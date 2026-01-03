@@ -17,6 +17,7 @@ export 'providers/home_widget_provider.dart';
 // Services
 export 'services/storage_service.dart';
 export 'services/export_service.dart';
+export 'services/haptic_service.dart';
 
 // Theme
 export 'theme/app_theme.dart';
