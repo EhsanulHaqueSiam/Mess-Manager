@@ -41,6 +41,13 @@ dependencies:
   image_picker: ^1.2.1
   http: ^1.6.0
 
+  # Export & Sharing
+  pdf: ^3.11.0              # PDF generation
+  printing: ^5.13.0         # Print/Share PDF
+  csv: ^6.0.0               # CSV export
+  path_provider: ^2.1.5     # File paths
+  share_plus: ^10.1.0       # Share files
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

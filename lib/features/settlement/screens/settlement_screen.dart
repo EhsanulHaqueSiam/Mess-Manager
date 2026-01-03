@@ -6,6 +6,7 @@ import 'package:gap/gap.dart';
 
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
+import 'package:mess_manager/core/services/export_service.dart';
 import 'package:mess_manager/features/settlement/providers/settlement_provider.dart';
 import 'package:mess_manager/features/balance/providers/balance_provider.dart';
 
@@ -37,6 +38,24 @@ class SettlementScreen extends ConsumerWidget {
           ],
         ),
         actions: [
+          // Export buttons
+          IconButton(
+            onPressed: () => _exportPdf(
+              context,
+              ref,
+              balances,
+              whoOwesWhom,
+              members,
+              summary,
+            ),
+            icon: const Icon(LucideIcons.fileText, size: 20),
+            tooltip: 'Export PDF',
+          ),
+          IconButton(
+            onPressed: () => _exportCsv(context, ref, balances, members),
+            icon: const Icon(LucideIcons.fileSpreadsheet, size: 20),
+            tooltip: 'Export CSV',
+          ),
           if (currentSettlement == null)
             TextButton.icon(
               onPressed: () => _createSettlement(context, ref, whoOwesWhom),
@@ -609,5 +628,65 @@ class SettlementScreen extends ConsumerWidget {
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+
+  Future<void> _exportPdf(
+    BuildContext context,
+    WidgetRef ref,
+    List balances,
+    List payments,
+    List members,
+    BalanceSummary summary,
+  ) async {
+    try {
+      final now = DateTime.now();
+      final pdfBytes = await ExportService.generateSettlementPdf(
+        year: now.year,
+        month: now.month,
+        totalBazar: summary.totalBazar,
+        mealRate: summary.mealRate,
+        balances: balances.cast(),
+        payments: payments.cast(),
+        members: members.cast(),
+      );
+
+      // Show share dialog
+      await ExportService.sharePdf(
+        pdfBytes,
+        'settlement_${now.year}_${now.month}.pdf',
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Export failed: $e')));
+      }
+    }
+  }
+
+  Future<void> _exportCsv(
+    BuildContext context,
+    WidgetRef ref,
+    List balances,
+    List members,
+  ) async {
+    try {
+      final now = DateTime.now();
+      final csv = ExportService.generateBalancesCsv(
+        balances: balances.cast(),
+        members: members.cast(),
+      );
+
+      await ExportService.shareCsv(
+        csv,
+        'balances_${now.year}_${now.month}.csv',
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Export failed: $e')));
+      }
+    }
   }
 }

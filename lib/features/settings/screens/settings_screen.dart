@@ -76,6 +76,12 @@ class SettingsScreen extends ConsumerWidget {
             subtitle: 'Monthly balance & payments',
             onTap: () => context.go(AppRoutes.settlement),
           ),
+          _buildSettingsTile(
+            icon: LucideIcons.clipboardList,
+            title: 'Duties',
+            subtitle: 'Rotation & assignments',
+            onTap: () => context.go(AppRoutes.duties),
+          ),
           const Gap(AppSpacing.lg),
 
           // Theme Section

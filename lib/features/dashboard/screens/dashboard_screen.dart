@@ -506,6 +506,12 @@ class DashboardScreen extends ConsumerWidget {
         color: AppColors.moneyNegative,
         route: AppRoutes.settlement,
       ),
+      _FeatureItem(
+        icon: LucideIcons.clipboardList,
+        label: 'Duties',
+        color: AppColors.info,
+        route: AppRoutes.duties,
+      ),
     ];
 
     return GridView.builder(
