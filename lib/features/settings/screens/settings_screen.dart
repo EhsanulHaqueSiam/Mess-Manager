@@ -134,7 +134,7 @@ class SettingsScreen extends ConsumerWidget {
             icon: LucideIcons.user,
             title: 'Profile',
             subtitle: 'Manage your account',
-            onTap: () {},
+            onTap: () => context.push(AppRoutes.profile),
             index: 14,
           ),
           _buildSettingsTile(

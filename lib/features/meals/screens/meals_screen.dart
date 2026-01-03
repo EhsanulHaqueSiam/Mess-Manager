@@ -3,9 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:gap/gap.dart';
+import 'package:go_router/go_router.dart';
+
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/models/meal.dart';
+import 'package:mess_manager/core/router/app_router.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
+import 'package:mess_manager/core/services/haptic_service.dart';
 import 'package:mess_manager/features/meals/providers/meals_provider.dart';
 import 'package:mess_manager/features/meals/widgets/add_meal_sheet.dart';
 import 'package:mess_manager/features/meals/widgets/bulk_meal_sheet.dart';
@@ -51,8 +55,21 @@ class _MealsScreenState extends ConsumerState<MealsScreen>
           ],
         ),
         actions: [
+          // Cancel Meals Button
+          IconButton(
+            onPressed: () {
+              HapticService.lightTap();
+              context.push(AppRoutes.vacation);
+            },
+            icon: const Icon(LucideIcons.calendarX, size: 20),
+            tooltip: 'Cancel Meals',
+          ),
+          // Bulk Entry Button
           TextButton.icon(
-            onPressed: () => _showBulkMealSheet(context),
+            onPressed: () {
+              HapticService.buttonPress();
+              _showBulkMealSheet(context);
+            },
             icon: const Icon(LucideIcons.calendarDays, size: 18),
             label: const Text('Bulk'),
             style: TextButton.styleFrom(foregroundColor: AppColors.mealColor),

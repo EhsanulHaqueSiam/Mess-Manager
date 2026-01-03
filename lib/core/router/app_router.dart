@@ -18,6 +18,7 @@ import 'package:mess_manager/features/info/screens/info_screen.dart';
 import 'package:mess_manager/features/auth/screens/login_screen.dart';
 import 'package:mess_manager/features/auth/screens/signup_screen.dart';
 import 'package:mess_manager/features/auth/screens/mess_selection_screen.dart';
+import 'package:mess_manager/features/auth/screens/profile_screen.dart';
 import 'package:mess_manager/features/notifications/screens/notification_settings_screen.dart';
 import 'package:mess_manager/shared/widgets/main_shell.dart';
 
@@ -47,12 +48,13 @@ class AppRoutes {
   static const login = '/login';
   static const signup = '/signup';
   static const messSelection = '/mess-selection';
+  static const profile = '/profile';
   static const notificationSettings = '/notification-settings';
 }
 
 /// Main Router Configuration
 final appRouter = GoRouter(
-  initialLocation: AppRoutes.dashboard,
+  initialLocation: AppRoutes.login, // Start with login
   debugLogDiagnostics: true,
   routes: [
     // Auth Routes (outside shell)
@@ -67,6 +69,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.messSelection,
       builder: (context, state) => const MessSelectionScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.profile,
+      builder: (context, state) => const ProfileScreen(),
     ),
 
     /// Main Shell with Bottom Navigation
