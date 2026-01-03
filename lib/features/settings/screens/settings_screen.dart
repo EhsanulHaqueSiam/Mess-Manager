@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:gap/gap.dart';
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/providers/theme_provider.dart';
+import 'package:mess_manager/core/router/app_router.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -30,6 +32,52 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.md),
         children: [
+          // Modules Section
+          _buildSectionHeader('Modules'),
+          _buildSettingsTile(
+            icon: LucideIcons.barChart3,
+            title: 'Analytics',
+            subtitle: 'Charts & insights',
+            onTap: () => context.go(AppRoutes.analytics),
+          ),
+          _buildSettingsTile(
+            icon: LucideIcons.users,
+            title: 'Members',
+            subtitle: 'Manage mess members',
+            onTap: () => context.go(AppRoutes.members),
+          ),
+          _buildSettingsTile(
+            icon: LucideIcons.arrowLeftRight,
+            title: 'Money Give/Take',
+            subtitle: 'Track personal transactions',
+            onTap: () => context.go(AppRoutes.money),
+          ),
+          _buildSettingsTile(
+            icon: LucideIcons.palmtree,
+            title: 'Vacation Mode',
+            subtitle: 'Manage absences',
+            onTap: () => context.go(AppRoutes.vacation),
+          ),
+          _buildSettingsTile(
+            icon: LucideIcons.zap,
+            title: 'DESCO Meter',
+            subtitle: 'Electricity balance',
+            onTap: () => context.go(AppRoutes.desco),
+          ),
+          _buildSettingsTile(
+            icon: LucideIcons.moon,
+            title: 'Ramadan',
+            subtitle: 'Sehri/Iftar tracking',
+            onTap: () => context.go(AppRoutes.ramadan),
+          ),
+          _buildSettingsTile(
+            icon: LucideIcons.receipt,
+            title: 'Settlement',
+            subtitle: 'Monthly balance & payments',
+            onTap: () => context.go(AppRoutes.settlement),
+          ),
+          const Gap(AppSpacing.lg),
+
           // Theme Section
           _buildSectionHeader('Appearance'),
           _buildSettingsTile(
@@ -56,12 +104,6 @@ class SettingsScreen extends ConsumerWidget {
             icon: LucideIcons.user,
             title: 'Profile',
             subtitle: 'Manage your account',
-            onTap: () {},
-          ),
-          _buildSettingsTile(
-            icon: LucideIcons.users,
-            title: 'Mess Members',
-            subtitle: '4 members',
             onTap: () {},
           ),
           _buildSettingsTile(
@@ -92,7 +134,7 @@ class SettingsScreen extends ConsumerWidget {
           _buildSectionHeader('About'),
           _buildSettingsTile(
             icon: LucideIcons.info,
-            title: 'About Area51',
+            title: 'About Mess Manager',
             subtitle: 'Version 1.0.0',
             onTap: () {},
           ),

@@ -13,6 +13,7 @@ import 'package:mess_manager/features/bazar/providers/bazar_provider.dart';
 import 'package:mess_manager/features/balance/providers/balance_provider.dart';
 import 'package:mess_manager/features/meals/widgets/add_meal_sheet.dart';
 import 'package:mess_manager/features/bazar/widgets/add_bazar_sheet.dart';
+import 'package:mess_manager/features/unified/widgets/add_entry_sheet.dart';
 import 'package:mess_manager/shared/widgets/smart_suggestion_card.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -132,6 +133,27 @@ class DashboardScreen extends ConsumerWidget {
                     _buildQuickActions(context),
                     const Gap(AppSpacing.lg),
 
+                    // Feature Modules Grid
+                    Row(
+                      children: [
+                        Icon(
+                          LucideIcons.layoutGrid,
+                          color: AppColors.secondary,
+                          size: 18,
+                        ),
+                        const Gap(AppSpacing.sm),
+                        Text(
+                          'Modules',
+                          style: AppTypography.headlineSmall.copyWith(
+                            color: AppColors.textPrimaryDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Gap(AppSpacing.sm),
+                    _buildFeatureGrid(context),
+                    const Gap(AppSpacing.lg),
+
                     // Recent Activity Header
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -183,6 +205,12 @@ class DashboardScreen extends ConsumerWidget {
             const SliverToBoxAdapter(child: Gap(AppSpacing.xxl)),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showUnifiedEntrySheet(context),
+        icon: const Icon(LucideIcons.plus),
+        label: const Text('Add'),
+        backgroundColor: AppColors.primary,
       ),
     );
   }
@@ -387,7 +415,7 @@ class DashboardScreen extends ConsumerWidget {
             icon: LucideIcons.arrowLeftRight,
             label: 'Money',
             color: AppColors.accentWarm,
-            onTap: () {},
+            onTap: () => context.go(AppRoutes.money),
           ),
         ),
       ],
@@ -438,6 +466,112 @@ class DashboardScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildFeatureGrid(BuildContext context) {
+    final features = [
+      _FeatureItem(
+        icon: LucideIcons.barChart3,
+        label: 'Analytics',
+        color: AppColors.primaryLight,
+        route: AppRoutes.analytics,
+      ),
+      _FeatureItem(
+        icon: LucideIcons.users,
+        label: 'Members',
+        color: AppColors.accentAlt,
+        route: AppRoutes.members,
+      ),
+      _FeatureItem(
+        icon: LucideIcons.palmtree,
+        label: 'Vacation',
+        color: AppColors.moneyPositive,
+        route: AppRoutes.vacation,
+      ),
+      _FeatureItem(
+        icon: LucideIcons.zap,
+        label: 'DESCO',
+        color: AppColors.accentWarm,
+        route: AppRoutes.desco,
+      ),
+      _FeatureItem(
+        icon: LucideIcons.moon,
+        label: 'Ramadan',
+        color: AppColors.secondary,
+        route: AppRoutes.ramadan,
+      ),
+      _FeatureItem(
+        icon: LucideIcons.receipt,
+        label: 'Settlement',
+        color: AppColors.moneyNegative,
+        route: AppRoutes.settlement,
+      ),
+    ];
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisSpacing: AppSpacing.sm,
+        crossAxisSpacing: AppSpacing.sm,
+        childAspectRatio: 1.1,
+      ),
+      itemCount: features.length,
+      itemBuilder: (context, index) {
+        final feature = features[index];
+        return _buildFeatureCard(context, feature, index);
+      },
+    ).animate().fadeIn(delay: 250.ms).slideY(begin: 0.1);
+  }
+
+  Widget _buildFeatureCard(
+    BuildContext context,
+    _FeatureItem feature,
+    int index,
+  ) {
+    return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => context.go(feature.route),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            child: Container(
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              decoration: BoxDecoration(
+                color: feature.color.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                border: Border.all(color: feature.color.withValues(alpha: 0.2)),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.sm),
+                    decoration: BoxDecoration(
+                      color: feature.color.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                    ),
+                    child: Icon(feature.icon, color: feature.color, size: 20),
+                  ),
+                  const Gap(AppSpacing.xs),
+                  Text(
+                    feature.label,
+                    style: AppTypography.labelSmall.copyWith(
+                      color: feature.color,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        )
+        .animate(delay: (50 * index).ms)
+        .fadeIn()
+        .scale(begin: const Offset(0.9, 0.9));
   }
 
   List<_Activity> _buildActivityList(
@@ -601,6 +735,15 @@ class DashboardScreen extends ConsumerWidget {
       builder: (context) => const AddBazarSheet(),
     );
   }
+
+  void _showUnifiedEntrySheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const AddEntrySheet(),
+    );
+  }
 }
 
 class _Activity {
@@ -618,5 +761,19 @@ class _Activity {
     required this.icon,
     required this.color,
     required this.time,
+  });
+}
+
+class _FeatureItem {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final String route;
+
+  _FeatureItem({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.route,
   });
 }
