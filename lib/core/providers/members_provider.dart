@@ -80,7 +80,7 @@ final currentMemberIdProvider = NotifierProvider<CurrentMemberNotifier, String>(
 
 class CurrentMemberNotifier extends Notifier<String> {
   @override
-  String build() => '1'; // Default: Siam
+  String build() => '3'; // Default: Sarkar (member) - Change to '1' for Siam (superAdmin)
 
   void setMember(String id) => state = id;
 }

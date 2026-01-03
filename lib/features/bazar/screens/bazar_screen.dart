@@ -7,7 +7,7 @@ import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
 import 'package:mess_manager/features/bazar/providers/bazar_provider.dart';
 import 'package:mess_manager/features/bazar/providers/bazar_list_provider.dart';
-import 'package:mess_manager/features/unified/widgets/add_entry_sheet.dart';
+import 'package:mess_manager/features/bazar/widgets/add_bazar_sheet.dart';
 import 'package:mess_manager/features/bazar/widgets/bazar_list_tab.dart';
 
 class BazarScreen extends ConsumerStatefulWidget {
@@ -99,7 +99,7 @@ class _BazarScreenState extends ConsumerState<BazarScreen>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => const AddEntrySheet(),
+      builder: (context) => const AddBazarSheet(),
     );
   }
 

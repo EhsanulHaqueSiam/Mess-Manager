@@ -217,6 +217,190 @@ class DutyAssignmentsNotifier extends Notifier<List<DutyAssignment>> {
       }
     }
   }
+
+  // ===== DISPUTE & APPROVAL METHODS =====
+
+  /// Dispute a completed duty (by another member)
+  Future<void> disputeDuty({
+    required String dutyId,
+    required String disputedBy,
+    required String reason,
+    String? disputePhotoPath,
+  }) async {
+    state = state.map((d) {
+      if (d.id == dutyId && d.status == DutyStatus.completed) {
+        return d.copyWith(
+          status: DutyStatus.disputed,
+          disputedBy: disputedBy,
+          disputeReason: reason,
+          disputePhotoPath: disputePhotoPath,
+          disputedAt: DateTime.now(),
+        );
+      }
+      return d;
+    }).toList();
+    await _save();
+  }
+
+  /// Admin approves a duty (completed or disputed)
+  Future<void> approveDuty({
+    required String dutyId,
+    required String reviewedBy,
+    String? adminNotes,
+  }) async {
+    state = state.map((d) {
+      if (d.id == dutyId) {
+        return d.copyWith(
+          status: DutyStatus.approved,
+          reviewedBy: reviewedBy,
+          reviewedAt: DateTime.now(),
+          adminNotes: adminNotes,
+        );
+      }
+      return d;
+    }).toList();
+    await _save();
+  }
+
+  /// Admin rejects a duty completion
+  Future<void> rejectDuty({
+    required String dutyId,
+    required String reviewedBy,
+    String? adminNotes,
+  }) async {
+    state = state.map((d) {
+      if (d.id == dutyId) {
+        return d.copyWith(
+          status: DutyStatus.rejected,
+          reviewedBy: reviewedBy,
+          reviewedAt: DateTime.now(),
+          adminNotes: adminNotes,
+        );
+      }
+      return d;
+    }).toList();
+    await _save();
+  }
+
+  /// Mark duty as completed by substitute (someone else did it)
+  /// This creates a duty debt for the original assignee
+  Future<void> markCompletedBySubstitute({
+    required String dutyId,
+    required String completedByMemberId,
+    String? proofImagePath,
+  }) async {
+    final duty = state.firstWhere((d) => d.id == dutyId);
+
+    state = state.map((d) {
+      if (d.id == dutyId) {
+        return d.copyWith(
+          status: DutyStatus.completed,
+          completedAt: DateTime.now(),
+          completedByMemberId: completedByMemberId,
+          proofImagePath: proofImagePath,
+        );
+      }
+      return d;
+    }).toList();
+    await _save();
+
+    // Create duty debt
+    await ref
+        .read(dutyDebtsProvider.notifier)
+        .createDebt(
+          debtorId: duty.memberId,
+          creditorId: completedByMemberId,
+          dutyType: duty.type,
+          originalDutyId: dutyId,
+        );
+  }
+
+  /// Get disputed duties (for admin review)
+  List<DutyAssignment> getDisputedDuties() {
+    return state.where((d) => d.status == DutyStatus.disputed).toList();
+  }
+
+  /// Get duties awaiting approval
+  List<DutyAssignment> getPendingApproval() {
+    return state
+        .where(
+          (d) =>
+              d.status == DutyStatus.completed ||
+              d.status == DutyStatus.disputed,
+        )
+        .toList();
+  }
+}
+
+// ===== DUTY DEBTS PROVIDER =====
+
+/// Provider for duty debts (substitute tracking)
+final dutyDebtsProvider = NotifierProvider<DutyDebtsNotifier, List<DutyDebt>>(
+  DutyDebtsNotifier.new,
+);
+
+class DutyDebtsNotifier extends Notifier<List<DutyDebt>> {
+  @override
+  List<DutyDebt> build() {
+    return StorageService.loadList<DutyDebt>(
+      boxName: 'duty_debts',
+      fromJson: DutyDebt.fromJson,
+    );
+  }
+
+  Future<void> _save() async {
+    await StorageService.saveList(
+      boxName: 'duty_debts',
+      items: state,
+      toJson: (d) => d.toJson(),
+    );
+  }
+
+  /// Create a new duty debt
+  Future<void> createDebt({
+    required String debtorId,
+    required String creditorId,
+    required DutyType dutyType,
+    required String originalDutyId,
+  }) async {
+    final debt = DutyDebt(
+      id: 'debt_${DateTime.now().millisecondsSinceEpoch}',
+      debtorId: debtorId,
+      creditorId: creditorId,
+      dutyType: dutyType,
+      date: DateTime.now(),
+      originalDutyId: originalDutyId,
+    );
+    state = [...state, debt];
+    await _save();
+  }
+
+  /// Settle a debt (when debtor does creditor's duty)
+  Future<void> settleDebt(String debtId, String settledByDutyId) async {
+    state = state.map((d) {
+      if (d.id == debtId) {
+        return d.copyWith(
+          isSettled: true,
+          settledAt: DateTime.now(),
+          settledByDutyId: settledByDutyId,
+        );
+      }
+      return d;
+    }).toList();
+    await _save();
+  }
+
+  /// Get unsettled debts for a member
+  List<DutyDebt> getDebtsForMember(String memberId) {
+    return state.where((d) => d.debtorId == memberId && !d.isSettled).toList();
+  }
+
+  /// Get credits for a member (duties they did for others)
+  List<DutyDebt> getCreditsForMember(String memberId) {
+    return state
+        .where((d) => d.creditorId == memberId && !d.isSettled)
+        .toList();
+  }
 }
 
 /// Today's duties provider

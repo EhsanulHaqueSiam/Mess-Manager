@@ -15,7 +15,10 @@ enum DutyType {
 /// Status of a duty assignment
 enum DutyStatus {
   pending, // Not yet started
-  completed, // Marked as done
+  completed, // Marked as done (awaiting verification)
+  disputed, // Another user disputed completion
+  approved, // Admin verified as complete
+  rejected, // Admin rejected completion
   skipped, // Skipped (with reason)
   swapped, // Swapped with another member
 }
@@ -31,9 +34,20 @@ sealed class DutyAssignment with _$DutyAssignment {
     required DateTime date,
     @Default(DutyStatus.pending) DutyStatus status,
     DateTime? completedAt,
-    String? proofImagePath, // Photo proof
+    String? proofImagePath, // Photo proof when completing
     String? note,
     String? swappedWithMemberId, // If swapped
+    // Dispute fields
+    String? disputedBy, // Member ID who disputed
+    String? disputePhotoPath, // Counter-evidence photo
+    String? disputeReason, // Reason for dispute
+    DateTime? disputedAt,
+    // Admin review
+    String? adminNotes,
+    String? reviewedBy, // Admin who reviewed
+    DateTime? reviewedAt,
+    // Substitute tracking
+    String? completedByMemberId, // If someone else did this duty
   }) = _DutyAssignment;
 
   factory DutyAssignment.fromJson(Map<String, dynamic> json) =>
@@ -73,4 +87,23 @@ sealed class DutySwapRequest with _$DutySwapRequest {
 
   factory DutySwapRequest.fromJson(Map<String, dynamic> json) =>
       _$DutySwapRequestFromJson(json);
+}
+
+/// Tracks duty debts when someone does another's assigned duty
+@freezed
+sealed class DutyDebt with _$DutyDebt {
+  const factory DutyDebt({
+    required String id,
+    required String debtorId, // Who owes the duty
+    required String creditorId, // Who did the work
+    required DutyType dutyType,
+    required DateTime date,
+    required String originalDutyId, // Link to original assignment
+    @Default(false) bool isSettled,
+    DateTime? settledAt,
+    String? settledByDutyId, // When debtor does creditor's duty
+  }) = _DutyDebt;
+
+  factory DutyDebt.fromJson(Map<String, dynamic> json) =>
+      _$DutyDebtFromJson(json);
 }

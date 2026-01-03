@@ -4,8 +4,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mess_manager/core/theme/app_theme.dart';
+
 import 'package:mess_manager/core/router/app_router.dart';
+import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
 import 'package:mess_manager/core/providers/smart_suggestions_provider.dart';
 import 'package:mess_manager/features/meals/providers/meals_provider.dart';
@@ -13,9 +14,9 @@ import 'package:mess_manager/features/bazar/providers/bazar_provider.dart';
 import 'package:mess_manager/features/balance/providers/balance_provider.dart';
 import 'package:mess_manager/features/meals/widgets/add_meal_sheet.dart';
 import 'package:mess_manager/features/bazar/widgets/add_bazar_sheet.dart';
-import 'package:mess_manager/features/unified/widgets/add_entry_sheet.dart';
 import 'package:mess_manager/shared/widgets/smart_suggestion_card.dart';
 import 'package:mess_manager/shared/widgets/party_splitter_sheet.dart';
+import 'package:mess_manager/shared/widgets/test_mode_switcher.dart';
 import 'package:mess_manager/features/dashboard/widgets/notification_alerts.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
 
@@ -76,6 +77,9 @@ class DashboardScreen extends ConsumerWidget {
                         // Profile Avatar with expense timer
                         Row(
                           children: [
+                            // 🧪 Test Mode Switcher (DEV ONLY)
+                            const TestModeSwitcher(),
+                            const Gap(AppSpacing.sm),
                             if (daysSinceBazar != null)
                               const ExpenseTimerWidget(),
                             const Gap(AppSpacing.sm),
@@ -414,15 +418,6 @@ class DashboardScreen extends ConsumerWidget {
             label: 'Add Meal',
             color: AppColors.mealColor,
             onTap: () => _showAddMealSheet(context),
-          ),
-        ),
-        const Gap(AppSpacing.sm),
-        Expanded(
-          child: _buildActionButton(
-            icon: LucideIcons.shoppingBag,
-            label: 'Add Bazar',
-            color: AppColors.bazarColor,
-            onTap: () => _showAddBazarSheet(context),
           ),
         ),
         const Gap(AppSpacing.sm),
@@ -778,7 +773,7 @@ class DashboardScreen extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => const AddEntrySheet(),
+      builder: (context) => const AddBazarSheet(),
     );
   }
 

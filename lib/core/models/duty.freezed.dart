@@ -15,8 +15,16 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$DutyAssignment {
 
- String get id; String get messId; String get memberId; DutyType get type; DateTime get date; DutyStatus get status; DateTime? get completedAt; String? get proofImagePath;// Photo proof
- String? get note; String? get swappedWithMemberId;
+ String get id; String get messId; String get memberId; DutyType get type; DateTime get date; DutyStatus get status; DateTime? get completedAt; String? get proofImagePath;// Photo proof when completing
+ String? get note; String? get swappedWithMemberId;// If swapped
+// Dispute fields
+ String? get disputedBy;// Member ID who disputed
+ String? get disputePhotoPath;// Counter-evidence photo
+ String? get disputeReason;// Reason for dispute
+ DateTime? get disputedAt;// Admin review
+ String? get adminNotes; String? get reviewedBy;// Admin who reviewed
+ DateTime? get reviewedAt;// Substitute tracking
+ String? get completedByMemberId;
 /// Create a copy of DutyAssignment
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -29,16 +37,16 @@ $DutyAssignmentCopyWith<DutyAssignment> get copyWith => _$DutyAssignmentCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DutyAssignment&&(identical(other.id, id) || other.id == id)&&(identical(other.messId, messId) || other.messId == messId)&&(identical(other.memberId, memberId) || other.memberId == memberId)&&(identical(other.type, type) || other.type == type)&&(identical(other.date, date) || other.date == date)&&(identical(other.status, status) || other.status == status)&&(identical(other.completedAt, completedAt) || other.completedAt == completedAt)&&(identical(other.proofImagePath, proofImagePath) || other.proofImagePath == proofImagePath)&&(identical(other.note, note) || other.note == note)&&(identical(other.swappedWithMemberId, swappedWithMemberId) || other.swappedWithMemberId == swappedWithMemberId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DutyAssignment&&(identical(other.id, id) || other.id == id)&&(identical(other.messId, messId) || other.messId == messId)&&(identical(other.memberId, memberId) || other.memberId == memberId)&&(identical(other.type, type) || other.type == type)&&(identical(other.date, date) || other.date == date)&&(identical(other.status, status) || other.status == status)&&(identical(other.completedAt, completedAt) || other.completedAt == completedAt)&&(identical(other.proofImagePath, proofImagePath) || other.proofImagePath == proofImagePath)&&(identical(other.note, note) || other.note == note)&&(identical(other.swappedWithMemberId, swappedWithMemberId) || other.swappedWithMemberId == swappedWithMemberId)&&(identical(other.disputedBy, disputedBy) || other.disputedBy == disputedBy)&&(identical(other.disputePhotoPath, disputePhotoPath) || other.disputePhotoPath == disputePhotoPath)&&(identical(other.disputeReason, disputeReason) || other.disputeReason == disputeReason)&&(identical(other.disputedAt, disputedAt) || other.disputedAt == disputedAt)&&(identical(other.adminNotes, adminNotes) || other.adminNotes == adminNotes)&&(identical(other.reviewedBy, reviewedBy) || other.reviewedBy == reviewedBy)&&(identical(other.reviewedAt, reviewedAt) || other.reviewedAt == reviewedAt)&&(identical(other.completedByMemberId, completedByMemberId) || other.completedByMemberId == completedByMemberId));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,messId,memberId,type,date,status,completedAt,proofImagePath,note,swappedWithMemberId);
+int get hashCode => Object.hash(runtimeType,id,messId,memberId,type,date,status,completedAt,proofImagePath,note,swappedWithMemberId,disputedBy,disputePhotoPath,disputeReason,disputedAt,adminNotes,reviewedBy,reviewedAt,completedByMemberId);
 
 @override
 String toString() {
-  return 'DutyAssignment(id: $id, messId: $messId, memberId: $memberId, type: $type, date: $date, status: $status, completedAt: $completedAt, proofImagePath: $proofImagePath, note: $note, swappedWithMemberId: $swappedWithMemberId)';
+  return 'DutyAssignment(id: $id, messId: $messId, memberId: $memberId, type: $type, date: $date, status: $status, completedAt: $completedAt, proofImagePath: $proofImagePath, note: $note, swappedWithMemberId: $swappedWithMemberId, disputedBy: $disputedBy, disputePhotoPath: $disputePhotoPath, disputeReason: $disputeReason, disputedAt: $disputedAt, adminNotes: $adminNotes, reviewedBy: $reviewedBy, reviewedAt: $reviewedAt, completedByMemberId: $completedByMemberId)';
 }
 
 
@@ -49,7 +57,7 @@ abstract mixin class $DutyAssignmentCopyWith<$Res>  {
   factory $DutyAssignmentCopyWith(DutyAssignment value, $Res Function(DutyAssignment) _then) = _$DutyAssignmentCopyWithImpl;
 @useResult
 $Res call({
- String id, String messId, String memberId, DutyType type, DateTime date, DutyStatus status, DateTime? completedAt, String? proofImagePath, String? note, String? swappedWithMemberId
+ String id, String messId, String memberId, DutyType type, DateTime date, DutyStatus status, DateTime? completedAt, String? proofImagePath, String? note, String? swappedWithMemberId, String? disputedBy, String? disputePhotoPath, String? disputeReason, DateTime? disputedAt, String? adminNotes, String? reviewedBy, DateTime? reviewedAt, String? completedByMemberId
 });
 
 
@@ -66,7 +74,7 @@ class _$DutyAssignmentCopyWithImpl<$Res>
 
 /// Create a copy of DutyAssignment
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? messId = null,Object? memberId = null,Object? type = null,Object? date = null,Object? status = null,Object? completedAt = freezed,Object? proofImagePath = freezed,Object? note = freezed,Object? swappedWithMemberId = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? messId = null,Object? memberId = null,Object? type = null,Object? date = null,Object? status = null,Object? completedAt = freezed,Object? proofImagePath = freezed,Object? note = freezed,Object? swappedWithMemberId = freezed,Object? disputedBy = freezed,Object? disputePhotoPath = freezed,Object? disputeReason = freezed,Object? disputedAt = freezed,Object? adminNotes = freezed,Object? reviewedBy = freezed,Object? reviewedAt = freezed,Object? completedByMemberId = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,messId: null == messId ? _self.messId : messId // ignore: cast_nullable_to_non_nullable
@@ -78,6 +86,14 @@ as DutyStatus,completedAt: freezed == completedAt ? _self.completedAt : complete
 as DateTime?,proofImagePath: freezed == proofImagePath ? _self.proofImagePath : proofImagePath // ignore: cast_nullable_to_non_nullable
 as String?,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
 as String?,swappedWithMemberId: freezed == swappedWithMemberId ? _self.swappedWithMemberId : swappedWithMemberId // ignore: cast_nullable_to_non_nullable
+as String?,disputedBy: freezed == disputedBy ? _self.disputedBy : disputedBy // ignore: cast_nullable_to_non_nullable
+as String?,disputePhotoPath: freezed == disputePhotoPath ? _self.disputePhotoPath : disputePhotoPath // ignore: cast_nullable_to_non_nullable
+as String?,disputeReason: freezed == disputeReason ? _self.disputeReason : disputeReason // ignore: cast_nullable_to_non_nullable
+as String?,disputedAt: freezed == disputedAt ? _self.disputedAt : disputedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,adminNotes: freezed == adminNotes ? _self.adminNotes : adminNotes // ignore: cast_nullable_to_non_nullable
+as String?,reviewedBy: freezed == reviewedBy ? _self.reviewedBy : reviewedBy // ignore: cast_nullable_to_non_nullable
+as String?,reviewedAt: freezed == reviewedAt ? _self.reviewedAt : reviewedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,completedByMemberId: freezed == completedByMemberId ? _self.completedByMemberId : completedByMemberId // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -160,10 +176,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String messId,  String memberId,  DutyType type,  DateTime date,  DutyStatus status,  DateTime? completedAt,  String? proofImagePath,  String? note,  String? swappedWithMemberId)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String messId,  String memberId,  DutyType type,  DateTime date,  DutyStatus status,  DateTime? completedAt,  String? proofImagePath,  String? note,  String? swappedWithMemberId,  String? disputedBy,  String? disputePhotoPath,  String? disputeReason,  DateTime? disputedAt,  String? adminNotes,  String? reviewedBy,  DateTime? reviewedAt,  String? completedByMemberId)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DutyAssignment() when $default != null:
-return $default(_that.id,_that.messId,_that.memberId,_that.type,_that.date,_that.status,_that.completedAt,_that.proofImagePath,_that.note,_that.swappedWithMemberId);case _:
+return $default(_that.id,_that.messId,_that.memberId,_that.type,_that.date,_that.status,_that.completedAt,_that.proofImagePath,_that.note,_that.swappedWithMemberId,_that.disputedBy,_that.disputePhotoPath,_that.disputeReason,_that.disputedAt,_that.adminNotes,_that.reviewedBy,_that.reviewedAt,_that.completedByMemberId);case _:
   return orElse();
 
 }
@@ -181,10 +197,10 @@ return $default(_that.id,_that.messId,_that.memberId,_that.type,_that.date,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String messId,  String memberId,  DutyType type,  DateTime date,  DutyStatus status,  DateTime? completedAt,  String? proofImagePath,  String? note,  String? swappedWithMemberId)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String messId,  String memberId,  DutyType type,  DateTime date,  DutyStatus status,  DateTime? completedAt,  String? proofImagePath,  String? note,  String? swappedWithMemberId,  String? disputedBy,  String? disputePhotoPath,  String? disputeReason,  DateTime? disputedAt,  String? adminNotes,  String? reviewedBy,  DateTime? reviewedAt,  String? completedByMemberId)  $default,) {final _that = this;
 switch (_that) {
 case _DutyAssignment():
-return $default(_that.id,_that.messId,_that.memberId,_that.type,_that.date,_that.status,_that.completedAt,_that.proofImagePath,_that.note,_that.swappedWithMemberId);}
+return $default(_that.id,_that.messId,_that.memberId,_that.type,_that.date,_that.status,_that.completedAt,_that.proofImagePath,_that.note,_that.swappedWithMemberId,_that.disputedBy,_that.disputePhotoPath,_that.disputeReason,_that.disputedAt,_that.adminNotes,_that.reviewedBy,_that.reviewedAt,_that.completedByMemberId);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -198,10 +214,10 @@ return $default(_that.id,_that.messId,_that.memberId,_that.type,_that.date,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String messId,  String memberId,  DutyType type,  DateTime date,  DutyStatus status,  DateTime? completedAt,  String? proofImagePath,  String? note,  String? swappedWithMemberId)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String messId,  String memberId,  DutyType type,  DateTime date,  DutyStatus status,  DateTime? completedAt,  String? proofImagePath,  String? note,  String? swappedWithMemberId,  String? disputedBy,  String? disputePhotoPath,  String? disputeReason,  DateTime? disputedAt,  String? adminNotes,  String? reviewedBy,  DateTime? reviewedAt,  String? completedByMemberId)?  $default,) {final _that = this;
 switch (_that) {
 case _DutyAssignment() when $default != null:
-return $default(_that.id,_that.messId,_that.memberId,_that.type,_that.date,_that.status,_that.completedAt,_that.proofImagePath,_that.note,_that.swappedWithMemberId);case _:
+return $default(_that.id,_that.messId,_that.memberId,_that.type,_that.date,_that.status,_that.completedAt,_that.proofImagePath,_that.note,_that.swappedWithMemberId,_that.disputedBy,_that.disputePhotoPath,_that.disputeReason,_that.disputedAt,_that.adminNotes,_that.reviewedBy,_that.reviewedAt,_that.completedByMemberId);case _:
   return null;
 
 }
@@ -213,7 +229,7 @@ return $default(_that.id,_that.messId,_that.memberId,_that.type,_that.date,_that
 @JsonSerializable()
 
 class _DutyAssignment implements DutyAssignment {
-  const _DutyAssignment({required this.id, required this.messId, required this.memberId, required this.type, required this.date, this.status = DutyStatus.pending, this.completedAt, this.proofImagePath, this.note, this.swappedWithMemberId});
+  const _DutyAssignment({required this.id, required this.messId, required this.memberId, required this.type, required this.date, this.status = DutyStatus.pending, this.completedAt, this.proofImagePath, this.note, this.swappedWithMemberId, this.disputedBy, this.disputePhotoPath, this.disputeReason, this.disputedAt, this.adminNotes, this.reviewedBy, this.reviewedAt, this.completedByMemberId});
   factory _DutyAssignment.fromJson(Map<String, dynamic> json) => _$DutyAssignmentFromJson(json);
 
 @override final  String id;
@@ -224,9 +240,25 @@ class _DutyAssignment implements DutyAssignment {
 @override@JsonKey() final  DutyStatus status;
 @override final  DateTime? completedAt;
 @override final  String? proofImagePath;
-// Photo proof
+// Photo proof when completing
 @override final  String? note;
 @override final  String? swappedWithMemberId;
+// If swapped
+// Dispute fields
+@override final  String? disputedBy;
+// Member ID who disputed
+@override final  String? disputePhotoPath;
+// Counter-evidence photo
+@override final  String? disputeReason;
+// Reason for dispute
+@override final  DateTime? disputedAt;
+// Admin review
+@override final  String? adminNotes;
+@override final  String? reviewedBy;
+// Admin who reviewed
+@override final  DateTime? reviewedAt;
+// Substitute tracking
+@override final  String? completedByMemberId;
 
 /// Create a copy of DutyAssignment
 /// with the given fields replaced by the non-null parameter values.
@@ -241,16 +273,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DutyAssignment&&(identical(other.id, id) || other.id == id)&&(identical(other.messId, messId) || other.messId == messId)&&(identical(other.memberId, memberId) || other.memberId == memberId)&&(identical(other.type, type) || other.type == type)&&(identical(other.date, date) || other.date == date)&&(identical(other.status, status) || other.status == status)&&(identical(other.completedAt, completedAt) || other.completedAt == completedAt)&&(identical(other.proofImagePath, proofImagePath) || other.proofImagePath == proofImagePath)&&(identical(other.note, note) || other.note == note)&&(identical(other.swappedWithMemberId, swappedWithMemberId) || other.swappedWithMemberId == swappedWithMemberId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DutyAssignment&&(identical(other.id, id) || other.id == id)&&(identical(other.messId, messId) || other.messId == messId)&&(identical(other.memberId, memberId) || other.memberId == memberId)&&(identical(other.type, type) || other.type == type)&&(identical(other.date, date) || other.date == date)&&(identical(other.status, status) || other.status == status)&&(identical(other.completedAt, completedAt) || other.completedAt == completedAt)&&(identical(other.proofImagePath, proofImagePath) || other.proofImagePath == proofImagePath)&&(identical(other.note, note) || other.note == note)&&(identical(other.swappedWithMemberId, swappedWithMemberId) || other.swappedWithMemberId == swappedWithMemberId)&&(identical(other.disputedBy, disputedBy) || other.disputedBy == disputedBy)&&(identical(other.disputePhotoPath, disputePhotoPath) || other.disputePhotoPath == disputePhotoPath)&&(identical(other.disputeReason, disputeReason) || other.disputeReason == disputeReason)&&(identical(other.disputedAt, disputedAt) || other.disputedAt == disputedAt)&&(identical(other.adminNotes, adminNotes) || other.adminNotes == adminNotes)&&(identical(other.reviewedBy, reviewedBy) || other.reviewedBy == reviewedBy)&&(identical(other.reviewedAt, reviewedAt) || other.reviewedAt == reviewedAt)&&(identical(other.completedByMemberId, completedByMemberId) || other.completedByMemberId == completedByMemberId));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,messId,memberId,type,date,status,completedAt,proofImagePath,note,swappedWithMemberId);
+int get hashCode => Object.hash(runtimeType,id,messId,memberId,type,date,status,completedAt,proofImagePath,note,swappedWithMemberId,disputedBy,disputePhotoPath,disputeReason,disputedAt,adminNotes,reviewedBy,reviewedAt,completedByMemberId);
 
 @override
 String toString() {
-  return 'DutyAssignment(id: $id, messId: $messId, memberId: $memberId, type: $type, date: $date, status: $status, completedAt: $completedAt, proofImagePath: $proofImagePath, note: $note, swappedWithMemberId: $swappedWithMemberId)';
+  return 'DutyAssignment(id: $id, messId: $messId, memberId: $memberId, type: $type, date: $date, status: $status, completedAt: $completedAt, proofImagePath: $proofImagePath, note: $note, swappedWithMemberId: $swappedWithMemberId, disputedBy: $disputedBy, disputePhotoPath: $disputePhotoPath, disputeReason: $disputeReason, disputedAt: $disputedAt, adminNotes: $adminNotes, reviewedBy: $reviewedBy, reviewedAt: $reviewedAt, completedByMemberId: $completedByMemberId)';
 }
 
 
@@ -261,7 +293,7 @@ abstract mixin class _$DutyAssignmentCopyWith<$Res> implements $DutyAssignmentCo
   factory _$DutyAssignmentCopyWith(_DutyAssignment value, $Res Function(_DutyAssignment) _then) = __$DutyAssignmentCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String messId, String memberId, DutyType type, DateTime date, DutyStatus status, DateTime? completedAt, String? proofImagePath, String? note, String? swappedWithMemberId
+ String id, String messId, String memberId, DutyType type, DateTime date, DutyStatus status, DateTime? completedAt, String? proofImagePath, String? note, String? swappedWithMemberId, String? disputedBy, String? disputePhotoPath, String? disputeReason, DateTime? disputedAt, String? adminNotes, String? reviewedBy, DateTime? reviewedAt, String? completedByMemberId
 });
 
 
@@ -278,7 +310,7 @@ class __$DutyAssignmentCopyWithImpl<$Res>
 
 /// Create a copy of DutyAssignment
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? messId = null,Object? memberId = null,Object? type = null,Object? date = null,Object? status = null,Object? completedAt = freezed,Object? proofImagePath = freezed,Object? note = freezed,Object? swappedWithMemberId = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? messId = null,Object? memberId = null,Object? type = null,Object? date = null,Object? status = null,Object? completedAt = freezed,Object? proofImagePath = freezed,Object? note = freezed,Object? swappedWithMemberId = freezed,Object? disputedBy = freezed,Object? disputePhotoPath = freezed,Object? disputeReason = freezed,Object? disputedAt = freezed,Object? adminNotes = freezed,Object? reviewedBy = freezed,Object? reviewedAt = freezed,Object? completedByMemberId = freezed,}) {
   return _then(_DutyAssignment(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,messId: null == messId ? _self.messId : messId // ignore: cast_nullable_to_non_nullable
@@ -290,6 +322,14 @@ as DutyStatus,completedAt: freezed == completedAt ? _self.completedAt : complete
 as DateTime?,proofImagePath: freezed == proofImagePath ? _self.proofImagePath : proofImagePath // ignore: cast_nullable_to_non_nullable
 as String?,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
 as String?,swappedWithMemberId: freezed == swappedWithMemberId ? _self.swappedWithMemberId : swappedWithMemberId // ignore: cast_nullable_to_non_nullable
+as String?,disputedBy: freezed == disputedBy ? _self.disputedBy : disputedBy // ignore: cast_nullable_to_non_nullable
+as String?,disputePhotoPath: freezed == disputePhotoPath ? _self.disputePhotoPath : disputePhotoPath // ignore: cast_nullable_to_non_nullable
+as String?,disputeReason: freezed == disputeReason ? _self.disputeReason : disputeReason // ignore: cast_nullable_to_non_nullable
+as String?,disputedAt: freezed == disputedAt ? _self.disputedAt : disputedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,adminNotes: freezed == adminNotes ? _self.adminNotes : adminNotes // ignore: cast_nullable_to_non_nullable
+as String?,reviewedBy: freezed == reviewedBy ? _self.reviewedBy : reviewedBy // ignore: cast_nullable_to_non_nullable
+as String?,reviewedAt: freezed == reviewedAt ? _self.reviewedAt : reviewedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,completedByMemberId: freezed == completedByMemberId ? _self.completedByMemberId : completedByMemberId // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -853,6 +893,293 @@ as String,requestedAt: null == requestedAt ? _self.requestedAt : requestedAt // 
 as DateTime,isApproved: null == isApproved ? _self.isApproved : isApproved // ignore: cast_nullable_to_non_nullable
 as bool,respondedAt: freezed == respondedAt ? _self.respondedAt : respondedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,message: freezed == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$DutyDebt {
+
+ String get id; String get debtorId;// Who owes the duty
+ String get creditorId;// Who did the work
+ DutyType get dutyType; DateTime get date; String get originalDutyId;// Link to original assignment
+ bool get isSettled; DateTime? get settledAt; String? get settledByDutyId;
+/// Create a copy of DutyDebt
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$DutyDebtCopyWith<DutyDebt> get copyWith => _$DutyDebtCopyWithImpl<DutyDebt>(this as DutyDebt, _$identity);
+
+  /// Serializes this DutyDebt to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DutyDebt&&(identical(other.id, id) || other.id == id)&&(identical(other.debtorId, debtorId) || other.debtorId == debtorId)&&(identical(other.creditorId, creditorId) || other.creditorId == creditorId)&&(identical(other.dutyType, dutyType) || other.dutyType == dutyType)&&(identical(other.date, date) || other.date == date)&&(identical(other.originalDutyId, originalDutyId) || other.originalDutyId == originalDutyId)&&(identical(other.isSettled, isSettled) || other.isSettled == isSettled)&&(identical(other.settledAt, settledAt) || other.settledAt == settledAt)&&(identical(other.settledByDutyId, settledByDutyId) || other.settledByDutyId == settledByDutyId));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,id,debtorId,creditorId,dutyType,date,originalDutyId,isSettled,settledAt,settledByDutyId);
+
+@override
+String toString() {
+  return 'DutyDebt(id: $id, debtorId: $debtorId, creditorId: $creditorId, dutyType: $dutyType, date: $date, originalDutyId: $originalDutyId, isSettled: $isSettled, settledAt: $settledAt, settledByDutyId: $settledByDutyId)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $DutyDebtCopyWith<$Res>  {
+  factory $DutyDebtCopyWith(DutyDebt value, $Res Function(DutyDebt) _then) = _$DutyDebtCopyWithImpl;
+@useResult
+$Res call({
+ String id, String debtorId, String creditorId, DutyType dutyType, DateTime date, String originalDutyId, bool isSettled, DateTime? settledAt, String? settledByDutyId
+});
+
+
+
+
+}
+/// @nodoc
+class _$DutyDebtCopyWithImpl<$Res>
+    implements $DutyDebtCopyWith<$Res> {
+  _$DutyDebtCopyWithImpl(this._self, this._then);
+
+  final DutyDebt _self;
+  final $Res Function(DutyDebt) _then;
+
+/// Create a copy of DutyDebt
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? debtorId = null,Object? creditorId = null,Object? dutyType = null,Object? date = null,Object? originalDutyId = null,Object? isSettled = null,Object? settledAt = freezed,Object? settledByDutyId = freezed,}) {
+  return _then(_self.copyWith(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,debtorId: null == debtorId ? _self.debtorId : debtorId // ignore: cast_nullable_to_non_nullable
+as String,creditorId: null == creditorId ? _self.creditorId : creditorId // ignore: cast_nullable_to_non_nullable
+as String,dutyType: null == dutyType ? _self.dutyType : dutyType // ignore: cast_nullable_to_non_nullable
+as DutyType,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
+as DateTime,originalDutyId: null == originalDutyId ? _self.originalDutyId : originalDutyId // ignore: cast_nullable_to_non_nullable
+as String,isSettled: null == isSettled ? _self.isSettled : isSettled // ignore: cast_nullable_to_non_nullable
+as bool,settledAt: freezed == settledAt ? _self.settledAt : settledAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,settledByDutyId: freezed == settledByDutyId ? _self.settledByDutyId : settledByDutyId // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [DutyDebt].
+extension DutyDebtPatterns on DutyDebt {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _DutyDebt value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _DutyDebt() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _DutyDebt value)  $default,){
+final _that = this;
+switch (_that) {
+case _DutyDebt():
+return $default(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _DutyDebt value)?  $default,){
+final _that = this;
+switch (_that) {
+case _DutyDebt() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String debtorId,  String creditorId,  DutyType dutyType,  DateTime date,  String originalDutyId,  bool isSettled,  DateTime? settledAt,  String? settledByDutyId)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _DutyDebt() when $default != null:
+return $default(_that.id,_that.debtorId,_that.creditorId,_that.dutyType,_that.date,_that.originalDutyId,_that.isSettled,_that.settledAt,_that.settledByDutyId);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String debtorId,  String creditorId,  DutyType dutyType,  DateTime date,  String originalDutyId,  bool isSettled,  DateTime? settledAt,  String? settledByDutyId)  $default,) {final _that = this;
+switch (_that) {
+case _DutyDebt():
+return $default(_that.id,_that.debtorId,_that.creditorId,_that.dutyType,_that.date,_that.originalDutyId,_that.isSettled,_that.settledAt,_that.settledByDutyId);}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String debtorId,  String creditorId,  DutyType dutyType,  DateTime date,  String originalDutyId,  bool isSettled,  DateTime? settledAt,  String? settledByDutyId)?  $default,) {final _that = this;
+switch (_that) {
+case _DutyDebt() when $default != null:
+return $default(_that.id,_that.debtorId,_that.creditorId,_that.dutyType,_that.date,_that.originalDutyId,_that.isSettled,_that.settledAt,_that.settledByDutyId);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _DutyDebt implements DutyDebt {
+  const _DutyDebt({required this.id, required this.debtorId, required this.creditorId, required this.dutyType, required this.date, required this.originalDutyId, this.isSettled = false, this.settledAt, this.settledByDutyId});
+  factory _DutyDebt.fromJson(Map<String, dynamic> json) => _$DutyDebtFromJson(json);
+
+@override final  String id;
+@override final  String debtorId;
+// Who owes the duty
+@override final  String creditorId;
+// Who did the work
+@override final  DutyType dutyType;
+@override final  DateTime date;
+@override final  String originalDutyId;
+// Link to original assignment
+@override@JsonKey() final  bool isSettled;
+@override final  DateTime? settledAt;
+@override final  String? settledByDutyId;
+
+/// Create a copy of DutyDebt
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$DutyDebtCopyWith<_DutyDebt> get copyWith => __$DutyDebtCopyWithImpl<_DutyDebt>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$DutyDebtToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DutyDebt&&(identical(other.id, id) || other.id == id)&&(identical(other.debtorId, debtorId) || other.debtorId == debtorId)&&(identical(other.creditorId, creditorId) || other.creditorId == creditorId)&&(identical(other.dutyType, dutyType) || other.dutyType == dutyType)&&(identical(other.date, date) || other.date == date)&&(identical(other.originalDutyId, originalDutyId) || other.originalDutyId == originalDutyId)&&(identical(other.isSettled, isSettled) || other.isSettled == isSettled)&&(identical(other.settledAt, settledAt) || other.settledAt == settledAt)&&(identical(other.settledByDutyId, settledByDutyId) || other.settledByDutyId == settledByDutyId));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,id,debtorId,creditorId,dutyType,date,originalDutyId,isSettled,settledAt,settledByDutyId);
+
+@override
+String toString() {
+  return 'DutyDebt(id: $id, debtorId: $debtorId, creditorId: $creditorId, dutyType: $dutyType, date: $date, originalDutyId: $originalDutyId, isSettled: $isSettled, settledAt: $settledAt, settledByDutyId: $settledByDutyId)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$DutyDebtCopyWith<$Res> implements $DutyDebtCopyWith<$Res> {
+  factory _$DutyDebtCopyWith(_DutyDebt value, $Res Function(_DutyDebt) _then) = __$DutyDebtCopyWithImpl;
+@override @useResult
+$Res call({
+ String id, String debtorId, String creditorId, DutyType dutyType, DateTime date, String originalDutyId, bool isSettled, DateTime? settledAt, String? settledByDutyId
+});
+
+
+
+
+}
+/// @nodoc
+class __$DutyDebtCopyWithImpl<$Res>
+    implements _$DutyDebtCopyWith<$Res> {
+  __$DutyDebtCopyWithImpl(this._self, this._then);
+
+  final _DutyDebt _self;
+  final $Res Function(_DutyDebt) _then;
+
+/// Create a copy of DutyDebt
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? debtorId = null,Object? creditorId = null,Object? dutyType = null,Object? date = null,Object? originalDutyId = null,Object? isSettled = null,Object? settledAt = freezed,Object? settledByDutyId = freezed,}) {
+  return _then(_DutyDebt(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,debtorId: null == debtorId ? _self.debtorId : debtorId // ignore: cast_nullable_to_non_nullable
+as String,creditorId: null == creditorId ? _self.creditorId : creditorId // ignore: cast_nullable_to_non_nullable
+as String,dutyType: null == dutyType ? _self.dutyType : dutyType // ignore: cast_nullable_to_non_nullable
+as DutyType,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
+as DateTime,originalDutyId: null == originalDutyId ? _self.originalDutyId : originalDutyId // ignore: cast_nullable_to_non_nullable
+as String,isSettled: null == isSettled ? _self.isSettled : isSettled // ignore: cast_nullable_to_non_nullable
+as bool,settledAt: freezed == settledAt ? _self.settledAt : settledAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,settledByDutyId: freezed == settledByDutyId ? _self.settledByDutyId : settledByDutyId // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

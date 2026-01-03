@@ -20,6 +20,7 @@ import 'package:mess_manager/features/auth/screens/signup_screen.dart';
 import 'package:mess_manager/features/auth/screens/mess_selection_screen.dart';
 import 'package:mess_manager/features/auth/screens/profile_screen.dart';
 import 'package:mess_manager/features/notifications/screens/notification_settings_screen.dart';
+import 'package:mess_manager/features/chatbot/screens/chatbot_screen.dart';
 import 'package:mess_manager/shared/widgets/main_shell.dart';
 
 /// App Routes Constants
@@ -38,6 +39,7 @@ class AppRoutes {
   static const settlement = '/settlement';
   static const duties = '/duties';
   static const info = '/info';
+  static const chatbot = '/chatbot';
 
   // Nested routes
   static const bazarAdd = '/bazar/add';
@@ -54,7 +56,9 @@ class AppRoutes {
 
 /// Main Router Configuration
 final appRouter = GoRouter(
-  initialLocation: AppRoutes.login, // Start with login
+  // TEST MODE: Start at dashboard, skip login
+  // TODO: Change to AppRoutes.login for production
+  initialLocation: AppRoutes.dashboard,
   debugLogDiagnostics: true,
   routes: [
     // Auth Routes (outside shell)
@@ -171,6 +175,12 @@ final appRouter = GoRouter(
           name: 'notification-settings',
           pageBuilder: (context, state) =>
               const NoTransitionPage(child: NotificationSettingsScreen()),
+        ),
+        GoRoute(
+          path: AppRoutes.chatbot,
+          name: 'chatbot',
+          pageBuilder: (context, state) =>
+              const NoTransitionPage(child: ChatbotScreen()),
         ),
       ],
     ),

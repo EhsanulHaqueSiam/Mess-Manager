@@ -14,6 +14,8 @@ class StorageService {
   static const String _ramadanMealsBox = 'ramadan_meals';
   static const String _ramadanBazarBox = 'ramadan_bazar';
   static const String _settlementsBox = 'settlements';
+  static const String _dutySchedulesBox = 'duty_schedules';
+  static const String _dutyAssignmentsBox = 'duty_assignments';
 
   /// Initialize Hive
   static Future<void> init() async {
@@ -32,6 +34,10 @@ class StorageService {
     await Hive.openBox<String>(_ramadanMealsBox);
     await Hive.openBox<String>(_ramadanBazarBox);
     await Hive.openBox<String>(_settlementsBox);
+    // Duties
+    await Hive.openBox<String>(_dutySchedulesBox);
+    await Hive.openBox<String>(_dutyAssignmentsBox);
+    await Hive.openBox<String>('duty_debts');
   }
 
   // ============ Single JSON Object Storage ============
