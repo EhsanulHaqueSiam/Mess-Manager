@@ -34,6 +34,32 @@ class StorageService {
     await Hive.openBox<String>(_settlementsBox);
   }
 
+  // ============ Single JSON Object Storage ============
+
+  /// Save a single JSON object
+  static Future<void> saveJson(String key, Map<String, dynamic> data) async {
+    final box = Hive.box<dynamic>(_settingsBox);
+    await box.put(key, jsonEncode(data));
+  }
+
+  /// Load a single JSON object
+  static Map<String, dynamic>? loadJson(String key) {
+    final box = Hive.box<dynamic>(_settingsBox);
+    final jsonStr = box.get(key);
+    if (jsonStr == null || jsonStr is! String) return null;
+    try {
+      return jsonDecode(jsonStr) as Map<String, dynamic>;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Delete a single JSON object
+  static Future<void> deleteJson(String key) async {
+    final box = Hive.box<dynamic>(_settingsBox);
+    await box.delete(key);
+  }
+
   // ============ Generic JSON Storage ============
 
   /// Save a list of items as JSON

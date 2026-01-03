@@ -15,6 +15,10 @@ import 'package:mess_manager/features/ramadan/screens/ramadan_screen.dart';
 import 'package:mess_manager/features/settlement/screens/settlement_screen.dart';
 import 'package:mess_manager/features/duties/screens/duties_screen.dart';
 import 'package:mess_manager/features/info/screens/info_screen.dart';
+import 'package:mess_manager/features/auth/screens/login_screen.dart';
+import 'package:mess_manager/features/auth/screens/signup_screen.dart';
+import 'package:mess_manager/features/auth/screens/mess_selection_screen.dart';
+import 'package:mess_manager/features/notifications/screens/notification_settings_screen.dart';
 import 'package:mess_manager/shared/widgets/main_shell.dart';
 
 /// App Routes Constants
@@ -38,6 +42,12 @@ class AppRoutes {
   static const bazarAdd = '/bazar/add';
   static const bazarList = '/bazar/list';
   static const mealsBulk = '/meals/bulk';
+
+  // Auth routes
+  static const login = '/login';
+  static const signup = '/signup';
+  static const messSelection = '/mess-selection';
+  static const notificationSettings = '/notification-settings';
 }
 
 /// Main Router Configuration
@@ -45,6 +55,20 @@ final appRouter = GoRouter(
   initialLocation: AppRoutes.dashboard,
   debugLogDiagnostics: true,
   routes: [
+    // Auth Routes (outside shell)
+    GoRoute(
+      path: AppRoutes.login,
+      builder: (context, state) => const LoginScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.signup,
+      builder: (context, state) => const SignupScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.messSelection,
+      builder: (context, state) => const MessSelectionScreen(),
+    ),
+
     /// Main Shell with Bottom Navigation
     ShellRoute(
       builder: (context, state, child) => MainShell(child: child),
@@ -135,6 +159,12 @@ final appRouter = GoRouter(
           name: 'info',
           pageBuilder: (context, state) =>
               const NoTransitionPage(child: InfoScreen()),
+        ),
+        GoRoute(
+          path: AppRoutes.notificationSettings,
+          name: 'notification-settings',
+          pageBuilder: (context, state) =>
+              const NoTransitionPage(child: NotificationSettingsScreen()),
         ),
       ],
     ),
