@@ -42,7 +42,7 @@
 |---------|-------------|
 | **Count Logic** | Default 2 = lunch + dinner. >2 = guest meal |
 | **Quick Entry** | 1-tap meal add per member |
-| **Bulk Entry** | Add 2-3 days or 1 week at once |
+| **Bulk Entry** | ✅ Add 2-3 days or 1 week at once |
 | **Cancel Advance** | Cancel future meals before deadline |
 | **Time Lock** | Admin sets: 12pm lunch, 7pm dinner cutoff |
 | **Food Preferences** | Member dietary notes visible |
@@ -269,8 +269,8 @@ Mark vacation:
 | Format | Description |
 |--------|-------------|
 | XLSX | Excel with sheets |
-| CSV | Simple spreadsheet |
-| PDF | Printable report |
+| CSV | ✅ Simple spreadsheet |
+| PDF | ✅ Printable report |
 | JSON | Developer format |
 | SQLite/DB | Full database backup |
 | Google Sheets | Direct export |
@@ -314,7 +314,7 @@ Mark vacation:
 
 ---
 
-## 🏠 Important Info Page
+## 🏠 Important Info Page ✅
 
 ### Contacts
 - Landlord, Bua (maid), Watchman
@@ -330,7 +330,7 @@ Mark vacation:
 
 ## 🔧 Special Features
 
-### Party/Occasion Splitter
+### Party/Occasion Splitter ✅
 - Outside food, Duck Party, etc.
 - Split only, no meal entry OR partial meal entry
 
