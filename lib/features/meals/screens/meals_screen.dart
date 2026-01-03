@@ -8,6 +8,7 @@ import 'package:mess_manager/core/models/meal.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
 import 'package:mess_manager/features/meals/providers/meals_provider.dart';
 import 'package:mess_manager/features/meals/widgets/add_meal_sheet.dart';
+import 'package:mess_manager/features/meals/widgets/bulk_meal_sheet.dart';
 import 'package:mess_manager/features/meals/widgets/meal_schedule_tab.dart';
 import 'package:mess_manager/features/balance/providers/balance_provider.dart';
 
@@ -49,6 +50,14 @@ class _MealsScreenState extends ConsumerState<MealsScreen>
             const Text('Meals'),
           ],
         ),
+        actions: [
+          TextButton.icon(
+            onPressed: () => _showBulkMealSheet(context),
+            icon: const Icon(LucideIcons.calendarDays, size: 18),
+            label: const Text('Bulk'),
+            style: TextButton.styleFrom(foregroundColor: AppColors.mealColor),
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -366,6 +375,15 @@ class _MealsScreenState extends ConsumerState<MealsScreen>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => const AddMealSheet(),
+    );
+  }
+
+  void _showBulkMealSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const BulkMealSheet(),
     );
   }
 }
