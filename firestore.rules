@@ -1,0 +1,133 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============ HELPER FUNCTIONS ============
+    
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Check if user is the resource owner
+    function isOwner(uid) {
+      return request.auth.uid == uid;
+    }
+    
+    // Check if user is a member of the mess
+    function isMessMember(messId) {
+      return isAuthenticated() && 
+        request.auth.uid in get(/databases/$(database)/documents/messes/$(messId)).data.members;
+    }
+    
+    // Check if user is the mess owner
+    function isMessOwner(messId) {
+      return isAuthenticated() && 
+        request.auth.uid == get(/databases/$(database)/documents/messes/$(messId)).data.ownerId;
+    }
+
+    // Validate string field
+    function isValidString(field, minLen, maxLen) {
+      return field is string && field.size() >= minLen && field.size() <= maxLen;
+    }
+
+    // ============ USER RULES ============
+    
+    match /users/{userId} {
+      // Users can only read/write their own profile
+      allow read: if isAuthenticated() && isOwner(userId);
+      allow create: if isAuthenticated() && isOwner(userId);
+      allow update: if isAuthenticated() && isOwner(userId);
+      allow delete: if isAuthenticated() && isOwner(userId);
+    }
+
+    // ============ MESS RULES ============
+    
+    match /messes/{messId} {
+      // Only members can read mess data
+      allow read: if isMessMember(messId);
+      
+      // Any authenticated user can create a mess
+      allow create: if isAuthenticated() && 
+        request.resource.data.ownerId == request.auth.uid &&
+        isValidString(request.resource.data.name, 1, 100);
+      
+      // Only owner can update mess settings
+      allow update: if isMessOwner(messId);
+      
+      // Only owner can delete mess
+      allow delete: if isMessOwner(messId);
+
+      // ============ MEALS SUB-COLLECTION ============
+      
+      match /meals/{mealId} {
+        // Members can read all meals
+        allow read: if isMessMember(messId);
+        
+        // Members can create meals
+        allow create: if isMessMember(messId) &&
+          request.resource.data.memberId is string &&
+          request.resource.data.date is timestamp &&
+          request.resource.data.type in ['breakfast', 'lunch', 'dinner'];
+        
+        // Members can update their own meals
+        allow update: if isMessMember(messId) && 
+          (request.resource.data.memberId == request.auth.uid ||
+           isMessOwner(messId));
+        
+        // Members can delete their own meals, owner can delete any
+        allow delete: if isMessMember(messId) && 
+          (resource.data.memberId == request.auth.uid ||
+           isMessOwner(messId));
+      }
+
+      // ============ BAZAR SUB-COLLECTION ============
+      
+      match /bazar/{bazarId} {
+        // Members can read all bazar entries
+        allow read: if isMessMember(messId);
+        
+        // Members can create bazar entries
+        allow create: if isMessMember(messId) &&
+          request.resource.data.memberId is string &&
+          request.resource.data.date is timestamp &&
+          request.resource.data.amount is number &&
+          request.resource.data.amount > 0;
+        
+        // Members can update their own entries
+        allow update: if isMessMember(messId) && 
+          (resource.data.memberId == request.auth.uid ||
+           isMessOwner(messId));
+        
+        // Members can delete their own entries, owner can delete any
+        allow delete: if isMessMember(messId) && 
+          (resource.data.memberId == request.auth.uid ||
+           isMessOwner(messId));
+      }
+
+      // ============ MEMBERS SUB-COLLECTION ============
+      
+      match /members/{memberId} {
+        allow read: if isMessMember(messId);
+        allow create, update: if isMessOwner(messId) || isOwner(memberId);
+        allow delete: if isMessOwner(messId);
+      }
+
+      // ============ CANCELLATIONS SUB-COLLECTION ============
+      
+      match /cancellations/{cancellationId} {
+        allow read: if isMessMember(messId);
+        allow create: if isMessMember(messId);
+        allow update, delete: if isMessMember(messId) && 
+          resource.data.memberId == request.auth.uid;
+      }
+
+      // ============ BILLS/EXPENSES SUB-COLLECTION ============
+      
+      match /expenses/{expenseId} {
+        allow read: if isMessMember(messId);
+        allow create, update, delete: if isMessOwner(messId);
+      }
+    }
+  }
+}

@@ -48,6 +48,15 @@ dependencies:
   image_picker: ^1.2.1        # Camera/gallery access
   http: ^1.6.0                # HTTP requests
 
+  # Firebase (Free Tier)
+  firebase_core: ^3.9.0           # Firebase core
+  firebase_auth: ^5.5.1           # Authentication
+  cloud_firestore: ^5.6.0         # Database
+  firebase_messaging: ^15.2.0     # Push notifications (FCM)
+  firebase_analytics: ^11.4.0     # Analytics
+  firebase_crashlytics: ^4.3.0    # Crash reporting
+  google_sign_in: ^6.2.2          # Google Sign-In
+
   # Export & Sharing
   pdf: ^3.11.0                # PDF generation
   printing: ^5.13.0           # Print/Share PDF
