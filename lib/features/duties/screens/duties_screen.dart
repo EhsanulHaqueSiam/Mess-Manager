@@ -7,6 +7,7 @@ import 'package:gap/gap.dart';
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/models/duty.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
+import 'package:mess_manager/core/services/haptic_service.dart';
 import 'package:mess_manager/features/duties/providers/duty_provider.dart';
 
 class DutiesScreen extends ConsumerStatefulWidget {
@@ -456,6 +457,7 @@ class _DutiesScreenState extends ConsumerState<DutiesScreen> {
   }
 
   void _markComplete(String dutyId) {
+    HapticService.success();
     ref.read(dutyAssignmentsProvider.notifier).markComplete(dutyId);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -466,6 +468,7 @@ class _DutiesScreenState extends ConsumerState<DutiesScreen> {
   }
 
   void _showAddScheduleSheet(BuildContext context) {
+    HapticService.modalOpen();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

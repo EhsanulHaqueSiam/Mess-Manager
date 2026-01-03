@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:gap/gap.dart';
+
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/providers/theme_provider.dart';
 import 'package:mess_manager/core/router/app_router.dart';
+import 'package:mess_manager/core/services/haptic_service.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -33,135 +36,157 @@ class SettingsScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(AppSpacing.md),
         children: [
           // Modules Section
-          _buildSectionHeader('Modules'),
+          _buildSectionHeader('Modules', 0),
           _buildSettingsTile(
             icon: LucideIcons.barChart3,
             title: 'Analytics',
             subtitle: 'Charts & insights',
             onTap: () => context.go(AppRoutes.analytics),
+            index: 1,
           ),
           _buildSettingsTile(
             icon: LucideIcons.users,
             title: 'Members',
             subtitle: 'Manage mess members',
             onTap: () => context.go(AppRoutes.members),
+            index: 2,
           ),
           _buildSettingsTile(
             icon: LucideIcons.arrowLeftRight,
             title: 'Money Give/Take',
             subtitle: 'Track personal transactions',
             onTap: () => context.go(AppRoutes.money),
+            index: 3,
           ),
           _buildSettingsTile(
-            icon: LucideIcons.palmtree,
-            title: 'Vacation Mode',
-            subtitle: 'Manage absences',
+            icon: LucideIcons.calendarX,
+            title: 'Cancel Meals',
+            subtitle: 'Bulk meal cancellation',
             onTap: () => context.go(AppRoutes.vacation),
+            index: 4,
           ),
           _buildSettingsTile(
             icon: LucideIcons.zap,
             title: 'DESCO Meter',
             subtitle: 'Electricity balance',
             onTap: () => context.go(AppRoutes.desco),
+            index: 5,
           ),
           _buildSettingsTile(
             icon: LucideIcons.moon,
             title: 'Ramadan',
             subtitle: 'Sehri/Iftar tracking',
             onTap: () => context.go(AppRoutes.ramadan),
+            index: 6,
           ),
           _buildSettingsTile(
             icon: LucideIcons.receipt,
             title: 'Settlement',
             subtitle: 'Monthly balance & payments',
             onTap: () => context.go(AppRoutes.settlement),
+            index: 7,
           ),
           _buildSettingsTile(
             icon: LucideIcons.clipboardList,
             title: 'Duties',
             subtitle: 'Rotation & assignments',
             onTap: () => context.go(AppRoutes.duties),
+            index: 8,
           ),
           _buildSettingsTile(
             icon: LucideIcons.info,
             title: 'Important Info',
             subtitle: 'Contacts, WiFi, rules',
             onTap: () => context.go(AppRoutes.info),
+            index: 9,
           ),
           const Gap(AppSpacing.lg),
 
-          // Theme Section
-          _buildSectionHeader('Appearance'),
+          // Appearance Section
+          _buildSectionHeader('Appearance', 10),
           _buildSettingsTile(
             icon: LucideIcons.moon,
             title: 'Dark Mode',
             subtitle: themeMode == ThemeMode.dark ? 'Enabled' : 'Disabled',
             trailing: Switch.adaptive(
               value: themeMode == ThemeMode.dark,
-              onChanged: (_) => themeNotifier.toggleTheme(),
+              onChanged: (_) {
+                HapticService.toggle();
+                themeNotifier.toggleTheme();
+              },
               activeTrackColor: AppColors.primary.withValues(alpha: 0.5),
-              thumbColor: WidgetStateProperty.resolveWith((states) {
-                if (states.contains(WidgetState.selected)) {
-                  return AppColors.primary;
-                }
-                return null;
-              }),
+              activeThumbColor: AppColors.primary,
             ),
+            index: 11,
+          ),
+          _buildSettingsTile(
+            icon: LucideIcons.bell,
+            title: 'Notifications',
+            subtitle: 'Configure meal reminders',
+            onTap: () => context.go(AppRoutes.notificationSettings),
+            index: 12,
           ),
           const Gap(AppSpacing.lg),
 
           // Account Section
-          _buildSectionHeader('Account'),
+          _buildSectionHeader('Account', 13),
           _buildSettingsTile(
             icon: LucideIcons.user,
             title: 'Profile',
             subtitle: 'Manage your account',
             onTap: () {},
+            index: 14,
           ),
           _buildSettingsTile(
-            icon: LucideIcons.bell,
-            title: 'Notifications',
-            subtitle: 'Configure alerts',
-            onTap: () {},
+            icon: LucideIcons.logOut,
+            title: 'Sign Out',
+            subtitle: 'Log out of your account',
+            onTap: () => _showSignOutDialog(context),
+            index: 15,
+            isDestructive: true,
           ),
           const Gap(AppSpacing.lg),
 
           // Data Section
-          _buildSectionHeader('Data'),
+          _buildSectionHeader('Data', 16),
           _buildSettingsTile(
             icon: LucideIcons.cloudLightning,
             title: 'Backup & Sync',
-            subtitle: 'Last synced: Today',
+            subtitle: 'Firebase sync enabled',
             onTap: () {},
+            index: 17,
           ),
           _buildSettingsTile(
             icon: LucideIcons.download,
             title: 'Export Data',
             subtitle: 'Download as PDF/Excel',
             onTap: () {},
+            index: 18,
           ),
           const Gap(AppSpacing.lg),
 
           // About Section
-          _buildSectionHeader('About'),
+          _buildSectionHeader('About', 19),
           _buildSettingsTile(
             icon: LucideIcons.info,
             title: 'About Mess Manager',
             subtitle: 'Version 1.0.0',
             onTap: () {},
+            index: 20,
           ),
           _buildSettingsTile(
             icon: LucideIcons.helpCircle,
             title: 'Help & Support',
             subtitle: 'Get assistance',
             onTap: () {},
+            index: 21,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(String title, int index) {
     return Padding(
       padding: const EdgeInsets.only(
         bottom: AppSpacing.sm,
@@ -174,16 +199,20 @@ class SettingsScreen extends ConsumerWidget {
           letterSpacing: 1.2,
         ),
       ),
-    );
+    ).animate(delay: (30 * index).ms).fadeIn();
   }
 
   Widget _buildSettingsTile({
     required IconData icon,
     required String title,
     required String subtitle,
+    required int index,
     Widget? trailing,
     VoidCallback? onTap,
+    bool isDestructive = false,
   }) {
+    final color = isDestructive ? AppColors.error : AppColors.primary;
+
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       decoration: BoxDecoration(
@@ -199,15 +228,15 @@ class SettingsScreen extends ConsumerWidget {
         leading: Container(
           padding: const EdgeInsets.all(AppSpacing.sm + 2),
           decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
           ),
-          child: Icon(icon, color: AppColors.primary, size: 18),
+          child: Icon(icon, color: color, size: 18),
         ),
         title: Text(
           title,
           style: AppTypography.titleSmall.copyWith(
-            color: AppColors.textPrimaryDark,
+            color: isDestructive ? AppColors.error : AppColors.textPrimaryDark,
           ),
         ),
         subtitle: Text(
@@ -223,7 +252,37 @@ class SettingsScreen extends ConsumerWidget {
               color: AppColors.textMutedDark,
               size: 20,
             ),
-        onTap: onTap,
+        onTap: () {
+          HapticService.lightTap();
+          onTap?.call();
+        },
+      ),
+    ).animate(delay: (30 * index).ms).fadeIn().slideX(begin: 0.02);
+  }
+
+  void _showSignOutDialog(BuildContext context) {
+    HapticService.mediumTap();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surfaceDark,
+        title: const Text('Sign Out'),
+        content: const Text('Are you sure you want to sign out?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              HapticService.success();
+              Navigator.pop(context);
+              context.go(AppRoutes.login);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('Sign Out'),
+          ),
+        ],
       ),
     );
   }
