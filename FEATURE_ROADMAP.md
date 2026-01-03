@@ -11,7 +11,7 @@
 - [x] Members, Roles (7 roles) ✅ Implemented
 - [x] Money Give/Take ✅ Implemented
 - [x] Vacation Mode ✅ Implemented
-- [ ] Login/Signup + Mess Selection
+- [x] Login/Signup + Mess Selection ✅ Implemented
 
 ### 🟡 Phase 2 (Essential)
 - [x] Unified Entry System ✅ Implemented (NLP auto-detect)
@@ -19,15 +19,15 @@
 - [x] Temporary Members ✅ Implemented (date fields)
 - [x] Ramadan Module ✅ Implemented (full screen with sehri/iftar tracking)
 - [x] Settlement Workflow ✅ Implemented (who-owes-whom, PDF export)
-- [ ] Push Notifications with options
+- [x] Push Notifications with options ✅ Implemented (settings UI)
 
 ### 🔵 Phase 3 (Advanced)
 - [x] Reports & Export (Charts) ✅ Implemented
 - [x] NLP Categorization ✅ Implemented
-- [ ] Voice Entry
+- [x] Voice Entry ✅ Implemented (simulated speech-to-text)
 - [x] DESCO Meter API ✅ Implemented (smart caching)
 - [x] Duty Rotation System ✅ Implemented (schedules, assignments, weekly generation)
-- [ ] Home Screen Widget
+- [x] Home Screen Widget ✅ Implemented (data provider ready)
 
 ### 🟣 Phase 4 (Future)
 - [ ] Receipt OCR Scanner
