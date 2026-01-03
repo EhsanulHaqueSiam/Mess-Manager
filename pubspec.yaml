@@ -20,33 +20,40 @@ dependencies:
   json_annotation: ^4.9.0
 
   # Modern UI Components (2025-2026 Trending)
-  forui: ^0.17.0            # Minimalist, beautiful widgets
-  flutter_animate: ^4.5.0   # Micro-animations
-  google_fonts: ^6.2.0      # Plus Jakarta Sans, Inter
-  fl_chart: ^1.1.1          # Data visualization
-  lucide_icons: ^0.257.0    # Modern icon set
+  forui: ^0.17.0              # Minimalist, beautiful widgets
+  flutter_animate: ^4.5.0     # Micro-animations & staggered effects
+  google_fonts: ^6.2.0        # Premium typography (Inter, Plus Jakarta Sans)
+  fl_chart: ^1.1.1            # Beautiful data visualization
+  lucide_icons: ^0.257.0      # Modern, clean icon set
   cupertino_icons: ^1.0.8
-  flex_color_scheme: ^8.2.0 # Dynamic theming
-  gap: ^3.0.0               # Spacing utility
+  flex_color_scheme: ^8.2.0   # Dynamic Material 3 theming
+  gap: ^3.0.0                 # Clean spacing utility
 
-  # Features
-  geolocator: ^14.0.2
-  local_auth: ^3.0.0
+  # Trending UI/UX Libraries (2025-2026)
+  flutter_slidable: ^3.1.1    # Swipe actions for lists
+  shimmer: ^3.0.0             # Skeleton loading states
+  cached_network_image: ^3.4.1 # Efficient image loading & caching
+  flutter_svg: ^2.0.16        # SVG support for scalable graphics
+  lottie: ^3.3.1              # JSON-based animations
+
+  # Features & Platform
+  geolocator: ^14.0.2         # Location services
+  local_auth: ^3.0.0          # Biometric authentication
 
   # Backend/Network
-  dio: ^5.4.0
-  uuid: ^4.5.2
-  hive: ^2.2.3
-  hive_flutter: ^1.1.0
-  image_picker: ^1.2.1
-  http: ^1.6.0
+  dio: ^5.4.0                 # Powerful HTTP client
+  uuid: ^4.5.2                # Unique ID generation
+  hive: ^2.2.3                # Fast NoSQL local storage
+  hive_flutter: ^1.1.0        # Hive Flutter bindings
+  image_picker: ^1.2.1        # Camera/gallery access
+  http: ^1.6.0                # HTTP requests
 
   # Export & Sharing
-  pdf: ^3.11.0              # PDF generation
-  printing: ^5.13.0         # Print/Share PDF
-  csv: ^6.0.0               # CSV export
-  path_provider: ^2.1.5     # File paths
-  share_plus: ^10.1.0       # Share files
+  pdf: ^3.11.0                # PDF generation
+  printing: ^5.13.0           # Print/Share PDF
+  csv: ^6.0.0                 # CSV export
+  path_provider: ^2.1.5       # File paths
+  share_plus: ^12.0.1         # Share files
 
 dev_dependencies:
   flutter_test:

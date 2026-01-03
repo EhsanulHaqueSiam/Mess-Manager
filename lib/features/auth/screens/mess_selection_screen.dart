@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/router/app_router.dart';
+import 'package:mess_manager/core/models/auth_user.dart';
 import 'package:mess_manager/features/auth/providers/auth_provider.dart';
 
 class MessSelectionScreen extends ConsumerStatefulWidget {
@@ -36,10 +37,12 @@ class _MessSelectionScreenState extends ConsumerState<MessSelectionScreen> {
         title: const Text('Select Mess'),
         actions: [
           TextButton(
-            onPressed: () => ref
-                .read(authProvider.notifier)
-                .signOut()
-                .then((_) => context.go(AppRoutes.login)),
+            onPressed: () async {
+              await ref.read(authProvider.notifier).signOut();
+              if (context.mounted) {
+                context.go(AppRoutes.login);
+              }
+            },
             child: const Text('Logout'),
           ),
         ],
@@ -187,7 +190,7 @@ class _MessSelectionScreenState extends ConsumerState<MessSelectionScreen> {
     );
   }
 
-  Widget _buildMessCard(mess, int index) {
+  Widget _buildMessCard(Mess mess, int index) {
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       decoration: BoxDecoration(
@@ -349,9 +352,9 @@ class _MessSelectionScreenState extends ConsumerState<MessSelectionScreen> {
                         name: nameController.text.trim(),
                         address: addressController.text.trim(),
                       );
-                  if (mounted) {
+                  if (context.mounted) {
                     Navigator.pop(context);
-                    this.context.go(AppRoutes.dashboard);
+                    context.go(AppRoutes.dashboard);
                   }
                 },
                 child: const Text('Create Mess'),

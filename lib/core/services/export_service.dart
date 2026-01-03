@@ -252,9 +252,9 @@ class ExportService {
     final file = File('${tempDir.path}/$filename');
     await file.writeAsBytes(pdfBytes);
 
-    await Share.shareXFiles([
-      XFile(file.path),
-    ], text: 'Monthly Settlement Report');
+    await SharePlus.instance.share(
+      ShareParams(files: [XFile(file.path)], text: 'Monthly Settlement Report'),
+    );
   }
 
   /// Generate CSV for balances
@@ -297,6 +297,8 @@ class ExportService {
     final file = File('${tempDir.path}/$filename');
     await file.writeAsString(csv);
 
-    await Share.shareXFiles([XFile(file.path)], text: 'Mess Manager Export');
+    await SharePlus.instance.share(
+      ShareParams(files: [XFile(file.path)], text: 'Mess Manager Export'),
+    );
   }
 }

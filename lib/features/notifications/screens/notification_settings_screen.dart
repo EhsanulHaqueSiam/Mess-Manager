@@ -81,7 +81,8 @@ class NotificationSettingsScreen extends ConsumerWidget {
                 Switch(
                   value: settings.enabled,
                   onChanged: (_) => notifier.toggleAll(),
-                  activeColor: AppColors.primary,
+                  activeTrackColor: AppColors.primary.withValues(alpha: 0.5),
+                  activeThumbColor: AppColors.primary,
                 ),
               ],
             ),
@@ -200,7 +201,8 @@ class NotificationSettingsScreen extends ConsumerWidget {
           Switch(
             value: enabled,
             onChanged: (_) => onToggle(),
-            activeColor: color,
+            activeTrackColor: color.withValues(alpha: 0.5),
+            activeThumbColor: color,
           ),
         ],
       ),
