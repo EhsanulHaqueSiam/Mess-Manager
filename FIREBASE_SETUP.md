@@ -1,6 +1,22 @@
-# Firebase Setup Guide
+# Firebase Setup Guide (All Free Tier Services)
 
-## Step 1: Install FlutterFire CLI
+## Services Used (All Free)
+
+| Service | Limit | Purpose |
+|---------|-------|---------|
+| **Authentication** | 50K MAUs | User login/signup |
+| **Cloud Firestore** | 1GB, 50K reads/day | Data storage |
+| **FCM** | Unlimited | Push notifications |
+| **Analytics** | 500 events | Usage tracking |
+| **Crashlytics** | Unlimited | Crash reporting |
+| **Performance** | Unlimited | App performance monitoring |
+| **Remote Config** | Unlimited | Dynamic app configuration |
+| **App Check** | Unlimited | API security/protection |
+| **In-App Messaging** | Unlimited | Targeted messages |
+
+---
+
+## Step 1: Install CLI Tools
 
 ```bash
 # Install Firebase CLI
@@ -16,97 +32,140 @@ dart pub global activate flutterfire_cli
 ## Step 2: Create Firebase Project
 
 1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Click "Create Project"
-3. Name it "mess-manager" (or your preferred name)
-4. Enable Google Analytics (free)
-5. Wait for project creation
+2. Click "Create Project" → Name: "mess-manager"
+3. Enable Google Analytics ✅
+4. Wait for creation
 
 ## Step 3: Configure FlutterFire
 
 ```bash
-# In your Flutter project directory
 cd area51_app
-
-# Run FlutterFire configuration
 flutterfire configure
 ```
 
-This will:
-- Create necessary Firebase configuration files
-- Generate `lib/firebase_options.dart`
-- Configure platforms (Android, iOS, Web)
+Select platforms: Android, iOS, Web
 
-## Step 4: Enable Firebase Services
+## Step 4: Enable Services
 
 ### Authentication
-1. Go to Firebase Console → Authentication → Get Started
-2. Enable "Email/Password" provider
-3. Enable "Google" provider (optional)
+1. Console → Authentication → Get Started
+2. Enable providers:
+   - ✅ Email/Password
+   - ✅ Google (optional)
 
 ### Cloud Firestore
-1. Go to Firebase Console → Firestore Database → Create Database
-2. Select "Start in production mode"
-3. Choose a location (e.g., asia-south1 for India)
-4. Deploy security rules from `firestore.rules`:
-
+1. Console → Firestore → Create Database
+2. Select **Production mode**
+3. Choose location: `asia-south1` (India)
+4. Deploy rules:
 ```bash
 firebase deploy --only firestore:rules
 ```
 
-### Cloud Messaging (FCM)
-1. Already enabled by default
-2. For Android: Add `google-services.json` (done by FlutterFire)
-3. For iOS: Upload APNs key in Firebase Console
+### App Check (Security)
+1. Console → App Check
+2. Register your app
+3. Enable enforcement for Firestore
 
-### Analytics & Crashlytics
-1. Already enabled with Firebase project creation
+### Remote Config
+1. Console → Remote Config
+2. Add parameters (or use defaults in code)
 
-## Step 5: Update Firebase Options
+### Performance Monitoring
+1. Console → Performance
+2. Automatically enabled
 
-After running `flutterfire configure`, update `firebase_service.dart`:
+---
 
+## Security Checklist ✅
+
+### 1. Firestore Security Rules (Already Created)
+- ✅ Users can only access their own data
+- ✅ Mess access limited to members only
+- ✅ Only owner can modify mess settings
+- ✅ Input validation on writes
+
+### 2. App Check (Prevents Unauthorized Access)
 ```dart
-// In firebase_service.dart, update initialize():
-await Firebase.initializeApp(
-  options: DefaultFirebaseOptions.currentPlatform, // Add this
+// Already integrated in firebase_service.dart
+await FirebaseAppCheck.instance.activate(
+  androidProvider: AndroidProvider.playIntegrity,
+  appleProvider: AppleProvider.appAttest,
 );
 ```
 
-And add the import:
-```dart
-import 'firebase_options.dart';
+### 3. Authentication
+- ✅ Email verification (optional)
+- ✅ Password strength requirements
+- ✅ Secure token management
+
+### 4. Rate Limiting (Firestore Rules)
+```javascript
+// Add to firestore.rules for extra protection
+match /messes/{messId}/meals/{mealId} {
+  allow create: if isMessMember(messId) && 
+    request.time > resource.data.createdAt + duration.value(1, 's');
+}
 ```
 
-## Step 6: Test Integration
+---
+
+## Anti-Hack Measures
+
+### What Firebase Protects Against:
+1. **Unauthorized API calls** - App Check verifies requests come from your app
+2. **Data theft** - Firestore rules restrict access
+3. **User impersonation** - Firebase Auth handles tokens securely
+4. **Brute force** - Firebase has built-in rate limiting
+5. **Fake clients** - App attestation on Android/iOS
+
+### Additional Security Tips:
+1. Never expose Firebase config in public repos (use .gitignore)
+2. Enable App Check enforcement in production
+3. Review Firestore rules regularly
+4. Monitor usage in Firebase Console
+5. Set up billing alerts (even on free tier)
+
+---
+
+## Remote Config Defaults
+
+| Key | Default | Purpose |
+|-----|---------|---------|
+| `meal_rate_default` | 1.0 | Default meal rate |
+| `meal_reminder_morning` | "09:00" | Lunch reminder time |
+| `meal_reminder_evening` | "17:00" | Dinner reminder time |
+| `night_preview_time` | "21:00" | Tomorrow's meal preview |
+| `maintenance_mode` | false | Enable maintenance mode |
+| `min_app_version` | "1.0.0" | Force update threshold |
+
+---
+
+## Free Tier Optimization
+
+### Reduce Firestore Reads:
+1. Use local Hive cache as first layer
+2. Batch multiple writes together
+3. Limit query results with `.limit()`
+4. Use `Timestamp.now()` instead of server timestamp when possible
+
+### Monitor Usage:
+1. Firebase Console → Usage & Billing
+2. Set up alerts at 80% usage
+3. Review daily in first weeks
+
+---
+
+## Test Firebase Integration
 
 ```bash
 # Run the app
 flutter run
 
-# Check Firebase Dashboard for:
-# - Active users in Analytics
-# - Registered users in Authentication
-# - Database entries in Firestore
+# Verify in Firebase Console:
+# ✅ Authentication - New user appears
+# ✅ Firestore - Documents created
+# ✅ Analytics - Events logged
+# ✅ Crashlytics - Connected
+# ✅ Performance - Traces visible
 ```
-
-## Free Tier Limits (Spark Plan)
-
-| Service | Daily Limit | Monthly Limit |
-|---------|-------------|---------------|
-| Auth | Unlimited | Unlimited |
-| Firestore Reads | 50,000 | 1.5M |
-| Firestore Writes | 20,000 | 600K |
-| Firestore Deletes | 20,000 | 600K |
-| Firestore Storage | - | 1 GB |
-| FCM | Unlimited | Unlimited |
-| Analytics | Unlimited | Unlimited |
-| Crashlytics | Unlimited | Unlimited |
-
-## Security Checklist
-
-- [x] Firestore Rules deployed
-- [x] Authentication required for all operations
-- [x] User data isolation
-- [x] Mess access control (members only)
-- [x] Owner permissions for mess settings
-- [x] Input validation in rules
