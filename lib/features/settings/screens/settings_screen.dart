@@ -82,6 +82,12 @@ class SettingsScreen extends ConsumerWidget {
             subtitle: 'Rotation & assignments',
             onTap: () => context.go(AppRoutes.duties),
           ),
+          _buildSettingsTile(
+            icon: LucideIcons.info,
+            title: 'Important Info',
+            subtitle: 'Contacts, WiFi, rules',
+            onTap: () => context.go(AppRoutes.info),
+          ),
           const Gap(AppSpacing.lg),
 
           // Theme Section

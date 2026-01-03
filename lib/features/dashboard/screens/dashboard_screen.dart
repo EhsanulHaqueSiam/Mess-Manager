@@ -15,6 +15,7 @@ import 'package:mess_manager/features/meals/widgets/add_meal_sheet.dart';
 import 'package:mess_manager/features/bazar/widgets/add_bazar_sheet.dart';
 import 'package:mess_manager/features/unified/widgets/add_entry_sheet.dart';
 import 'package:mess_manager/shared/widgets/smart_suggestion_card.dart';
+import 'package:mess_manager/shared/widgets/party_splitter_sheet.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -418,6 +419,15 @@ class DashboardScreen extends ConsumerWidget {
             onTap: () => context.go(AppRoutes.money),
           ),
         ),
+        const Gap(AppSpacing.sm),
+        Expanded(
+          child: _buildActionButton(
+            icon: LucideIcons.partyPopper,
+            label: 'Split',
+            color: AppColors.secondary,
+            onTap: () => _showPartySplitter(context),
+          ),
+        ),
       ],
     ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1);
   }
@@ -511,6 +521,12 @@ class DashboardScreen extends ConsumerWidget {
         label: 'Duties',
         color: AppColors.info,
         route: AppRoutes.duties,
+      ),
+      _FeatureItem(
+        icon: LucideIcons.info,
+        label: 'Info',
+        color: AppColors.textSecondaryDark,
+        route: AppRoutes.info,
       ),
     ];
 
@@ -748,6 +764,15 @@ class DashboardScreen extends ConsumerWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => const AddEntrySheet(),
+    );
+  }
+
+  void _showPartySplitter(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const PartySplitterSheet(),
     );
   }
 }

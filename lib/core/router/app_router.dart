@@ -14,6 +14,7 @@ import 'package:mess_manager/features/desco/screens/desco_screen.dart';
 import 'package:mess_manager/features/ramadan/screens/ramadan_screen.dart';
 import 'package:mess_manager/features/settlement/screens/settlement_screen.dart';
 import 'package:mess_manager/features/duties/screens/duties_screen.dart';
+import 'package:mess_manager/features/info/screens/info_screen.dart';
 import 'package:mess_manager/shared/widgets/main_shell.dart';
 
 /// App Routes Constants
@@ -31,6 +32,7 @@ class AppRoutes {
   static const ramadan = '/ramadan';
   static const settlement = '/settlement';
   static const duties = '/duties';
+  static const info = '/info';
 
   // Nested routes
   static const bazarAdd = '/bazar/add';
@@ -127,6 +129,12 @@ final appRouter = GoRouter(
           name: 'duties',
           pageBuilder: (context, state) =>
               const NoTransitionPage(child: DutiesScreen()),
+        ),
+        GoRoute(
+          path: AppRoutes.info,
+          name: 'info',
+          pageBuilder: (context, state) =>
+              const NoTransitionPage(child: InfoScreen()),
         ),
       ],
     ),
