@@ -16,6 +16,8 @@ import 'package:mess_manager/features/bazar/widgets/add_bazar_sheet.dart';
 import 'package:mess_manager/features/unified/widgets/add_entry_sheet.dart';
 import 'package:mess_manager/shared/widgets/smart_suggestion_card.dart';
 import 'package:mess_manager/shared/widgets/party_splitter_sheet.dart';
+import 'package:mess_manager/features/dashboard/widgets/notification_alerts.dart';
+import 'package:mess_manager/core/services/haptic_service.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -113,6 +115,10 @@ class DashboardScreen extends ConsumerWidget {
                     ),
                     const Gap(AppSpacing.lg),
 
+                    // Notification Alerts Area
+                    NotificationAlertsArea(alerts: getSampleAlerts()),
+                    const Gap(AppSpacing.lg),
+
                     // Quick Actions
                     Row(
                       children: [
@@ -208,10 +214,19 @@ class DashboardScreen extends ConsumerWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showUnifiedEntrySheet(context),
-        icon: const Icon(LucideIcons.plus),
-        label: const Text('Add'),
+        onPressed: () {
+          HapticService.buttonPress();
+          _showUnifiedEntrySheet(context);
+        },
+        icon: const Icon(LucideIcons.plus, size: 22),
+        label: const Text(
+          'Add Entry',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
         backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        elevation: 8,
+        extendedPadding: const EdgeInsets.symmetric(horizontal: 20),
       ),
     );
   }
