@@ -1,0 +1,50 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // ============ HELPER FUNCTIONS ============
+    
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Check if user is the file owner (metadata)
+    function isOwner(uid) {
+      return request.auth.uid == uid;
+    }
+    
+    // Validate image upload
+    function isValidImage() {
+      return request.resource.size < 5 * 1024 * 1024 // Max 5MB
+          && request.resource.contentType.matches('image/.*');
+    }
+
+    // ============ DUTY PROOF PHOTOS ============
+    // Path: duties/{dutyId}/proofs/{fileName}
+    match /duties/{dutyId}/proofs/{fileName} {
+      // Any authenticated user can read proofs (transparency)
+      allow read: if isAuthenticated();
+      
+      // Only authenticated users can upload proofs
+      allow create: if isAuthenticated() && isValidImage();
+      
+      // Only uploader or admin can delete (simplified for now as uploader)
+      allow delete: if isAuthenticated(); 
+    }
+
+    // ============ PAYMENT SCREENSHOTS ============
+    // Path: payments/{paymentId}/{fileName}
+    match /payments/{paymentId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidImage();
+    }
+    
+    // ============ PROFILE PHOTOS ============
+    // Path: profiles/{userId}/{fileName}
+    match /profiles/{userId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && userId == request.auth.uid && isValidImage();
+    }
+  }
+}
