@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mess_manager/core/models/unified_entry.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
-import 'package:mess_manager/core/services/storage_service.dart';
+import 'package:mess_manager/core/database/isar_service.dart';
 
 /// Sample unified entries
 final _sampleEntries = <UnifiedEntry>[
@@ -40,17 +40,17 @@ final _sampleEntries = <UnifiedEntry>[
 class UnifiedEntriesNotifier extends Notifier<List<UnifiedEntry>> {
   @override
   List<UnifiedEntry> build() {
-    // Try load from storage first
-    final saved = StorageService.loadUnifiedEntriesJson();
+    // Try load from Isar first
+    final saved = IsarService.getAllUnifiedEntries();
     if (saved.isNotEmpty) {
-      return saved.map((json) => UnifiedEntry.fromJson(json)).toList();
+      return saved;
     }
     return List.from(_sampleEntries);
   }
 
   void addEntry(UnifiedEntry entry) {
     state = [...state, entry];
-    _persist();
+    IsarService.saveUnifiedEntry(entry);
   }
 
   void updateEntry(UnifiedEntry entry) {
@@ -58,16 +58,12 @@ class UnifiedEntriesNotifier extends Notifier<List<UnifiedEntry>> {
       for (final e in state)
         if (e.id == entry.id) entry else e,
     ];
-    _persist();
+    IsarService.saveUnifiedEntry(entry);
   }
 
   void removeEntry(String id) {
     state = state.where((e) => e.id != id).toList();
-    _persist();
-  }
-
-  void _persist() {
-    StorageService.saveUnifiedEntries(state);
+    IsarService.deleteUnifiedEntry(id);
   }
 }
 

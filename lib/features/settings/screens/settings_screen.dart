@@ -4,9 +4,10 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:gap/gap.dart';
+import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:animated_theme_switcher/animated_theme_switcher.dart';
 
 import 'package:mess_manager/core/theme/app_theme.dart';
-import 'package:mess_manager/core/providers/theme_provider.dart';
 import 'package:mess_manager/core/router/app_router.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
 
@@ -15,8 +16,7 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeModeProvider);
-    final themeNotifier = ref.read(themeModeProvider.notifier);
+    final isDarkMode = AdaptiveTheme.of(context).mode.isDark;
 
     return Scaffold(
       appBar: AppBar(
@@ -104,21 +104,7 @@ class SettingsScreen extends ConsumerWidget {
 
           // Appearance Section
           _buildSectionHeader('Appearance', 10),
-          _buildSettingsTile(
-            icon: LucideIcons.moon,
-            title: 'Dark Mode',
-            subtitle: themeMode == ThemeMode.dark ? 'Enabled' : 'Disabled',
-            trailing: Switch.adaptive(
-              value: themeMode == ThemeMode.dark,
-              onChanged: (_) {
-                HapticService.toggle();
-                themeNotifier.toggleTheme();
-              },
-              activeTrackColor: AppColors.primary.withValues(alpha: 0.5),
-              activeThumbColor: AppColors.primary,
-            ),
-            index: 11,
-          ),
+          _buildAnimatedThemeTile(context, isDarkMode, 11),
           _buildSettingsTile(
             icon: LucideIcons.bell,
             title: 'Notifications',
@@ -255,6 +241,83 @@ class SettingsScreen extends ConsumerWidget {
         onTap: () {
           HapticService.lightTap();
           onTap?.call();
+        },
+      ),
+    ).animate(delay: (30 * index).ms).fadeIn().slideX(begin: 0.02);
+  }
+
+  /// Animated theme tile with expanding circle transition
+  Widget _buildAnimatedThemeTile(
+    BuildContext context,
+    bool isDarkMode,
+    int index,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: AppColors.cardDark,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        border: Border.all(color: AppColors.borderDark.withValues(alpha: 0.5)),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.xs,
+        ),
+        leading: Container(
+          padding: const EdgeInsets.all(AppSpacing.sm + 2),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+          ),
+          child: Icon(
+            isDarkMode ? LucideIcons.moon : LucideIcons.sun,
+            color: AppColors.primary,
+            size: 18,
+          ),
+        ),
+        title: Text(
+          'Dark Mode',
+          style: AppTypography.titleSmall.copyWith(
+            color: AppColors.textPrimaryDark,
+          ),
+        ),
+        subtitle: Text(
+          isDarkMode ? 'Enabled' : 'Disabled',
+          style: AppTypography.bodySmall.copyWith(
+            color: AppColors.textSecondaryDark,
+          ),
+        ),
+        trailing: ThemeSwitcher(
+          clipper: const ThemeSwitcherCircleClipper(),
+          builder: (ctx) {
+            return Switch.adaptive(
+              value: isDarkMode,
+              onChanged: (_) {
+                HapticService.toggle();
+                // Use both animated_theme_switcher and adaptive_theme
+                final themeSwitcher = ThemeSwitcher.of(ctx);
+                final adaptiveTheme = AdaptiveTheme.of(context);
+
+                // Get the new theme
+                final newTheme = isDarkMode
+                    ? adaptiveTheme.lightTheme
+                    : adaptiveTheme.darkTheme;
+
+                // Animate the transition
+                themeSwitcher.changeTheme(theme: newTheme);
+
+                // Also update AdaptiveTheme for persistence
+                adaptiveTheme.toggleThemeMode();
+              },
+              activeTrackColor: AppColors.primary.withValues(alpha: 0.5),
+              activeThumbColor: AppColors.primary,
+            );
+          },
+        ),
+        onTap: () {
+          HapticService.toggle();
+          AdaptiveTheme.of(context).toggleThemeMode();
         },
       ),
     ).animate(delay: (30 * index).ms).fadeIn().slideX(begin: 0.02);

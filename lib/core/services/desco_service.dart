@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:mess_manager/core/services/storage_service.dart';
+import 'package:mess_manager/core/database/isar_service.dart';
 
 /// DESCO Prepaid Meter API Service
 ///
@@ -45,7 +45,7 @@ class DescoService {
 
   /// Initialize meter from saved config
   static Future<void> loadSavedMeter() async {
-    final config = StorageService.getSetting<String>(_meterConfigKey);
+    final config = IsarService.getSetting<String>(_meterConfigKey);
     if (config != null) {
       try {
         final data = jsonDecode(config);
@@ -99,7 +99,7 @@ class DescoService {
     meterNo = info.meterNo!;
 
     // Save config
-    await StorageService.saveSetting(
+    IsarService.saveSetting(
       _meterConfigKey,
       jsonEncode({
         'accountNo': info.accountNo,
@@ -110,23 +110,23 @@ class DescoService {
     );
 
     // Clear old cache (new meter = new data)
-    await StorageService.removeSetting(_balanceCacheKey);
-    await StorageService.removeSetting(_balanceTimestampKey);
-    await StorageService.removeSetting(_lastKnownBalanceKey);
-    await StorageService.removeSetting(_locationCacheKey);
+    IsarService.removeSetting(_balanceCacheKey);
+    IsarService.removeSetting(_balanceTimestampKey);
+    IsarService.removeSetting(_lastKnownBalanceKey);
+    IsarService.removeSetting(_locationCacheKey);
 
     return true;
   }
 
   /// Check if meter is configured
   static bool get isMeterConfigured {
-    final config = StorageService.getSetting<String>(_meterConfigKey);
+    final config = IsarService.getSetting<String>(_meterConfigKey);
     return config != null;
   }
 
   /// Get current meter config
   static DescoMeterConfig? get currentConfig {
-    final config = StorageService.getSetting<String>(_meterConfigKey);
+    final config = IsarService.getSetting<String>(_meterConfigKey);
     if (config == null) return null;
     try {
       return DescoMeterConfig.fromJson(jsonDecode(config));
@@ -172,9 +172,9 @@ class DescoService {
   /// Get ESTIMATED current balance (no API call)
   /// Based on last known balance - (days * avg daily usage)
   static DescoBalance? _getEstimatedBalance() {
-    final lastKnown = StorageService.getSetting<String>(_lastKnownBalanceKey);
-    final avgUsage = StorageService.getSetting<double>(_avgDailyUsageKey);
-    final lastTs = StorageService.getSetting<String>(_balanceTimestampKey);
+    final lastKnown = IsarService.getSetting<String>(_lastKnownBalanceKey);
+    final avgUsage = IsarService.getSetting<double>(_avgDailyUsageKey);
+    final lastTs = IsarService.getSetting<String>(_balanceTimestampKey);
 
     if (lastKnown == null) return null;
 
@@ -205,12 +205,12 @@ class DescoService {
     final cacheTs = '${cacheKey}_ts';
 
     if (!forceRefresh) {
-      final tsStr = StorageService.getSetting<String>(cacheTs);
+      final tsStr = IsarService.getSetting<String>(cacheTs);
       if (tsStr != null) {
         final ts = DateTime.tryParse(tsStr);
         // Cache consumption data for 1 week (doesn't change often)
         if (ts != null && DateTime.now().difference(ts).inDays < 7) {
-          final cached = StorageService.getSetting<String>(cacheKey);
+          final cached = IsarService.getSetting<String>(cacheKey);
           if (cached != null) {
             try {
               final list = jsonDecode(cached) as List;
@@ -235,8 +235,8 @@ class DescoService {
         final list = (data['data'] as List? ?? [])
             .map((e) => DescoConsumption.fromJson(e))
             .toList();
-        await StorageService.saveSetting(cacheKey, jsonEncode(data['data']));
-        await StorageService.saveSetting(
+        IsarService.saveSetting(cacheKey, jsonEncode(data['data']));
+        IsarService.saveSetting(
           cacheTs,
           DateTime.now().toIso8601String(),
         );
@@ -257,12 +257,12 @@ class DescoService {
     final cacheTs = '${cacheKey}_ts';
 
     if (!forceRefresh) {
-      final tsStr = StorageService.getSetting<String>(cacheTs);
+      final tsStr = IsarService.getSetting<String>(cacheTs);
       if (tsStr != null) {
         final ts = DateTime.tryParse(tsStr);
         // Cache recharge data for 1 day
         if (ts != null && DateTime.now().difference(ts).inHours < 24) {
-          final cached = StorageService.getSetting<String>(cacheKey);
+          final cached = IsarService.getSetting<String>(cacheKey);
           if (cached != null) {
             try {
               final list = jsonDecode(cached) as List;
@@ -291,8 +291,8 @@ class DescoService {
         final list = (data['data'] as List? ?? [])
             .map((e) => DescoRecharge.fromJson(e))
             .toList();
-        await StorageService.saveSetting(cacheKey, jsonEncode(data['data']));
-        await StorageService.saveSetting(
+        IsarService.saveSetting(cacheKey, jsonEncode(data['data']));
+        IsarService.saveSetting(
           cacheTs,
           DateTime.now().toIso8601String(),
         );
@@ -305,7 +305,7 @@ class DescoService {
   /// Get customer location (cached indefinitely - doesn't change)
   static Future<DescoLocation?> getLocation({bool forceRefresh = false}) async {
     if (!forceRefresh) {
-      final cached = StorageService.getSetting<String>(_locationCacheKey);
+      final cached = IsarService.getSetting<String>(_locationCacheKey);
       if (cached != null) {
         try {
           return DescoLocation.fromJson(jsonDecode(cached));
@@ -322,7 +322,7 @@ class DescoService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final location = DescoLocation.fromJson(data);
-        await StorageService.saveSetting(_locationCacheKey, jsonEncode(data));
+        IsarService.saveSetting(_locationCacheKey, jsonEncode(data));
         return location;
       }
     } catch (_) {}
@@ -331,7 +331,7 @@ class DescoService {
 
   // Cache helpers
   static DescoBalance? _getCachedBalance() {
-    final tsStr = StorageService.getSetting<String>(_balanceTimestampKey);
+    final tsStr = IsarService.getSetting<String>(_balanceTimestampKey);
     if (tsStr == null) return null;
 
     final timestamp = DateTime.tryParse(tsStr);
@@ -340,7 +340,7 @@ class DescoService {
     // Smart cache: valid until next DESCO update window (2am BD)
     if (DateTime.now().difference(timestamp) > _smartCacheDuration) return null;
 
-    final cached = StorageService.getSetting<String>(_balanceCacheKey);
+    final cached = IsarService.getSetting<String>(_balanceCacheKey);
     if (cached == null) return null;
 
     try {
@@ -351,15 +351,15 @@ class DescoService {
   }
 
   static Future<void> _cacheBalance(DescoBalance balance) async {
-    await StorageService.saveSetting(
+    IsarService.saveSetting(
       _balanceCacheKey,
       jsonEncode(balance.toJson()),
     );
-    await StorageService.saveSetting(
+    IsarService.saveSetting(
       _balanceTimestampKey,
       DateTime.now().toIso8601String(),
     );
-    await StorageService.saveSetting(
+    IsarService.saveSetting(
       _lastKnownBalanceKey,
       balance.currentBalance.toString(),
     );
@@ -367,8 +367,8 @@ class DescoService {
 
   /// Update usage statistics for estimation
   static Future<void> _updateUsageStats(DescoBalance balance) async {
-    final lastKnown = StorageService.getSetting<String>(_lastKnownBalanceKey);
-    final lastTs = StorageService.getSetting<String>(_balanceTimestampKey);
+    final lastKnown = IsarService.getSetting<String>(_lastKnownBalanceKey);
+    final lastTs = IsarService.getSetting<String>(_balanceTimestampKey);
 
     if (lastKnown != null && lastTs != null) {
       final lastBalance = double.tryParse(lastKnown);
@@ -379,7 +379,7 @@ class DescoService {
         if (daysSince > 0) {
           final dailyUsage = (lastBalance - balance.currentBalance) / daysSince;
           if (dailyUsage > 0) {
-            await StorageService.saveSetting(_avgDailyUsageKey, dailyUsage);
+            IsarService.saveSetting(_avgDailyUsageKey, dailyUsage);
           }
         }
       }
@@ -422,7 +422,7 @@ class DescoService {
   /// Get estimated days until balance runs out
   static int? getEstimatedDaysRemaining() {
     final cached = _getCachedBalance();
-    final avgUsage = StorageService.getSetting<double>(_avgDailyUsageKey);
+    final avgUsage = IsarService.getSetting<double>(_avgDailyUsageKey);
 
     if (cached == null || avgUsage == null || avgUsage <= 0) return null;
 

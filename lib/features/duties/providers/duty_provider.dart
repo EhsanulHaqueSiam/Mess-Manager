@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mess_manager/core/models/duty.dart';
-import 'package:mess_manager/core/services/storage_service.dart';
+import 'package:mess_manager/core/database/isar_service.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
 
 /// Duty schedules provider
@@ -12,18 +12,11 @@ final dutySchedulesProvider =
 class DutySchedulesNotifier extends Notifier<List<DutySchedule>> {
   @override
   List<DutySchedule> build() {
-    return StorageService.loadList<DutySchedule>(
-      boxName: 'duty_schedules',
-      fromJson: DutySchedule.fromJson,
-    );
+    return IsarService.getAllDutySchedules();
   }
 
-  Future<void> _save() async {
-    await StorageService.saveList(
-      boxName: 'duty_schedules',
-      items: state,
-      toJson: (s) => s.toJson(),
-    );
+  void _save() {
+    IsarService.saveDutySchedules(state);
   }
 
   Future<void> createSchedule({
@@ -40,7 +33,7 @@ class DutySchedulesNotifier extends Notifier<List<DutySchedule>> {
       lastRotatedAt: DateTime.now(),
     );
     state = [...state, schedule];
-    await _save();
+    _save();
   }
 
   Future<void> updateRotationOrder(
@@ -53,7 +46,7 @@ class DutySchedulesNotifier extends Notifier<List<DutySchedule>> {
       }
       return s;
     }).toList();
-    await _save();
+    _save();
   }
 
   Future<void> toggleScheduleActive(String scheduleId) async {
@@ -63,12 +56,12 @@ class DutySchedulesNotifier extends Notifier<List<DutySchedule>> {
       }
       return s;
     }).toList();
-    await _save();
+    _save();
   }
 
   Future<void> deleteSchedule(String scheduleId) async {
     state = state.where((s) => s.id != scheduleId).toList();
-    await _save();
+    _save();
   }
 }
 
@@ -81,18 +74,11 @@ final dutyAssignmentsProvider =
 class DutyAssignmentsNotifier extends Notifier<List<DutyAssignment>> {
   @override
   List<DutyAssignment> build() {
-    return StorageService.loadList<DutyAssignment>(
-      boxName: 'duty_assignments',
-      fromJson: DutyAssignment.fromJson,
-    );
+    return IsarService.getAllDutyAssignments();
   }
 
-  Future<void> _save() async {
-    await StorageService.saveList(
-      boxName: 'duty_assignments',
-      items: state,
-      toJson: (a) => a.toJson(),
-    );
+  void _save() {
+    IsarService.saveDutyAssignments(state);
   }
 
   /// Get today's duties
@@ -134,7 +120,7 @@ class DutyAssignmentsNotifier extends Notifier<List<DutyAssignment>> {
       date: date,
     );
     state = [...state, assignment];
-    await _save();
+    _save();
   }
 
   /// Mark duty as complete (optionally with photo proof)
@@ -149,7 +135,7 @@ class DutyAssignmentsNotifier extends Notifier<List<DutyAssignment>> {
       }
       return d;
     }).toList();
-    await _save();
+    _save();
   }
 
   /// Skip duty with reason
@@ -160,7 +146,7 @@ class DutyAssignmentsNotifier extends Notifier<List<DutyAssignment>> {
       }
       return d;
     }).toList();
-    await _save();
+    _save();
   }
 
   /// Swap duty with another member
@@ -175,7 +161,7 @@ class DutyAssignmentsNotifier extends Notifier<List<DutyAssignment>> {
       }
       return d;
     }).toList();
-    await _save();
+    _save();
   }
 
   /// Generate duties for next week based on schedules
@@ -239,7 +225,7 @@ class DutyAssignmentsNotifier extends Notifier<List<DutyAssignment>> {
       }
       return d;
     }).toList();
-    await _save();
+    _save();
   }
 
   /// Admin approves a duty (completed or disputed)
@@ -259,7 +245,7 @@ class DutyAssignmentsNotifier extends Notifier<List<DutyAssignment>> {
       }
       return d;
     }).toList();
-    await _save();
+    _save();
   }
 
   /// Admin rejects a duty completion
@@ -279,7 +265,7 @@ class DutyAssignmentsNotifier extends Notifier<List<DutyAssignment>> {
       }
       return d;
     }).toList();
-    await _save();
+    _save();
   }
 
   /// Mark duty as completed by substitute (someone else did it)
@@ -302,7 +288,7 @@ class DutyAssignmentsNotifier extends Notifier<List<DutyAssignment>> {
       }
       return d;
     }).toList();
-    await _save();
+    _save();
 
     // Create duty debt
     await ref
@@ -342,18 +328,11 @@ final dutyDebtsProvider = NotifierProvider<DutyDebtsNotifier, List<DutyDebt>>(
 class DutyDebtsNotifier extends Notifier<List<DutyDebt>> {
   @override
   List<DutyDebt> build() {
-    return StorageService.loadList<DutyDebt>(
-      boxName: 'duty_debts',
-      fromJson: DutyDebt.fromJson,
-    );
+    return IsarService.getAllDutyDebts();
   }
 
-  Future<void> _save() async {
-    await StorageService.saveList(
-      boxName: 'duty_debts',
-      items: state,
-      toJson: (d) => d.toJson(),
-    );
+  void _save() {
+    IsarService.saveDutyDebts(state);
   }
 
   /// Create a new duty debt
@@ -372,7 +351,7 @@ class DutyDebtsNotifier extends Notifier<List<DutyDebt>> {
       originalDutyId: originalDutyId,
     );
     state = [...state, debt];
-    await _save();
+    _save();
   }
 
   /// Settle a debt (when debtor does creditor's duty)
@@ -387,7 +366,7 @@ class DutyDebtsNotifier extends Notifier<List<DutyDebt>> {
       }
       return d;
     }).toList();
-    await _save();
+    _save();
   }
 
   /// Get unsettled debts for a member

@@ -3,12 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:gap/gap.dart';
+import 'package:velocity_x/velocity_x.dart';
+import 'package:getwidget/getwidget.dart';
+
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
 import 'package:mess_manager/core/models/member.dart';
-
+import 'package:mess_manager/core/widgets/gf_components.dart';
+import 'package:mess_manager/core/widgets/animated_widgets.dart';
+import 'package:mess_manager/core/services/haptic_service.dart';
+import 'package:mess_manager/features/members/widgets/add_edit_member_sheet.dart';
 import 'package:mess_manager/features/balance/providers/balance_provider.dart';
 
+/// Members Screen - Uses GetWidget + VelocityX + flutter_animate
 class MembersScreen extends ConsumerWidget {
   const MembersScreen({super.key});
 
@@ -16,42 +23,71 @@ class MembersScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final members = ref.watch(membersProvider);
     final balances = ref.watch(memberBalancesProvider);
+    final currentMemberId = ref.watch(currentMemberIdProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            const Icon(LucideIcons.users, color: AppColors.primary, size: 22),
-            const Gap(AppSpacing.sm),
-            const Text('Members'),
-          ],
-        ),
+        title: [
+          const Icon(LucideIcons.users, color: AppColors.primary, size: 22),
+          const Gap(AppSpacing.sm),
+          'Members'.text.make(),
+        ].hStack(),
         actions: [
-          IconButton(
-            icon: const Icon(LucideIcons.userPlus),
-            onPressed: () {}, // TODO: Add member
+          GFIconButton(
+            icon: const Icon(LucideIcons.userPlus, color: AppColors.primary),
+            type: GFButtonType.transparent,
+            onPressed: () {
+              HapticService.buttonPress();
+              _showAddEditSheet(context);
+            },
           ),
         ],
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        itemCount: members.length,
-        itemBuilder: (context, index) {
-          final member = members[index];
-          final balance = balances.firstWhere(
-            (b) => b.memberId == member.id,
-            orElse: () => MemberBalance(
-              memberId: member.id,
-              name: member.name,
-              totalMeals: 0,
-              totalBazar: 0,
-              balance: 0,
-              mealCost: 0,
+      body: members.isEmpty
+          ? EmptyStateWidget.noData(
+              title: 'No Members Yet',
+              subtitle: 'Add your first mess member to get started',
+              action: ShimmerCTAButton(
+                text: 'Add First Member',
+                icon: LucideIcons.plus,
+                onPressed: () => _showAddEditSheet(context),
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              itemCount: members.length,
+              itemBuilder: (context, index) {
+                final member = members[index];
+                final balance = balances.firstWhere(
+                  (b) => b.memberId == member.id,
+                  orElse: () => MemberBalance(
+                    memberId: member.id,
+                    name: member.name,
+                    totalMeals: 0,
+                    totalBazar: 0,
+                    balance: 0,
+                    mealCost: 0,
+                  ),
+                );
+                return _buildMemberCard(
+                  context,
+                  member,
+                  balance,
+                  index,
+                  currentMemberId,
+                );
+              },
             ),
-          );
-          return _buildMemberCard(context, member, balance, index);
-        },
-      ),
+    );
+  }
+
+  void _showAddEditSheet(BuildContext context, {Member? member}) {
+    HapticService.modalOpen();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => AddEditMemberSheet(member: member),
     );
   }
 
@@ -60,136 +96,80 @@ class MembersScreen extends ConsumerWidget {
     Member member,
     MemberBalance balance,
     int index,
+    String currentMemberId,
   ) {
-    final isCurrentUser = member.id == 'm1'; // TODO: Get current user
+    final isCurrentUser = member.id == currentMemberId;
     final roleColor = _getRoleColor(member.role);
     final balanceColor = balance.balance >= 0
         ? AppColors.moneyPositive
         : AppColors.moneyNegative;
 
-    return Container(
+    return GFCard(
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.cardDark,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(
-          color: isCurrentUser
-              ? AppColors.primary.withValues(alpha: 0.5)
-              : AppColors.borderDark.withValues(alpha: 0.5),
-          width: isCurrentUser ? 2 : 1,
-        ),
+      padding: EdgeInsets.zero,
+      color: AppColors.cardDark,
+      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+      border: Border.all(
+        color: isCurrentUser
+            ? AppColors.primary.withValues(alpha: 0.5)
+            : AppColors.borderDark.withValues(alpha: 0.5),
+        width: isCurrentUser ? 2 : 1,
       ),
-      child: Column(
-        children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Row(
-              children: [
-                // Avatar
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                  child: Text(
-                    member.name[0].toUpperCase(),
-                    style: AppTypography.headlineMedium.copyWith(
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ),
-                const Gap(AppSpacing.md),
-                // Info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            member.name,
-                            style: AppTypography.titleMedium.copyWith(
-                              color: AppColors.textPrimaryDark,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          if (isCurrentUser) ...[
-                            const Gap(AppSpacing.xs),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                'You',
-                                style: AppTypography.labelSmall.copyWith(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: roleColor.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              member.role.name.toUpperCase(),
-                              style: AppTypography.labelSmall.copyWith(
-                                color: roleColor,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          const Gap(AppSpacing.sm),
-                          Text(
-                            '${balance.totalMeals.toStringAsFixed(0)} meals',
-                            style: AppTypography.labelSmall.copyWith(
-                              color: AppColors.textMutedDark,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                // Balance
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      '${balance.balance >= 0 ? '+' : ''}৳${balance.balance.toStringAsFixed(0)}',
-                      style: AppTypography.titleMedium.copyWith(
-                        color: balanceColor,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    Text(
-                      'balance',
-                      style: AppTypography.labelSmall.copyWith(
-                        color: AppColors.textMutedDark,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+      content: InkWell(
+        onTap: () => _showAddEditSheet(context, member: member),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        child: VStack([
+          // Header Row
+          HStack([
+            // Avatar
+            GFMemberAvatar(
+              name: member.name,
+              size: 48,
+              backgroundColor: AppColors.primary.withValues(alpha: 0.1),
             ),
-          ),
+            12.widthBox,
+            // Info
+            VStack(crossAlignment: CrossAxisAlignment.start, [
+              HStack([
+                member.name.text.color(AppColors.textPrimaryDark).bold.make(),
+                if (isCurrentUser) ...[
+                  4.widthBox,
+                  GFBadge(
+                    text: 'You',
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    textColor: AppColors.primary,
+                    size: GFSize.SMALL,
+                  ),
+                ],
+              ]),
+              4.heightBox,
+              HStack([
+                GFBadge(
+                  text: member.role.name.toUpperCase(),
+                  color: roleColor.withValues(alpha: 0.1),
+                  textColor: roleColor,
+                  size: GFSize.SMALL,
+                ),
+                8.widthBox,
+                '${balance.totalMeals.toStringAsFixed(0)} meals'.text.xs
+                    .color(AppColors.textMutedDark)
+                    .make(),
+              ]),
+            ]).expand(),
+            // Balance
+            VStack(crossAlignment: CrossAxisAlignment.end, [
+              '${balance.balance >= 0 ? '+' : ''}৳${balance.balance.toStringAsFixed(0)}'
+                  .text
+                  .lg
+                  .color(balanceColor)
+                  .bold
+                  .make(),
+              'balance'.text.xs.color(AppColors.textMutedDark).make(),
+            ]),
+          ]).p16(),
 
           // Food Preferences
-          if (member.preferences.isNotEmpty) ...[
+          if (member.preferences.isNotEmpty)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(AppSpacing.md),
@@ -199,59 +179,36 @@ class MembersScreen extends ConsumerWidget {
                   bottom: Radius.circular(AppSpacing.radiusMd - 1),
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        LucideIcons.alertCircle,
-                        size: 14,
-                        color: AppColors.warning,
-                      ),
-                      const Gap(4),
-                      Text(
-                        'Food Preferences',
-                        style: AppTypography.labelSmall.copyWith(
-                          color: AppColors.textSecondaryDark,
-                        ),
-                      ),
-                    ],
+              child: VStack(crossAlignment: CrossAxisAlignment.start, [
+                HStack([
+                  Icon(
+                    LucideIcons.alertCircle,
+                    size: 14,
+                    color: AppColors.warning,
                   ),
-                  const Gap(AppSpacing.xs),
-                  Wrap(
-                    spacing: AppSpacing.xs,
-                    runSpacing: AppSpacing.xs,
-                    children: member.preferences.map((pref) {
-                      final label = pref.notes ?? pref.type.name;
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.warning.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(
-                            AppSpacing.radiusSm,
-                          ),
-                          border: Border.all(
-                            color: AppColors.warning.withValues(alpha: 0.3),
-                          ),
-                        ),
-                        child: Text(
-                          label,
-                          style: AppTypography.labelSmall.copyWith(
-                            color: AppColors.warning,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ],
-              ),
+                  4.widthBox,
+                  'Food Preferences'.text.xs
+                      .color(AppColors.textSecondaryDark)
+                      .make(),
+                ]),
+                8.heightBox,
+                Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
+                  children: member.preferences.map((pref) {
+                    final label = pref.notes ?? pref.type.name;
+                    return GFBadge(
+                      text: label,
+                      color: AppColors.warning.withValues(alpha: 0.1),
+                      textColor: AppColors.warning,
+                      size: GFSize.SMALL,
+                      shape: GFBadgeShape.pills,
+                    );
+                  }).toList(),
+                ),
+              ]),
             ),
-          ],
-        ],
+        ]),
       ),
     ).animate(delay: (80 * index).ms).fadeIn().slideX(begin: 0.03);
   }

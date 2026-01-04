@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mess_manager/core/models/settlement.dart';
 
-import 'package:mess_manager/core/services/storage_service.dart';
+import 'package:mess_manager/core/database/isar_service.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
 import 'package:mess_manager/features/bazar/providers/bazar_provider.dart';
 import 'package:mess_manager/features/meals/providers/meals_provider.dart';
@@ -15,18 +15,11 @@ final settlementsProvider =
 class SettlementsNotifier extends Notifier<List<Settlement>> {
   @override
   List<Settlement> build() {
-    return StorageService.loadList<Settlement>(
-      boxName: 'settlements',
-      fromJson: Settlement.fromJson,
-    );
+    return IsarService.getAllSettlements();
   }
 
-  Future<void> _save() async {
-    await StorageService.saveList(
-      boxName: 'settlements',
-      items: state,
-      toJson: (s) => s.toJson(),
-    );
+  void _save() {
+    IsarService.saveSettlements(state);
   }
 
   Settlement? getForMonth(int year, int month) {
@@ -50,7 +43,7 @@ class SettlementsNotifier extends Notifier<List<Settlement>> {
     // Remove old settlement for same month if exists
     state = state.where((s) => !(s.year == year && s.month == month)).toList();
     state = [...state, settlement];
-    await _save();
+    _save();
   }
 
   Future<void> markItemPaid(
@@ -78,7 +71,7 @@ class SettlementsNotifier extends Notifier<List<Settlement>> {
       }
       return s;
     }).toList();
-    await _save();
+    _save();
   }
 }
 

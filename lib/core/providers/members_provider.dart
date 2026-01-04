@@ -1,49 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mess_manager/core/models/member.dart';
-
-/// Sample members for the mess (hardcoded for now)
-final sampleMembers = [
-  Member(
-    id: '1',
-    name: 'Siam',
-    role: MemberRole.superAdmin,
-    preferences: [],
-    joinedAt: DateTime(2024, 1, 1),
-  ),
-  Member(
-    id: '2',
-    name: 'Tanmoy',
-    role: MemberRole.admin,
-    preferences: [const FoodPreference(type: RestrictionType.noBeef)],
-    joinedAt: DateTime(2024, 1, 1),
-  ),
-  Member(
-    id: '3',
-    name: 'Sarkar',
-    role: MemberRole.member,
-    preferences: [
-      const FoodPreference(
-        type: RestrictionType.vegetarian,
-        daysActive: [2, 4], // Tue, Thu
-        notes: 'Vegetarian on Tuesdays and Thursdays',
-      ),
-    ],
-    joinedAt: DateTime(2024, 2, 15),
-  ),
-  Member(
-    id: '4',
-    name: 'Shahriyer',
-    role: MemberRole.member,
-    preferences: [
-      const FoodPreference(
-        type: RestrictionType.allergic,
-        allergen: 'shrimp',
-        notes: 'Allergic to shrimp',
-      ),
-    ],
-    joinedAt: DateTime(2024, 3, 1),
-  ),
-];
+import 'package:mess_manager/core/services/member_service.dart';
 
 /// Provider for all members
 final membersProvider = NotifierProvider<MembersNotifier, List<Member>>(
@@ -52,16 +9,65 @@ final membersProvider = NotifierProvider<MembersNotifier, List<Member>>(
 
 class MembersNotifier extends Notifier<List<Member>> {
   @override
-  List<Member> build() => List.from(sampleMembers);
+  List<Member> build() {
+    // Initial load from service
+    _loadMembers();
+    return [];
+  }
 
-  void updateBalance(String memberId, double balance) {
+  Future<void> _loadMembers() async {
+    try {
+      final members = await MemberService.getMembers();
+      state = members;
+    } catch (e) {
+      // Keep empty or handle error
+    }
+  }
+
+  Future<void> refresh() async {
+    try {
+      final members = await MemberService.getMembers(forceRefresh: true);
+      state = members;
+    } catch (e) {
+      // Handle error
+    }
+  }
+
+  Future<void> addMember(Member member) async {
+    // Optimistic update
+    state = [...state, member];
+    try {
+      await MemberService.saveMember(member);
+    } catch (e) {
+      // Revert on failure
+      state = state.where((m) => m.id != member.id).toList();
+      rethrow;
+    }
+  }
+
+  Future<void> updateMember(Member member) async {
+    final oldState = state;
     state = [
-      for (final member in state)
-        if (member.id == memberId)
-          member.copyWith(balance: balance)
-        else
-          member,
+      for (final m in state)
+        if (m.id == member.id) member else m,
     ];
+    try {
+      await MemberService.saveMember(member);
+    } catch (e) {
+      state = oldState;
+      rethrow;
+    }
+  }
+
+  Future<void> deleteMember(String id) async {
+    final oldState = state;
+    state = state.where((m) => m.id != id).toList();
+    try {
+      await MemberService.deleteMember(id);
+    } catch (e) {
+      state = oldState;
+      rethrow;
+    }
   }
 
   Member? getMember(String id) {
@@ -80,7 +86,12 @@ final currentMemberIdProvider = NotifierProvider<CurrentMemberNotifier, String>(
 
 class CurrentMemberNotifier extends Notifier<String> {
   @override
-  String build() => '3'; // Default: Sarkar (member) - Change to '1' for Siam (superAdmin)
+  String build() {
+    // Default to first member if available, or empty
+    final members = ref.watch(membersProvider);
+    if (members.isNotEmpty) return members.first.id;
+    return '';
+  }
 
   void setMember(String id) => state = id;
 }

@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:gap/gap.dart';
+import 'package:velocity_x/velocity_x.dart';
+import 'package:getwidget/getwidget.dart';
 
 import 'package:mess_manager/core/theme/app_theme.dart';
+import 'package:mess_manager/core/services/haptic_service.dart';
+import 'package:mess_manager/core/widgets/gf_components.dart';
 import 'package:mess_manager/features/notifications/providers/notification_provider.dart';
 
+/// Notification Settings Screen - Uses GetWidget + VelocityX + flutter_animate
 class NotificationSettingsScreen extends ConsumerWidget {
   const NotificationSettingsScreen({super.key});
 
@@ -16,88 +21,69 @@ class NotificationSettingsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            const Icon(LucideIcons.bell, color: AppColors.primary, size: 22),
-            const Gap(AppSpacing.sm),
-            const Text('Notifications'),
-          ],
-        ),
+        title: [
+          const Icon(LucideIcons.bell, color: AppColors.primary, size: 22),
+          8.widthBox,
+          'Notifications'.text.make(),
+        ].hStack(),
       ),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.md),
         children: [
           // Master Toggle
-          Container(
+          GFCard(
             padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppColors.primary.withValues(alpha: 0.15),
-                  AppColors.primaryLight.withValues(alpha: 0.05),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-              border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.3),
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(AppSpacing.sm),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                  ),
-                  child: const Icon(
-                    LucideIcons.bellRing,
-                    color: AppColors.primary,
-                  ),
-                ),
-                const Gap(AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'All Notifications',
-                        style: AppTypography.titleMedium.copyWith(
-                          color: AppColors.textPrimaryDark,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Text(
-                        settings.enabled ? 'Enabled' : 'Disabled',
-                        style: AppTypography.bodySmall.copyWith(
-                          color: settings.enabled
-                              ? AppColors.moneyPositive
-                              : AppColors.textMutedDark,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Switch(
-                  value: settings.enabled,
-                  onChanged: (_) => notifier.toggleAll(),
-                  activeTrackColor: AppColors.primary.withValues(alpha: 0.5),
-                  activeThumbColor: AppColors.primary,
-                ),
+            margin: EdgeInsets.zero,
+            gradient: LinearGradient(
+              colors: [
+                AppColors.primary.withValues(alpha: 0.15),
+                AppColors.primaryLight.withValues(alpha: 0.05),
               ],
             ),
-          ),
-          const Gap(AppSpacing.lg),
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            content: HStack([
+              GFAvatar(
+                backgroundColor: AppColors.primary.withValues(alpha: 0.2),
+                child: const Icon(
+                  LucideIcons.bellRing,
+                  color: AppColors.primary,
+                ),
+              ),
+              12.widthBox,
+              VStack(crossAlignment: CrossAxisAlignment.start, [
+                'All Notifications'.text
+                    .color(AppColors.textPrimaryDark)
+                    .bold
+                    .make(),
+                (settings.enabled ? 'Enabled' : 'Disabled').text.sm
+                    .color(
+                      settings.enabled
+                          ? AppColors.moneyPositive
+                          : AppColors.textMutedDark,
+                    )
+                    .make(),
+              ]).expand(),
+              GFToggle(
+                value: settings.enabled,
+                onChanged: (_) {
+                  HapticService.selectionTick();
+                  notifier.toggleAll();
+                },
+                enabledThumbColor: AppColors.primary,
+                type: GFToggleType.ios,
+              ),
+            ]),
+          ).animate().fadeIn().slideY(begin: 0.05),
+          16.heightBox,
+
+          // Section Header
+          'Notification Types'.text.sm
+              .color(AppColors.textSecondaryDark)
+              .make(),
+          8.heightBox,
 
           // Individual Toggles
-          Text(
-            'Notification Types',
-            style: AppTypography.labelMedium.copyWith(
-              color: AppColors.textSecondaryDark,
-            ),
-          ),
-          const Gap(AppSpacing.sm),
-
           _buildToggle(
             icon: LucideIcons.utensils,
             title: 'Meal Reminders',
@@ -105,7 +91,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
             enabled: settings.mealReminder && settings.enabled,
             onToggle: () => notifier.toggle(NotificationType.mealReminder),
             color: AppColors.mealColor,
-          ),
+          ).animate(delay: 100.ms).fadeIn(),
           _buildToggle(
             icon: LucideIcons.shoppingCart,
             title: 'Bazar Overdue',
@@ -113,7 +99,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
             enabled: settings.bazarOverdue && settings.enabled,
             onToggle: () => notifier.toggle(NotificationType.bazarOverdue),
             color: AppColors.bazarColor,
-          ),
+          ).animate(delay: 150.ms).fadeIn(),
           _buildToggle(
             icon: LucideIcons.receipt,
             title: 'Bill Due',
@@ -121,7 +107,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
             enabled: settings.billDue && settings.enabled,
             onToggle: () => notifier.toggle(NotificationType.billDue),
             color: AppColors.moneyNegative,
-          ),
+          ).animate(delay: 200.ms).fadeIn(),
           _buildToggle(
             icon: LucideIcons.zap,
             title: 'Low DESCO Balance',
@@ -129,7 +115,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
             enabled: settings.lowDescoBalance && settings.enabled,
             onToggle: () => notifier.toggle(NotificationType.lowDescoBalance),
             color: AppColors.accentWarm,
-          ),
+          ).animate(delay: 250.ms).fadeIn(),
           _buildToggle(
             icon: LucideIcons.clipboardList,
             title: 'Duty Reminders',
@@ -137,7 +123,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
             enabled: settings.dutyReminder && settings.enabled,
             onToggle: () => notifier.toggle(NotificationType.dutyReminder),
             color: AppColors.info,
-          ),
+          ).animate(delay: 300.ms).fadeIn(),
           _buildToggle(
             icon: LucideIcons.plus,
             title: 'New Entries',
@@ -145,7 +131,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
             enabled: settings.newEntry && settings.enabled,
             onToggle: () => notifier.toggle(NotificationType.newEntry),
             color: AppColors.secondary,
-          ),
+          ).animate(delay: 350.ms).fadeIn(),
         ],
       ),
     );
@@ -159,53 +145,29 @@ class NotificationSettingsScreen extends ConsumerWidget {
     required VoidCallback onToggle,
     required Color color,
   }) {
-    return Container(
+    return GFAppCard(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.cardDark,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: AppColors.borderDark.withValues(alpha: 0.5)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-            ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const Gap(AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: AppTypography.titleSmall.copyWith(
-                    color: AppColors.textPrimaryDark,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textMutedDark,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Switch(
-            value: enabled,
-            onChanged: (_) => onToggle(),
-            activeTrackColor: color.withValues(alpha: 0.5),
-            activeThumbColor: color,
-          ),
-        ],
-      ),
+      child: HStack([
+        GFAvatar(
+          size: 40,
+          backgroundColor: color.withValues(alpha: 0.15),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        12.widthBox,
+        VStack(crossAlignment: CrossAxisAlignment.start, [
+          title.text.color(AppColors.textPrimaryDark).bold.make(),
+          subtitle.text.sm.color(AppColors.textMutedDark).make(),
+        ]).expand(),
+        GFToggle(
+          value: enabled,
+          onChanged: (_) {
+            HapticService.selectionTick();
+            onToggle();
+          },
+          enabledThumbColor: color,
+          type: GFToggleType.ios,
+        ),
+      ]),
     );
   }
 }

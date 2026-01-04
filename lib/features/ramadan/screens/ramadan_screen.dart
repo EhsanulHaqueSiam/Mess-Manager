@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:gap/gap.dart';
+import 'package:velocity_x/velocity_x.dart';
+import 'package:getwidget/getwidget.dart';
+
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/models/ramadan.dart';
+import 'package:mess_manager/core/models/money_transaction.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
+import 'package:mess_manager/core/services/haptic_service.dart';
+import 'package:mess_manager/core/widgets/gf_components.dart';
 import 'package:mess_manager/features/ramadan/providers/ramadan_provider.dart';
+import 'package:mess_manager/features/money/providers/money_provider.dart';
 
+/// Ramadan Screen - Uses GetWidget + VelocityX + flutter_animate
 class RamadanScreen extends ConsumerStatefulWidget {
   const RamadanScreen({super.key});
 
@@ -24,19 +32,17 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            const Icon(LucideIcons.moon, color: AppColors.primary, size: 22),
-            const Gap(AppSpacing.sm),
-            const Text('Ramadan'),
-          ],
-        ),
+        title: HStack([
+          const Icon(LucideIcons.moon, color: AppColors.primary, size: 22),
+          8.widthBox,
+          'Ramadan'.text.make(),
+        ]),
         actions: [
           if (season == null)
             TextButton.icon(
               onPressed: () => _showCreateSeasonSheet(context),
               icon: const Icon(LucideIcons.plus, size: 18),
-              label: const Text('New Season'),
+              label: 'New Season'.text.make(),
             ),
         ],
       ),
@@ -44,202 +50,65 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
           ? _buildNoSeasonState()
           : SingleChildScrollView(
               padding: const EdgeInsets.all(AppSpacing.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Season Info Card
-                  _buildSeasonCard(season, mealRate),
-                  const Gap(AppSpacing.lg),
+              child: VStack(crossAlignment: CrossAxisAlignment.start, [
+                // Season Info Card
+                _buildSeasonCard(
+                  season,
+                  mealRate,
+                ).animate().fadeIn().scale(begin: const Offset(0.95, 0.95)),
+                16.heightBox,
 
-                  // Quick Actions
-                  _buildQuickActions(season),
-                  const Gap(AppSpacing.lg),
+                // Quick Actions
+                _buildQuickActions(season),
+                16.heightBox,
 
-                  // Today's Meals
-                  _buildTodayMeals(season),
-                  const Gap(AppSpacing.lg),
+                // Today's Meals
+                _buildTodayMeals(season),
+                16.heightBox,
 
-                  // Balances
-                  Text(
-                    'Balances',
-                    style: AppTypography.headlineSmall.copyWith(
-                      color: AppColors.textPrimaryDark,
-                    ),
-                  ),
-                  const Gap(AppSpacing.sm),
-                  ...balances.map((b) => _buildBalanceRow(b, members)),
+                // Balances
+                'Balances'.text.xl.bold.color(AppColors.textPrimaryDark).make(),
+                8.heightBox,
+                ...balances.asMap().entries.map(
+                  (e) => _buildBalanceRow(e.value, members, e.key),
+                ),
+                16.heightBox,
 
-                  const Gap(AppSpacing.lg),
-
-                  // Credit/Debt Section
-                  _buildCreditDebtSection(members),
-                ],
-              ),
+                // Credit/Debt Section
+                _buildCreditDebtSection(members),
+              ]),
             ),
       floatingActionButton: season != null
           ? FloatingActionButton.extended(
               onPressed: () => _showAddMealSheet(context, season),
               icon: const Icon(LucideIcons.utensils),
-              label: const Text('Add Meal'),
+              label: 'Add Meal'.text.make(),
               backgroundColor: AppColors.primary,
-            )
+            ).animate().scale(delay: 300.ms)
           : null,
     );
   }
 
-  Widget _buildCreditDebtSection(List members) {
-    final creditDebts = ref.watch(ramadanCreditDebtProvider);
-    final isSettled = ref.watch(isRamadanSettledProvider);
-    final season =
-        ref.watch(activeRamadanSeasonProvider) ??
-        ref.watch(ramadanSeasonNeedingSettlementProvider);
-
-    if (creditDebts.isEmpty && isSettled) {
-      return Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: AppColors.success.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-          border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
-        ),
-        child: Row(
-          children: [
-            Icon(LucideIcons.checkCircle, color: AppColors.success, size: 20),
-            const Gap(AppSpacing.sm),
-            Text(
-              'All balances settled!',
-              style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.success,
-              ),
-            ),
-            const Spacer(),
-            if (season != null && !season.isSettled)
-              TextButton(
-                onPressed: () => _markSettled(season.id),
-                child: const Text('Close Season'),
-              ),
-          ],
-        ),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Who Owes Whom',
-          style: AppTypography.headlineSmall.copyWith(
-            color: AppColors.textPrimaryDark,
-          ),
-        ),
-        const Gap(AppSpacing.sm),
-        ...creditDebts.map((cd) => _buildCreditDebtRow(cd, members)),
-      ],
-    );
-  }
-
-  Widget _buildCreditDebtRow(RamadanCreditDebt cd, List members) {
-    final from = members.firstWhere(
-      (m) => m.id == cd.fromMemberId,
-      orElse: () => null,
-    );
-    final to = members.firstWhere(
-      (m) => m.id == cd.toMemberId,
-      orElse: () => null,
-    );
-    if (from == null || to == null) return const SizedBox.shrink();
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.cardDark,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: AppColors.error.withValues(alpha: 0.2),
-            child: Text(
-              from.name[0],
-              style: TextStyle(color: AppColors.error, fontSize: 12),
-            ),
-          ),
-          const Gap(AppSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${from.name} → ${to.name}',
-                  style: AppTypography.titleSmall.copyWith(
-                    color: AppColors.textPrimaryDark,
-                  ),
-                ),
-                Text(
-                  '৳${cd.amount.toStringAsFixed(0)}',
-                  style: AppTypography.labelMedium.copyWith(
-                    color: AppColors.warning,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            icon: Icon(LucideIcons.checkCircle, color: AppColors.success),
-            onPressed: () {
-              // TODO: Mark as paid
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Payment recording coming soon')),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _markSettled(String seasonId) {
-    ref.read(ramadanSeasonsProvider.notifier).markSeasonSettled(seasonId);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Ramadan season closed ✓'),
-        backgroundColor: AppColors.success,
-      ),
-    );
-  }
-
   Widget _buildNoSeasonState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(LucideIcons.moon, size: 64, color: AppColors.textMutedDark),
-          const Gap(AppSpacing.lg),
-          Text(
-            'No Active Ramadan Season',
-            style: AppTypography.titleLarge.copyWith(
-              color: AppColors.textPrimaryDark,
-            ),
-          ),
-          const Gap(AppSpacing.sm),
-          Text(
-            'Create a new season to start tracking',
-            style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textSecondaryDark,
-            ),
-          ),
-          const Gap(AppSpacing.lg),
-          ElevatedButton.icon(
-            onPressed: () => _showCreateSeasonSheet(context),
-            icon: const Icon(LucideIcons.plus, size: 18),
-            label: const Text('Create Season'),
-          ),
-        ],
+    return VStack(alignment: MainAxisAlignment.center, [
+      const Icon(LucideIcons.moon, size: 64, color: AppColors.textMutedDark),
+      16.heightBox,
+      'No Active Ramadan Season'.text.xl
+          .color(AppColors.textPrimaryDark)
+          .center
+          .make(),
+      8.heightBox,
+      'Create a new season to start tracking'.text
+          .color(AppColors.textSecondaryDark)
+          .center
+          .make(),
+      24.heightBox,
+      GFPrimaryButton(
+        text: 'Create Season',
+        icon: LucideIcons.plus,
+        onPressed: () => _showCreateSeasonSheet(context),
       ),
-    );
+    ]).centered().animate().fadeIn();
   }
 
   Widget _buildSeasonCard(RamadanSeason season, double mealRate) {
@@ -247,114 +116,78 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
     final totalDays = season.endDate.difference(season.startDate).inDays;
     final progress = 1 - (daysLeft / totalDays);
 
-    return Container(
+    return GFCard(
+      margin: EdgeInsets.zero,
       padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.7)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+      gradient: LinearGradient(
+        colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.7)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(LucideIcons.moon, color: Colors.white, size: 24),
-              const Gap(AppSpacing.sm),
-              Text(
-                'Ramadan ${season.year}',
-                style: AppTypography.headlineSmall.copyWith(
-                  color: Colors.white,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '$daysLeft days left',
-                  style: AppTypography.labelSmall.copyWith(color: Colors.white),
-                ),
-              ),
-            ],
+      content: VStack(crossAlignment: CrossAxisAlignment.start, [
+        HStack([
+          const Icon(LucideIcons.moon, color: Colors.white, size: 24),
+          8.widthBox,
+          'Ramadan ${season.year}'.text.xl.white.bold.make().expand(),
+          GFBadge(
+            text: '$daysLeft days left',
+            color: Colors.white.withValues(alpha: 0.2),
+            textColor: Colors.white,
+            size: GFSize.SMALL,
+            shape: GFBadgeShape.pills,
           ),
-          const Gap(AppSpacing.md),
-          LinearProgressIndicator(
-            value: progress.clamp(0, 1),
+        ]),
+        12.heightBox,
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: progress.clamp(0, 1).toDouble(),
             backgroundColor: Colors.white.withValues(alpha: 0.3),
             valueColor: const AlwaysStoppedAnimation(Colors.white),
+            minHeight: 6,
           ),
-          const Gap(AppSpacing.md),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _statItem('Members', '${season.optedInMemberIds.length}'),
-              _statItem('Meal Rate', '৳${mealRate.toStringAsFixed(1)}'),
-              _statItem('Progress', '${(progress * 100).toInt()}%'),
-            ],
-          ),
-        ],
-      ),
+        ),
+        12.heightBox,
+        HStack(alignment: MainAxisAlignment.spaceAround, [
+          _statItem('Members', '${season.optedInMemberIds.length}'),
+          _statItem('Meal Rate', '৳${mealRate.toStringAsFixed(1)}'),
+          _statItem('Progress', '${(progress * 100).toInt()}%'),
+        ]),
+      ]),
     );
   }
 
   Widget _statItem(String label, String value) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: AppTypography.titleMedium.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Text(
-          label,
-          style: AppTypography.labelSmall.copyWith(
-            color: Colors.white.withValues(alpha: 0.8),
-          ),
-        ),
-      ],
-    );
+    return VStack([
+      value.text.lg.white.bold.make(),
+      label.text.xs.color(Colors.white.withValues(alpha: 0.8)).make(),
+    ]);
   }
 
   Widget _buildQuickActions(RamadanSeason season) {
-    return Row(
-      children: [
-        Expanded(
-          child: _actionCard(
-            icon: LucideIcons.sunrise,
-            label: 'Sehri',
-            color: AppColors.info,
-            onTap: () => _quickAddMeal(season, RamadanMealType.sehri),
-          ),
-        ),
-        const Gap(AppSpacing.sm),
-        Expanded(
-          child: _actionCard(
-            icon: LucideIcons.sunset,
-            label: 'Iftar',
-            color: AppColors.warning,
-            onTap: () => _quickAddMeal(season, RamadanMealType.iftar),
-          ),
-        ),
-        const Gap(AppSpacing.sm),
-        Expanded(
-          child: _actionCard(
-            icon: LucideIcons.shoppingCart,
-            label: 'Bazar',
-            color: AppColors.bazarColor,
-            onTap: () => _showAddBazarSheet(context, season),
-          ),
-        ),
-      ],
-    );
+    return HStack([
+      _actionCard(
+        icon: LucideIcons.sunrise,
+        label: 'Sehri',
+        color: AppColors.info,
+        onTap: () => _quickAddMeal(season, RamadanMealType.sehri),
+      ).expand(),
+      8.widthBox,
+      _actionCard(
+        icon: LucideIcons.sunset,
+        label: 'Iftar',
+        color: AppColors.warning,
+        onTap: () => _quickAddMeal(season, RamadanMealType.iftar),
+      ).expand(),
+      8.widthBox,
+      _actionCard(
+        icon: LucideIcons.shoppingCart,
+        label: 'Bazar',
+        color: AppColors.bazarColor,
+        onTap: () => _showAddBazarSheet(context, season),
+      ).expand(),
+    ]).animate(delay: 100.ms).fadeIn().slideY(begin: 0.05);
   }
 
   Widget _actionCard({
@@ -363,26 +196,15 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
     required Color color,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
+    return GFAppCard(
+      color: color.withValues(alpha: 0.15),
+      borderColor: color.withValues(alpha: 0.3),
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 24),
-            const Gap(AppSpacing.xs),
-            Text(
-              label,
-              style: AppTypography.labelMedium.copyWith(color: color),
-            ),
-          ],
-        ),
-      ),
+      child: VStack([
+        Icon(icon, color: color, size: 24),
+        8.heightBox,
+        label.text.sm.color(color).center.make(),
+      ]).p8(),
     );
   }
 
@@ -390,50 +212,30 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
     final todayMeals = ref
         .watch(ramadanMealsProvider.notifier)
         .getMealsForDate(season.id, DateTime.now());
-
     final hasSehri = todayMeals.any((m) => m.type == RamadanMealType.sehri);
     final hasIftar = todayMeals.any((m) => m.type == RamadanMealType.iftar);
 
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.cardDark,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Today's Status",
-            style: AppTypography.titleSmall.copyWith(
-              color: AppColors.textPrimaryDark,
-            ),
-          ),
-          const Gap(AppSpacing.sm),
-          Row(
-            children: [
-              Expanded(
-                child: _mealStatus(
-                  'Sehri',
-                  LucideIcons.sunrise,
-                  hasSehri,
-                  AppColors.info,
-                ),
-              ),
-              const Gap(AppSpacing.sm),
-              Expanded(
-                child: _mealStatus(
-                  'Iftar',
-                  LucideIcons.sunset,
-                  hasIftar,
-                  AppColors.warning,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+    return GFAppCard(
+      child: VStack(crossAlignment: CrossAxisAlignment.start, [
+        "Today's Status".text.bold.color(AppColors.textPrimaryDark).make(),
+        8.heightBox,
+        HStack([
+          _mealStatus(
+            'Sehri',
+            LucideIcons.sunrise,
+            hasSehri,
+            AppColors.info,
+          ).expand(),
+          8.widthBox,
+          _mealStatus(
+            'Iftar',
+            LucideIcons.sunset,
+            hasIftar,
+            AppColors.warning,
+          ).expand(),
+        ]),
+      ]),
+    ).animate(delay: 200.ms).fadeIn();
   }
 
   Widget _mealStatus(String label, IconData icon, bool done, Color color) {
@@ -444,27 +246,19 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
         borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
         border: Border.all(color: done ? color : AppColors.borderDark),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            done ? LucideIcons.checkCircle : icon,
-            color: done ? color : AppColors.textMutedDark,
-            size: 18,
-          ),
-          const Gap(AppSpacing.xs),
-          Text(
-            label,
-            style: AppTypography.labelMedium.copyWith(
-              color: done ? color : AppColors.textMutedDark,
-            ),
-          ),
-        ],
-      ),
+      child: HStack(alignment: MainAxisAlignment.center, [
+        Icon(
+          done ? LucideIcons.checkCircle : icon,
+          color: done ? color : AppColors.textMutedDark,
+          size: 18,
+        ),
+        4.widthBox,
+        label.text.sm.color(done ? color : AppColors.textMutedDark).make(),
+      ]),
     );
   }
 
-  Widget _buildBalanceRow(RamadanBalance balance, List members) {
+  Widget _buildBalanceRow(RamadanBalance balance, List members, int index) {
     final member = members.firstWhere(
       (m) => m.id == balance.memberId,
       orElse: () => null,
@@ -473,58 +267,140 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
 
     final isPositive = balance.balance >= 0;
 
-    return Container(
+    return GFAppCard(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.cardDark,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+      child: HStack([
+        GFMemberAvatar(
+          name: member.name,
+          size: 36,
+          backgroundColor: AppColors.primary.withValues(alpha: 0.2),
+        ),
+        8.widthBox,
+        VStack(crossAlignment: CrossAxisAlignment.start, [
+          member.name.text.color(AppColors.textPrimaryDark).make(),
+          '${balance.totalMeals} meals • ৳${balance.totalBazar.toStringAsFixed(0)} bazar'
+              .text
+              .xs
+              .color(AppColors.textMutedDark)
+              .make(),
+        ]).expand(),
+        '${isPositive ? '+' : ''}৳${balance.balance.toStringAsFixed(0)}'.text.lg
+            .color(isPositive ? AppColors.success : AppColors.error)
+            .bold
+            .make(),
+      ]),
+    ).animate(delay: (60 * index).ms).fadeIn().slideX(begin: 0.02);
+  }
+
+  Widget _buildCreditDebtSection(List members) {
+    final creditDebts = ref.watch(ramadanCreditDebtProvider);
+    final isSettled = ref.watch(isRamadanSettledProvider);
+    final season =
+        ref.watch(activeRamadanSeasonProvider) ??
+        ref.watch(ramadanSeasonNeedingSettlementProvider);
+
+    if (creditDebts.isEmpty && isSettled) {
+      return GFAppCard(
+        color: AppColors.success.withValues(alpha: 0.1),
+        borderColor: AppColors.success.withValues(alpha: 0.3),
+        child: HStack([
+          const Icon(
+            LucideIcons.checkCircle,
+            color: AppColors.success,
+            size: 20,
+          ),
+          8.widthBox,
+          'All balances settled!'.text.color(AppColors.success).make().expand(),
+          if (season != null && !season.isSettled)
+            GFSecondaryButton(
+              text: 'Close Season',
+              color: AppColors.success,
+              onPressed: () => _markSettled(season.id),
+            ),
+        ]),
+      );
+    }
+
+    return VStack(crossAlignment: CrossAxisAlignment.start, [
+      'Who Owes Whom'.text.xl.bold.color(AppColors.textPrimaryDark).make(),
+      8.heightBox,
+      ...creditDebts.asMap().entries.map(
+        (e) => _buildCreditDebtRow(e.value, members, e.key),
       ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: AppColors.primary.withValues(alpha: 0.2),
-            child: Text(
-              member.name[0],
-              style: AppTypography.labelMedium.copyWith(
-                color: AppColors.primary,
-              ),
-            ),
+    ]);
+  }
+
+  Widget _buildCreditDebtRow(RamadanCreditDebt cd, List members, int index) {
+    final from = members.firstWhere(
+      (m) => m.id == cd.fromMemberId,
+      orElse: () => null,
+    );
+    final to = members.firstWhere(
+      (m) => m.id == cd.toMemberId,
+      orElse: () => null,
+    );
+    if (from == null || to == null) return const SizedBox.shrink();
+
+    return GFAppCard(
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: HStack([
+        GFMemberAvatar(
+          name: from.name,
+          size: 32,
+          backgroundColor: AppColors.error.withValues(alpha: 0.2),
+        ),
+        8.widthBox,
+        VStack(crossAlignment: CrossAxisAlignment.start, [
+          '${from.name} → ${to.name}'.text
+              .color(AppColors.textPrimaryDark)
+              .make(),
+          '৳${cd.amount.toStringAsFixed(0)}'.text.sm
+              .color(AppColors.warning)
+              .bold
+              .make(),
+        ]).expand(),
+        GFIconButton(
+          icon: const Icon(
+            LucideIcons.checkCircle,
+            color: AppColors.success,
+            size: 20,
           ),
-          const Gap(AppSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  member.name,
-                  style: AppTypography.titleSmall.copyWith(
-                    color: AppColors.textPrimaryDark,
-                  ),
-                ),
-                Text(
-                  '${balance.totalMeals} meals • ৳${balance.totalBazar.toStringAsFixed(0)} bazar',
-                  style: AppTypography.labelSmall.copyWith(
-                    color: AppColors.textMutedDark,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Text(
-            '${isPositive ? '+' : ''}৳${balance.balance.toStringAsFixed(0)}',
-            style: AppTypography.titleMedium.copyWith(
-              color: isPositive ? AppColors.success : AppColors.error,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
+          type: GFButtonType.transparent,
+          onPressed: () => _markRamadanPayment(cd),
+        ),
+      ]),
+    ).animate(delay: (60 * index).ms).fadeIn().slideX(begin: 0.02);
+  }
+
+  void _markSettled(String seasonId) {
+    ref.read(ramadanSeasonsProvider.notifier).markSeasonSettled(seasonId);
+    showSuccessToast(context, 'Ramadan season closed ✓');
+  }
+
+  void _markRamadanPayment(RamadanCreditDebt cd) {
+    HapticService.success();
+
+    // Create a settled money transaction to record the payment
+    final transaction = MoneyTransaction(
+      id: 'ramadan_${DateTime.now().millisecondsSinceEpoch}',
+      fromMemberId: cd.fromMemberId, // Debtor pays
+      toMemberId: cd.toMemberId, // Creditor receives
+      amount: cd.amount,
+      description: 'Ramadan settlement',
+      date: DateTime.now(),
+      isSettled: true,
+      settledAt: DateTime.now(),
+    );
+
+    ref.read(moneyTransactionsProvider.notifier).addTransaction(transaction);
+    showSuccessToast(
+      context,
+      'Payment of ৳${cd.amount.toStringAsFixed(0)} recorded ✓',
     );
   }
 
   void _quickAddMeal(RamadanSeason season, RamadanMealType type) {
+    HapticService.buttonPress();
     final memberId = ref.read(currentMemberIdProvider);
 
     ref
@@ -536,13 +412,9 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
           type: type,
         );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '${type == RamadanMealType.sehri ? 'Sehri' : 'Iftar'} added ✓',
-        ),
-        backgroundColor: AppColors.success,
-      ),
+    showSuccessToast(
+      context,
+      '${type == RamadanMealType.sehri ? 'Sehri' : 'Iftar'} added ✓',
     );
   }
 
@@ -556,15 +428,356 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
   }
 
   void _showAddMealSheet(BuildContext context, RamadanSeason season) {
-    // TODO: Implement full add meal sheet
+    HapticService.modalOpen();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _AddRamadanMealSheet(season: season),
+    );
   }
 
   void _showAddBazarSheet(BuildContext context, RamadanSeason season) {
-    // TODO: Implement add bazar sheet
+    HapticService.modalOpen();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _AddRamadanBazarSheet(season: season),
+    );
   }
 }
 
-/// Create Season Sheet
+// ==================== Add Ramadan Meal Sheet ====================
+
+class _AddRamadanMealSheet extends ConsumerStatefulWidget {
+  final RamadanSeason season;
+
+  const _AddRamadanMealSheet({required this.season});
+
+  @override
+  ConsumerState<_AddRamadanMealSheet> createState() =>
+      _AddRamadanMealSheetState();
+}
+
+class _AddRamadanMealSheetState extends ConsumerState<_AddRamadanMealSheet> {
+  String? _selectedMemberId;
+  RamadanMealType _mealType = RamadanMealType.iftar;
+  double _portions = 1.0;
+  int _guests = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedMemberId = ref.read(currentMemberIdProvider);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final members = ref.watch(membersProvider);
+
+    return Container(
+      padding: EdgeInsets.only(
+        left: AppSpacing.lg,
+        right: AppSpacing.lg,
+        top: AppSpacing.lg,
+        bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
+      ),
+      decoration: const BoxDecoration(
+        color: AppColors.surfaceDark,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppSpacing.radiusLg),
+        ),
+      ),
+      child: VStack(crossAlignment: CrossAxisAlignment.start, [
+        Center(
+          child: Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: AppColors.borderDark,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        ),
+        16.heightBox,
+        'Add Ramadan Meal'.text.xl2.bold
+            .color(AppColors.textPrimaryDark)
+            .make(),
+        16.heightBox,
+
+        // Member Selector
+        'Member'.text.sm.color(AppColors.textMutedDark).make(),
+        8.heightBox,
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: members
+              .map(
+                (m) => ChoiceChip(
+                  label: m.name.text.make(),
+                  selected: _selectedMemberId == m.id,
+                  onSelected: (_) => setState(() => _selectedMemberId = m.id),
+                ),
+              )
+              .toList(),
+        ),
+        16.heightBox,
+
+        // Meal Type
+        'Meal Type'.text.sm.color(AppColors.textMutedDark).make(),
+        8.heightBox,
+        HStack([
+          _mealTypeChip(RamadanMealType.sehri, LucideIcons.sunrise),
+          8.widthBox,
+          _mealTypeChip(RamadanMealType.iftar, LucideIcons.sunset),
+        ]),
+        16.heightBox,
+
+        // Portions
+        HStack([
+          'Portions'.text.color(AppColors.textSecondaryDark).make().expand(),
+          GFIconButton(
+            icon: const Icon(LucideIcons.minus, size: 16),
+            size: GFSize.SMALL,
+            type: GFButtonType.outline,
+            onPressed: () {
+              if (_portions > 0.5) setState(() => _portions -= 0.5);
+            },
+          ),
+          '${_portions}x'.text.lg.bold
+              .color(AppColors.textPrimaryDark)
+              .make()
+              .pSymmetric(h: 12),
+          GFIconButton(
+            icon: const Icon(LucideIcons.plus, size: 16),
+            size: GFSize.SMALL,
+            type: GFButtonType.outline,
+            onPressed: () => setState(() => _portions += 0.5),
+          ),
+        ]),
+        12.heightBox,
+
+        // Guests
+        HStack([
+          'Guests'.text.color(AppColors.textSecondaryDark).make().expand(),
+          GFIconButton(
+            icon: const Icon(LucideIcons.minus, size: 16),
+            size: GFSize.SMALL,
+            type: GFButtonType.outline,
+            onPressed: () {
+              if (_guests > 0) setState(() => _guests--);
+            },
+          ),
+          '$_guests'.text.lg.bold
+              .color(AppColors.textPrimaryDark)
+              .make()
+              .pSymmetric(h: 12),
+          GFIconButton(
+            icon: const Icon(LucideIcons.plus, size: 16),
+            size: GFSize.SMALL,
+            type: GFButtonType.outline,
+            onPressed: () => setState(() => _guests++),
+          ),
+        ]),
+        24.heightBox,
+
+        GFPrimaryButton(
+          text: 'Add Meal',
+          icon: LucideIcons.check,
+          onPressed: _submit,
+        ),
+        16.heightBox,
+      ]),
+    );
+  }
+
+  Widget _mealTypeChip(RamadanMealType type, IconData icon) {
+    final isSelected = _mealType == type;
+    final label = type == RamadanMealType.sehri ? 'Sehri' : 'Iftar';
+    return ChoiceChip(
+      label: HStack([
+        Icon(
+          icon,
+          size: 16,
+          color: isSelected ? Colors.white : AppColors.textPrimaryDark,
+        ),
+        6.widthBox,
+        label.text
+            .color(isSelected ? Colors.white : AppColors.textPrimaryDark)
+            .make(),
+      ]),
+      selected: isSelected,
+      onSelected: (_) => setState(() => _mealType = type),
+    );
+  }
+
+  void _submit() {
+    if (_selectedMemberId == null) {
+      showErrorToast(context, 'Select a member');
+      return;
+    }
+
+    HapticService.success();
+    ref
+        .read(ramadanMealsProvider.notifier)
+        .addMeal(
+          seasonId: widget.season.id,
+          memberId: _selectedMemberId!,
+          date: DateTime.now(),
+          type: _mealType,
+          count: _portions.toInt(),
+          guestName: _guests > 0 ? 'Guest(s): $_guests' : null,
+        );
+
+    Navigator.pop(context);
+    showSuccessToast(
+      context,
+      '${_mealType == RamadanMealType.sehri ? "Sehri" : "Iftar"} meal added ✓',
+    );
+  }
+}
+
+// ==================== Add Ramadan Bazar Sheet ====================
+
+class _AddRamadanBazarSheet extends ConsumerStatefulWidget {
+  final RamadanSeason season;
+
+  const _AddRamadanBazarSheet({required this.season});
+
+  @override
+  ConsumerState<_AddRamadanBazarSheet> createState() =>
+      _AddRamadanBazarSheetState();
+}
+
+class _AddRamadanBazarSheetState extends ConsumerState<_AddRamadanBazarSheet> {
+  final _itemController = TextEditingController();
+  final _amountController = TextEditingController();
+  String? _selectedMemberId;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedMemberId = ref.read(currentMemberIdProvider);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final members = ref.watch(membersProvider);
+
+    return Container(
+      padding: EdgeInsets.only(
+        left: AppSpacing.lg,
+        right: AppSpacing.lg,
+        top: AppSpacing.lg,
+        bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
+      ),
+      decoration: const BoxDecoration(
+        color: AppColors.surfaceDark,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppSpacing.radiusLg),
+        ),
+      ),
+      child: VStack(crossAlignment: CrossAxisAlignment.start, [
+        Center(
+          child: Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: AppColors.borderDark,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        ),
+        16.heightBox,
+        'Add Ramadan Bazar'.text.xl2.bold
+            .color(AppColors.textPrimaryDark)
+            .make(),
+        16.heightBox,
+
+        // Member Selector
+        'Paid By'.text.sm.color(AppColors.textMutedDark).make(),
+        8.heightBox,
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: members
+              .map(
+                (m) => ChoiceChip(
+                  label: m.name.text.make(),
+                  selected: _selectedMemberId == m.id,
+                  onSelected: (_) => setState(() => _selectedMemberId = m.id),
+                ),
+              )
+              .toList(),
+        ),
+        16.heightBox,
+
+        // Item Description
+        TextField(
+          controller: _itemController,
+          decoration: const InputDecoration(
+            labelText: 'Item Description',
+            hintText: 'e.g., Dates, Fruits, Iftar items',
+            prefixIcon: Icon(LucideIcons.shoppingBag, size: 18),
+          ),
+        ),
+        12.heightBox,
+
+        // Amount
+        TextField(
+          controller: _amountController,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: 'Amount (৳)',
+            hintText: '0',
+            prefixIcon: Icon(LucideIcons.banknote, size: 18),
+          ),
+        ),
+        24.heightBox,
+
+        GFPrimaryButton(
+          text: 'Add Bazar Entry',
+          icon: LucideIcons.check,
+          onPressed: _submit,
+        ),
+        16.heightBox,
+      ]),
+    );
+  }
+
+  void _submit() {
+    final amount = double.tryParse(_amountController.text) ?? 0;
+    if (_selectedMemberId == null) {
+      showErrorToast(context, 'Select a member');
+      return;
+    }
+    if (_itemController.text.isEmpty) {
+      showErrorToast(context, 'Enter item description');
+      return;
+    }
+    if (amount <= 0) {
+      showErrorToast(context, 'Enter valid amount');
+      return;
+    }
+
+    HapticService.success();
+    ref
+        .read(ramadanBazarProvider.notifier)
+        .addBazar(
+          seasonId: widget.season.id,
+          memberId: _selectedMemberId!,
+          amount: amount,
+          description: _itemController.text,
+        );
+
+    Navigator.pop(context);
+    showSuccessToast(context, 'Bazar entry added ✓');
+  }
+}
+
+// ==================== Create Season Sheet ====================
+
 class _CreateSeasonSheet extends ConsumerStatefulWidget {
   const _CreateSeasonSheet();
 
@@ -581,12 +794,9 @@ class _CreateSeasonSheetState extends ConsumerState<_CreateSeasonSheet> {
   @override
   void initState() {
     super.initState();
-    // Pre-select all members
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final members = ref.read(membersProvider);
-      setState(() {
-        _selectedMembers.addAll(members.map((m) => m.id));
-      });
+      setState(() => _selectedMembers.addAll(members.map((m) => m.id)));
     });
   }
 
@@ -596,109 +806,89 @@ class _CreateSeasonSheetState extends ConsumerState<_CreateSeasonSheet> {
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.surfaceDark,
-        borderRadius: const BorderRadius.vertical(
+        borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppSpacing.radiusLg),
         ),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.borderDark,
-                borderRadius: BorderRadius.circular(2),
-              ),
+      child: VStack(crossAlignment: CrossAxisAlignment.start, [
+        Center(
+          child: Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: AppColors.borderDark,
+              borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const Gap(AppSpacing.lg),
-          Text(
-            'Create Ramadan Season',
-            style: AppTypography.headlineMedium.copyWith(
-              color: AppColors.textPrimaryDark,
-            ),
-          ),
-          const Gap(AppSpacing.lg),
+        ),
+        16.heightBox,
+        'Create Ramadan Season'.text.xl2
+            .color(AppColors.textPrimaryDark)
+            .make(),
+        16.heightBox,
 
-          // Hijri Year
-          TextField(
-            controller: _yearController,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              labelText: 'Hijri Year',
-              prefixIcon: Icon(LucideIcons.calendar, size: 18),
-            ),
+        // Hijri Year
+        TextField(
+          controller: _yearController,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: 'Hijri Year',
+            prefixIcon: Icon(LucideIcons.calendar, size: 18),
           ),
-          const Gap(AppSpacing.md),
+        ),
+        12.heightBox,
 
-          // Date Range
-          Row(
-            children: [
-              Expanded(
-                child: _datePicker(
-                  'Start',
-                  _startDate,
-                  (d) => setState(() => _startDate = d),
-                ),
-              ),
-              const Gap(AppSpacing.sm),
-              Expanded(
-                child: _datePicker(
-                  'End',
-                  _endDate,
-                  (d) => setState(() => _endDate = d),
-                ),
-              ),
-            ],
-          ),
-          const Gap(AppSpacing.lg),
+        // Date Range
+        HStack([
+          _datePicker(
+            'Start',
+            _startDate,
+            (d) => setState(() => _startDate = d),
+          ).expand(),
+          8.widthBox,
+          _datePicker(
+            'End',
+            _endDate,
+            (d) => setState(() => _endDate = d),
+          ).expand(),
+        ]),
+        16.heightBox,
 
-          // Opt-in Members
-          Text(
-            'Opt-in Members',
-            style: AppTypography.labelMedium.copyWith(
-              color: AppColors.textSecondaryDark,
-            ),
-          ),
-          const Gap(AppSpacing.sm),
-          Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            children: members.map((m) {
-              final selected = _selectedMembers.contains(m.id);
-              return FilterChip(
-                selected: selected,
-                label: Text(m.name),
-                onSelected: (s) {
-                  setState(() {
-                    if (s) {
-                      _selectedMembers.add(m.id);
-                    } else {
-                      _selectedMembers.remove(m.id);
-                    }
-                  });
-                },
-              );
-            }).toList(),
-          ),
-          const Gap(AppSpacing.xl),
+        // Opt-in Members
+        'Opt-in Members'.text.sm.color(AppColors.textSecondaryDark).make(),
+        8.heightBox,
+        Wrap(
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.sm,
+          children: members.map((m) {
+            final selected = _selectedMembers.contains(m.id);
+            return FilterChip(
+              selected: selected,
+              label: m.name.text.make(),
+              onSelected: (s) {
+                HapticService.selectionTick();
+                setState(() {
+                  if (s) {
+                    _selectedMembers.add(m.id);
+                  } else {
+                    _selectedMembers.remove(m.id);
+                  }
+                });
+              },
+            );
+          }).toList(),
+        ),
+        24.heightBox,
 
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _create,
-              icon: const Icon(LucideIcons.check, size: 18),
-              label: const Text('Create Season'),
-            ),
-          ),
-          const Gap(AppSpacing.lg),
-        ],
-      ),
+        GFPrimaryButton(
+          text: 'Create Season',
+          icon: LucideIcons.check,
+          onPressed: _create,
+        ),
+        16.heightBox,
+      ]),
     );
   }
 
@@ -709,6 +899,7 @@ class _CreateSeasonSheetState extends ConsumerState<_CreateSeasonSheet> {
   ) {
     return GestureDetector(
       onTap: () async {
+        HapticService.lightTap();
         final picked = await showDatePicker(
           context: context,
           initialDate: date,
@@ -717,38 +908,25 @@ class _CreateSeasonSheetState extends ConsumerState<_CreateSeasonSheet> {
         );
         if (picked != null) onChanged(picked);
       },
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: AppColors.cardDark,
-          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-          border: Border.all(color: AppColors.borderDark),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: AppTypography.labelSmall.copyWith(
-                color: AppColors.textMutedDark,
-              ),
-            ),
-            const Gap(4),
-            Text(
-              '${date.day}/${date.month}/${date.year}',
-              style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.textPrimaryDark,
-              ),
-            ),
-          ],
-        ),
+      child: GFAppCard(
+        child: VStack(crossAlignment: CrossAxisAlignment.start, [
+          label.text.xs.color(AppColors.textMutedDark).make(),
+          4.heightBox,
+          '${date.day}/${date.month}/${date.year}'.text
+              .color(AppColors.textPrimaryDark)
+              .make(),
+        ]),
       ),
     );
   }
 
   void _create() {
-    if (_selectedMembers.isEmpty) return;
+    if (_selectedMembers.isEmpty) {
+      showErrorToast(context, 'Select at least one member');
+      return;
+    }
 
+    HapticService.success();
     ref
         .read(ramadanSeasonsProvider.notifier)
         .createSeason(
@@ -759,11 +937,6 @@ class _CreateSeasonSheetState extends ConsumerState<_CreateSeasonSheet> {
         );
 
     Navigator.of(context).pop();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Ramadan season created ✓'),
-        backgroundColor: AppColors.success,
-      ),
-    );
+    showSuccessToast(context, 'Ramadan season created ✓');
   }
 }

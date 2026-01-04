@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mess_manager/core/models/bazar_entry.dart';
+import 'package:mess_manager/core/database/isar_service.dart';
 
 /// Generate sample bazar entries
 List<BazarEntry> _generateSampleBazarEntries() {
@@ -62,14 +63,24 @@ final bazarEntriesProvider =
 
 class BazarEntriesNotifier extends Notifier<List<BazarEntry>> {
   @override
-  List<BazarEntry> build() => _generateSampleBazarEntries();
+  List<BazarEntry> build() {
+    // Try to load from Isar first
+    final saved = IsarService.getAllBazarEntries();
+    if (saved.isNotEmpty) {
+      return saved;
+    }
+    // Fall back to sample data
+    return _generateSampleBazarEntries();
+  }
 
   void addEntry(BazarEntry entry) {
     state = [...state, entry];
+    IsarService.saveBazarEntry(entry);
   }
 
   void removeEntry(String id) {
     state = state.where((e) => e.id != id).toList();
+    IsarService.deleteBazarEntry(id);
   }
 
   void updateEntry(BazarEntry entry) {
@@ -77,6 +88,7 @@ class BazarEntriesNotifier extends Notifier<List<BazarEntry>> {
       for (final e in state)
         if (e.id == entry.id) entry else e,
     ];
+    IsarService.saveBazarEntry(entry);
   }
 
   List<BazarEntry> getEntriesForMember(String memberId) {

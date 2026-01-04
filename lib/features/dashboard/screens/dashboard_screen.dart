@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:gap/gap.dart';
+import 'package:velocity_x/velocity_x.dart';
+import 'package:getwidget/getwidget.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_layout_grid/flutter_layout_grid.dart';
 
 import 'package:mess_manager/core/router/app_router.dart';
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
 import 'package:mess_manager/core/providers/smart_suggestions_provider.dart';
+import 'package:mess_manager/core/services/haptic_service.dart';
+import 'package:mess_manager/core/widgets/gf_components.dart';
 import 'package:mess_manager/features/meals/providers/meals_provider.dart';
 import 'package:mess_manager/features/bazar/providers/bazar_provider.dart';
 import 'package:mess_manager/features/balance/providers/balance_provider.dart';
@@ -18,8 +22,8 @@ import 'package:mess_manager/shared/widgets/smart_suggestion_card.dart';
 import 'package:mess_manager/shared/widgets/party_splitter_sheet.dart';
 import 'package:mess_manager/shared/widgets/test_mode_switcher.dart';
 import 'package:mess_manager/features/dashboard/widgets/notification_alerts.dart';
-import 'package:mess_manager/core/services/haptic_service.dart';
 
+/// Dashboard Screen - Uses GetWidget + VelocityX + flutter_animate
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
@@ -32,7 +36,6 @@ class DashboardScreen extends ConsumerWidget {
     final members = ref.watch(membersProvider);
     final daysSinceBazar = ref.watch(daysSinceLastBazarProvider);
 
-    // Recent activity (combine meals and bazar, sort by date)
     final activities = _buildActivityList(meals, bazarEntries, members);
 
     return Scaffold(
@@ -41,164 +44,84 @@ class DashboardScreen extends ConsumerWidget {
           slivers: [
             // Header
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Greeting
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                                  _getGreeting(),
-                                  style: AppTypography.bodyMedium.copyWith(
-                                    color: AppColors.textSecondaryDark,
-                                  ),
-                                )
-                                .animate()
-                                .fadeIn(duration: 300.ms)
-                                .slideX(begin: -0.1),
-                            const Gap(AppSpacing.xs),
-                            Text(
-                                  'Area51 Mess',
-                                  style: AppTypography.displaySmall.copyWith(
-                                    color: AppColors.textPrimaryDark,
-                                  ),
-                                )
-                                .animate()
-                                .fadeIn(duration: 400.ms)
-                                .slideX(begin: -0.1),
-                          ],
-                        ),
-                        // Profile Avatar with expense timer
-                        Row(
-                          children: [
-                            // 🧪 Test Mode Switcher (DEV ONLY)
-                            const TestModeSwitcher(),
-                            const Gap(AppSpacing.sm),
-                            if (daysSinceBazar != null)
-                              const ExpenseTimerWidget(),
-                            const Gap(AppSpacing.sm),
-                            Container(
-                              padding: const EdgeInsets.all(3),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: LinearGradient(
-                                  colors: AppColors.gradientPrimary,
-                                ),
-                              ),
-                              child: const CircleAvatar(
-                                radius: 22,
-                                backgroundColor: AppColors.cardDark,
-                                child: Icon(
-                                  LucideIcons.user,
-                                  color: AppColors.primary,
-                                  size: 20,
-                                ),
-                              ),
-                            ).animate().scale(delay: 300.ms, duration: 400.ms),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const Gap(AppSpacing.xl),
+              child: VStack(crossAlignment: CrossAxisAlignment.start, [
+                // Greeting Row
+                HStack([
+                  VStack(crossAlignment: CrossAxisAlignment.start, [
+                    _getGreeting().text
+                        .color(AppColors.textSecondaryDark)
+                        .make()
+                        .animate()
+                        .fadeIn(duration: 300.ms)
+                        .slideX(begin: -0.1),
+                    4.heightBox,
+                    'Area51 Mess'.text.xl2.bold
+                        .color(AppColors.textPrimaryDark)
+                        .make()
+                        .animate()
+                        .fadeIn(duration: 400.ms)
+                        .slideX(begin: -0.1),
+                  ]).expand(),
+                  // Profile Row
+                  HStack([
+                    const TestModeSwitcher(),
+                    8.widthBox,
+                    if (daysSinceBazar != null) const ExpenseTimerWidget(),
+                    8.widthBox,
+                    _buildProfileAvatar(),
+                  ]),
+                ]),
+                20.heightBox,
 
-                    // Balance Card
-                    _buildBalanceCard(context, currentBalance, summary),
-                    const Gap(AppSpacing.md),
+                // Balance Card
+                _buildBalanceCard(context, currentBalance, summary),
+                12.heightBox,
 
-                    // Smart Suggestions
-                    SmartSuggestionCard(
-                      onAddMeal: () => _showAddMealSheet(context),
-                      onAddBazar: () => _showAddBazarSheet(context),
-                      onCheckList: () => context.go(AppRoutes.bazar),
-                    ),
-                    const Gap(AppSpacing.lg),
-
-                    // Notification Alerts Area
-                    NotificationAlertsArea(alerts: getSampleAlerts()),
-                    const Gap(AppSpacing.lg),
-
-                    // Quick Actions
-                    Row(
-                      children: [
-                        const Icon(
-                          LucideIcons.zap,
-                          color: AppColors.accentAlt,
-                          size: 18,
-                        ),
-                        const Gap(AppSpacing.sm),
-                        Text(
-                          'Quick Actions',
-                          style: AppTypography.headlineSmall.copyWith(
-                            color: AppColors.textPrimaryDark,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Gap(AppSpacing.sm),
-                    _buildQuickActions(context),
-                    const Gap(AppSpacing.lg),
-
-                    // Feature Modules Grid
-                    Row(
-                      children: [
-                        Icon(
-                          LucideIcons.layoutGrid,
-                          color: AppColors.secondary,
-                          size: 18,
-                        ),
-                        const Gap(AppSpacing.sm),
-                        Text(
-                          'Modules',
-                          style: AppTypography.headlineSmall.copyWith(
-                            color: AppColors.textPrimaryDark,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Gap(AppSpacing.sm),
-                    _buildFeatureGrid(context),
-                    const Gap(AppSpacing.lg),
-
-                    // Recent Activity Header
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              LucideIcons.activity,
-                              color: AppColors.primaryLight,
-                              size: 18,
-                            ),
-                            const Gap(AppSpacing.sm),
-                            Text(
-                              'Recent Activity',
-                              style: AppTypography.headlineSmall.copyWith(
-                                color: AppColors.textPrimaryDark,
-                              ),
-                            ),
-                          ],
-                        ),
-                        TextButton(
-                          onPressed: () {},
-                          child: Text(
-                            'See all',
-                            style: AppTypography.labelMedium.copyWith(
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                // Smart Suggestions
+                SmartSuggestionCard(
+                  onAddMeal: () => _showAddMealSheet(context),
+                  onAddBazar: () => _showAddBazarSheet(context),
+                  onCheckList: () => context.go(AppRoutes.bazar),
                 ),
-              ),
+                16.heightBox,
+
+                // Notification Alerts
+                NotificationAlertsArea(alerts: getSampleAlerts()),
+                16.heightBox,
+
+                // Quick Actions Header
+                _sectionHeader(
+                  LucideIcons.zap,
+                  'Quick Actions',
+                  AppColors.accentAlt,
+                ),
+                8.heightBox,
+                _buildQuickActions(context),
+                16.heightBox,
+
+                // Feature Modules Header
+                _sectionHeader(
+                  LucideIcons.layoutGrid,
+                  'Modules',
+                  AppColors.secondary,
+                ),
+                8.heightBox,
+                _buildFeatureGrid(context),
+                16.heightBox,
+
+                // Recent Activity Header
+                HStack([
+                  _sectionHeader(
+                    LucideIcons.activity,
+                    'Recent Activity',
+                    AppColors.primaryLight,
+                  ).expand(),
+                  TextButton(
+                    onPressed: () {},
+                    child: 'See all'.text.sm.color(AppColors.primary).make(),
+                  ),
+                ]),
+              ]).p16(),
             ),
 
             // Activity List
@@ -213,26 +136,48 @@ class DashboardScreen extends ConsumerWidget {
               ),
             ),
 
-            const SliverToBoxAdapter(child: Gap(AppSpacing.xxl)),
+            const SliverToBoxAdapter(child: SizedBox(height: 100)),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          HapticService.buttonPress();
-          _showUnifiedEntrySheet(context);
-        },
-        icon: const Icon(LucideIcons.plus, size: 22),
-        label: const Text(
-          'Add Entry',
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 8,
-        extendedPadding: const EdgeInsets.symmetric(horizontal: 20),
-      ),
+      floatingActionButton:
+          FloatingActionButton.extended(
+                onPressed: () {
+                  HapticService.buttonPress();
+                  _showAddBazarSheet(context);
+                },
+                icon: const Icon(LucideIcons.plus, size: 22),
+                label: 'Add Entry'.text.bold.make(),
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+              )
+              .animate()
+              .scale(delay: 500.ms)
+              .shimmer(delay: 1.seconds, duration: 1500.ms),
     );
+  }
+
+  Widget _buildProfileAvatar() {
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(colors: AppColors.gradientPrimary),
+      ),
+      child: GFAvatar(
+        radius: 22,
+        backgroundColor: AppColors.cardDark,
+        child: const Icon(LucideIcons.user, color: AppColors.primary, size: 20),
+      ),
+    ).animate().scale(delay: 300.ms, duration: 400.ms);
+  }
+
+  Widget _sectionHeader(IconData icon, String title, Color color) {
+    return HStack([
+      Icon(icon, color: color, size: 18),
+      8.widthBox,
+      title.text.lg.bold.color(AppColors.textPrimaryDark).make(),
+    ]);
   }
 
   String _getGreeting() {
@@ -254,329 +199,283 @@ class DashboardScreen extends ConsumerWidget {
         : AppColors.moneyNegative;
 
     return GestureDetector(
-      onTap: () => context.go(AppRoutes.balance),
-      child: Container(
+      onTap: () {
+        HapticService.lightTap();
+        context.go(AppRoutes.balance);
+      },
+      child: GFCard(
+        margin: EdgeInsets.zero,
         padding: const EdgeInsets.all(AppSpacing.lg),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppColors.primary,
-              AppColors.primaryDark,
-              AppColors.secondary,
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.4),
-              blurRadius: 24,
-              offset: const Offset(0, 12),
-              spreadRadius: -8,
-            ),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primary,
+            AppColors.primaryDark,
+            AppColors.secondary,
           ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          LucideIcons.wallet,
-                          color: Colors.white.withValues(alpha: 0.8),
-                          size: 16,
-                        ),
-                        const Gap(AppSpacing.xs),
-                        Text(
-                          'Your Balance',
-                          style: AppTypography.labelMedium.copyWith(
-                            color: Colors.white.withValues(alpha: 0.8),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Gap(AppSpacing.sm),
-                    Text(
-                      '${isPositive ? '+' : ''}৳${(balance?.balance ?? 0).toStringAsFixed(0)}',
-                      style: AppTypography.displayLarge.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
+        content: VStack([
+          HStack([
+            VStack(crossAlignment: CrossAxisAlignment.start, [
+              HStack([
+                Icon(
+                  LucideIcons.wallet,
+                  color: Colors.white.withValues(alpha: 0.8),
+                  size: 16,
                 ),
-                // Status Badge
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm + 4,
-                    vertical: AppSpacing.xs + 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: balanceColor.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
-                    border: Border.all(
-                      color: balanceColor.withValues(alpha: 0.5),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        isPositive
-                            ? LucideIcons.trendingUp
-                            : LucideIcons.trendingDown,
-                        color: balanceColor,
-                        size: 14,
-                      ),
-                      const Gap(4),
-                      Text(
-                        isPositive ? 'Positive' : 'Owes',
-                        style: AppTypography.labelSmall.copyWith(
-                          color: balanceColor,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                4.widthBox,
+                'Your Balance'.text.sm
+                    .color(Colors.white.withValues(alpha: 0.8))
+                    .make(),
+              ]),
+              8.heightBox,
+              '${isPositive ? '+' : ''}৳${(balance?.balance ?? 0).toStringAsFixed(0)}'
+                  .text
+                  .xl4
+                  .white
+                  .extraBold
+                  .make(),
+            ]).expand(),
+            // Status Badge
+            GFBadge(
+              text: isPositive ? 'Positive' : 'Owes',
+              color: balanceColor.withValues(alpha: 0.2),
+              textColor: balanceColor,
+              shape: GFBadgeShape.pills,
+              size: GFSize.SMALL,
             ),
-            const Gap(AppSpacing.lg),
-            Container(
-              height: 1,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.white.withValues(alpha: 0),
-                    Colors.white.withValues(alpha: 0.3),
-                    Colors.white.withValues(alpha: 0),
-                  ],
-                ),
+          ]),
+          16.heightBox,
+          Container(
+            height: 1,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.white.withValues(alpha: 0),
+                  Colors.white.withValues(alpha: 0.3),
+                  Colors.white.withValues(alpha: 0),
+                ],
               ),
             ),
-            const Gap(AppSpacing.md),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStatItem(
-                  LucideIcons.calculator,
-                  'Meal Rate',
-                  '৳${summary.mealRate.toStringAsFixed(0)}',
-                ),
-                _buildStatItem(
-                  LucideIcons.utensils,
-                  'Your Meals',
-                  '${balance?.totalMeals.toStringAsFixed(0) ?? 0}',
-                ),
-                _buildStatItem(
-                  LucideIcons.users,
-                  'Members',
-                  '${summary.memberCount}',
-                ),
-              ],
+          ),
+          12.heightBox,
+          HStack(alignment: MainAxisAlignment.spaceAround, [
+            _statItem(
+              LucideIcons.calculator,
+              'Meal Rate',
+              '৳${summary.mealRate.toStringAsFixed(0)}',
             ),
-          ],
-        ),
+            _statItem(
+              LucideIcons.utensils,
+              'Your Meals',
+              '${balance?.totalMeals.toStringAsFixed(0) ?? 0}',
+            ),
+            _statItem(LucideIcons.users, 'Members', '${summary.memberCount}'),
+          ]),
+        ]),
       ),
     ).animate().fadeIn(duration: 500.ms).scale(begin: const Offset(0.95, 0.95));
   }
 
-  Widget _buildStatItem(IconData icon, String label, String value) {
-    return Column(
-      children: [
-        Icon(icon, color: Colors.white.withValues(alpha: 0.7), size: 18),
-        const Gap(AppSpacing.xs),
-        Text(
-          value,
-          style: AppTypography.titleMedium.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        Text(
-          label,
-          style: AppTypography.labelSmall.copyWith(
-            color: Colors.white.withValues(alpha: 0.7),
-          ),
-        ),
-      ],
-    );
+  Widget _statItem(IconData icon, String label, String value) {
+    return VStack([
+      Icon(icon, color: Colors.white.withValues(alpha: 0.7), size: 18),
+      4.heightBox,
+      value.text.lg.white.bold.make(),
+      label.text.xs.color(Colors.white.withValues(alpha: 0.7)).make(),
+    ]);
   }
 
   Widget _buildQuickActions(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildActionButton(
-            icon: LucideIcons.plus,
-            label: 'Add Meal',
-            color: AppColors.mealColor,
-            onTap: () => _showAddMealSheet(context),
-          ),
-        ),
-        const Gap(AppSpacing.sm),
-        Expanded(
-          child: _buildActionButton(
-            icon: LucideIcons.arrowLeftRight,
-            label: 'Money',
-            color: AppColors.accentWarm,
-            onTap: () => context.go(AppRoutes.money),
-          ),
-        ),
-        const Gap(AppSpacing.sm),
-        Expanded(
-          child: _buildActionButton(
-            icon: LucideIcons.partyPopper,
-            label: 'Split',
-            color: AppColors.secondary,
-            onTap: () => _showPartySplitter(context),
-          ),
-        ),
-      ],
-    ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1);
+    return HStack([
+      _actionCard(
+        icon: LucideIcons.plus,
+        label: 'Add Meal',
+        color: AppColors.mealColor,
+        onTap: () => _showAddMealSheet(context),
+      ).expand(),
+      8.widthBox,
+      _actionCard(
+        icon: LucideIcons.arrowLeftRight,
+        label: 'Money',
+        color: AppColors.accentWarm,
+        onTap: () => context.go(AppRoutes.money),
+      ).expand(),
+      8.widthBox,
+      _actionCard(
+        icon: LucideIcons.partyPopper,
+        label: 'Split',
+        color: AppColors.secondary,
+        onTap: () => _showPartySplitter(context),
+      ).expand(),
+    ]).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1);
   }
 
-  Widget _buildActionButton({
+  Widget _actionCard({
     required IconData icon,
     required String label,
     required Color color,
     required VoidCallback onTap,
   }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            vertical: AppSpacing.md,
-            horizontal: AppSpacing.sm,
-          ),
+    return GFAppCard(
+      color: color.withValues(alpha: 0.1),
+      borderColor: color.withValues(alpha: 0.2),
+      onTap: onTap,
+      child: VStack([
+        Container(
+          padding: const EdgeInsets.all(AppSpacing.sm),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            border: Border.all(color: color.withValues(alpha: 0.2)),
+            color: color.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
           ),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.sm),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                ),
-                child: Icon(icon, color: color, size: 22),
-              ),
-              const Gap(AppSpacing.sm),
-              Text(
-                label,
-                style: AppTypography.labelMedium.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
+          child: Icon(icon, color: color, size: 22),
         ),
-      ),
+        8.heightBox,
+        label.text.sm.color(color).bold.center.make(),
+      ]).py8(),
     );
   }
 
   Widget _buildFeatureGrid(BuildContext context) {
     final features = [
       _FeatureItem(
-        icon: LucideIcons.barChart3,
-        label: 'Analytics',
-        color: AppColors.primaryLight,
-        route: AppRoutes.analytics,
+        LucideIcons.barChart3,
+        'Analytics',
+        AppColors.primaryLight,
+        AppRoutes.analytics,
       ),
       _FeatureItem(
-        icon: LucideIcons.users,
-        label: 'Members',
-        color: AppColors.accentAlt,
-        route: AppRoutes.members,
+        LucideIcons.users,
+        'Members',
+        AppColors.accentAlt,
+        AppRoutes.members,
       ),
       _FeatureItem(
-        icon: LucideIcons.palmtree,
-        label: 'Vacation',
-        color: AppColors.moneyPositive,
-        route: AppRoutes.vacation,
+        LucideIcons.palmtree,
+        'Vacation',
+        AppColors.moneyPositive,
+        AppRoutes.vacation,
       ),
       _FeatureItem(
-        icon: LucideIcons.zap,
-        label: 'DESCO',
-        color: AppColors.accentWarm,
-        route: AppRoutes.desco,
+        LucideIcons.zap,
+        'DESCO',
+        AppColors.accentWarm,
+        AppRoutes.desco,
       ),
       _FeatureItem(
-        icon: LucideIcons.moon,
-        label: 'Ramadan',
-        color: AppColors.secondary,
-        route: AppRoutes.ramadan,
+        LucideIcons.moon,
+        'Ramadan',
+        AppColors.secondary,
+        AppRoutes.ramadan,
       ),
       _FeatureItem(
-        icon: LucideIcons.receipt,
-        label: 'Settlement',
-        color: AppColors.moneyNegative,
-        route: AppRoutes.settlement,
+        LucideIcons.receipt,
+        'Settlement',
+        AppColors.moneyNegative,
+        AppRoutes.settlement,
       ),
       _FeatureItem(
-        icon: LucideIcons.clipboardList,
-        label: 'Duties',
-        color: AppColors.info,
-        route: AppRoutes.duties,
+        LucideIcons.clipboardList,
+        'Duties',
+        AppColors.info,
+        AppRoutes.duties,
       ),
       _FeatureItem(
-        icon: LucideIcons.info,
-        label: 'Info',
-        color: AppColors.textSecondaryDark,
-        route: AppRoutes.info,
+        LucideIcons.info,
+        'Info',
+        AppColors.textSecondaryDark,
+        AppRoutes.info,
       ),
     ];
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        mainAxisSpacing: AppSpacing.sm,
-        crossAxisSpacing: AppSpacing.sm,
-        childAspectRatio: 1.1,
-      ),
-      itemCount: features.length,
-      itemBuilder: (context, index) {
-        final feature = features[index];
-        return _buildFeatureCard(context, feature, index);
-      },
+    // Bento layout using flutter_layout_grid
+    return LayoutGrid(
+      columnSizes: [1.fr, 1.fr, 1.fr, 1.fr],
+      rowSizes: const [auto, auto],
+      columnGap: AppSpacing.sm,
+      rowGap: AppSpacing.sm,
+      children: [
+        // Analytics - 2 columns wide for emphasis
+        _buildBentoCard(context, features[0], 0, colSpan: 2).withGridPlacement(
+          columnStart: 0,
+          columnSpan: 2,
+          rowStart: 0,
+          rowSpan: 1,
+        ),
+        _buildBentoCard(context, features[1], 1).withGridPlacement(
+          columnStart: 2,
+          columnSpan: 1,
+          rowStart: 0,
+          rowSpan: 1,
+        ),
+        _buildBentoCard(context, features[2], 2).withGridPlacement(
+          columnStart: 3,
+          columnSpan: 1,
+          rowStart: 0,
+          rowSpan: 1,
+        ),
+        _buildBentoCard(context, features[3], 3).withGridPlacement(
+          columnStart: 0,
+          columnSpan: 1,
+          rowStart: 1,
+          rowSpan: 1,
+        ),
+        _buildBentoCard(context, features[4], 4).withGridPlacement(
+          columnStart: 1,
+          columnSpan: 1,
+          rowStart: 1,
+          rowSpan: 1,
+        ),
+        // Settlement - 2 columns wide
+        _buildBentoCard(context, features[5], 5, colSpan: 2).withGridPlacement(
+          columnStart: 2,
+          columnSpan: 2,
+          rowStart: 1,
+          rowSpan: 1,
+        ),
+      ],
     ).animate().fadeIn(delay: 250.ms).slideY(begin: 0.1);
   }
 
-  Widget _buildFeatureCard(
+  Widget _buildBentoCard(
     BuildContext context,
     _FeatureItem feature,
-    int index,
-  ) {
-    return Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () => context.go(feature.route),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            child: Container(
-              padding: const EdgeInsets.all(AppSpacing.sm),
-              decoration: BoxDecoration(
-                color: feature.color.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                border: Border.all(color: feature.color.withValues(alpha: 0.2)),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
+    int index, {
+    int colSpan = 1,
+  }) {
+    final isWide = colSpan > 1;
+    return GFAppCard(
+          color: feature.color.withValues(alpha: 0.08),
+          borderColor: feature.color.withValues(alpha: 0.2),
+          padding: const EdgeInsets.all(AppSpacing.md),
+          onTap: () {
+            HapticService.lightTap();
+            context.go(feature.route);
+          },
+          child: isWide
+              ? HStack([
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.sm),
+                    decoration: BoxDecoration(
+                      color: feature.color.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                    ),
+                    child: Icon(feature.icon, color: feature.color, size: 24),
+                  ),
+                  12.widthBox,
+                  VStack(crossAlignment: CrossAxisAlignment.start, [
+                    feature.label.text.lg.color(feature.color).bold.make(),
+                    'Tap to view'.text.xs.color(AppColors.textMutedDark).make(),
+                  ]).expand(),
+                  Icon(
+                    LucideIcons.chevronRight,
+                    color: feature.color,
+                    size: 16,
+                  ),
+                ])
+              : VStack(alignment: MainAxisAlignment.center, [
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.sm),
                     decoration: BoxDecoration(
@@ -585,21 +484,9 @@ class DashboardScreen extends ConsumerWidget {
                     ),
                     child: Icon(feature.icon, color: feature.color, size: 20),
                   ),
-                  const Gap(AppSpacing.xs),
-                  Text(
-                    feature.label,
-                    style: AppTypography.labelSmall.copyWith(
-                      color: feature.color,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          ),
+                  6.heightBox,
+                  feature.label.text.sm.color(feature.color).bold.center.make(),
+                ]),
         )
         .animate(delay: (50 * index).ms)
         .fadeIn()
@@ -613,7 +500,7 @@ class DashboardScreen extends ConsumerWidget {
   ) {
     final activities = <_Activity>[];
 
-    // Add recent meals (last 5)
+    // Add recent meals
     final recentMeals = [...meals]
       ..sort(
         (a, b) => b.createdAt?.compareTo(a.createdAt ?? DateTime.now()) ?? 0,
@@ -635,7 +522,7 @@ class DashboardScreen extends ConsumerWidget {
       );
     }
 
-    // Add recent bazar entries (last 5)
+    // Add recent bazar
     final recentBazar = [...bazarEntries]
       ..sort(
         (a, b) => b.createdAt?.compareTo(a.createdAt ?? DateTime.now()) ?? 0,
@@ -657,7 +544,6 @@ class DashboardScreen extends ConsumerWidget {
       );
     }
 
-    // Sort by time
     activities.sort((a, b) => b.time.compareTo(a.time));
     return activities;
   }
@@ -667,78 +553,40 @@ class DashboardScreen extends ConsumerWidget {
     _Activity activity,
     int index,
   ) {
-    return Container(
+    return GFAppCard(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.cardDark,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: AppColors.borderDark.withValues(alpha: 0.5)),
-      ),
-      child: Row(
-        children: [
-          // Icon Container
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.sm + 2),
-            decoration: BoxDecoration(
-              color: activity.color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+      child: HStack([
+        // Icon
+        GFAvatar(
+          size: 36,
+          backgroundColor: activity.color.withValues(alpha: 0.1),
+          child: Icon(activity.icon, color: activity.color, size: 18),
+        ),
+        12.widthBox,
+        // Content
+        VStack(crossAlignment: CrossAxisAlignment.start, [
+          HStack([
+            activity.name.text.bold.color(AppColors.textPrimaryDark).make(),
+            4.widthBox,
+            Container(
+              width: 3,
+              height: 3,
+              decoration: const BoxDecoration(
+                color: AppColors.textMutedDark,
+                shape: BoxShape.circle,
+              ),
             ),
-            child: Icon(activity.icon, color: activity.color, size: 18),
-          ),
-          const Gap(AppSpacing.md),
-          // Content
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      activity.name,
-                      style: AppTypography.titleSmall.copyWith(
-                        color: AppColors.textPrimaryDark,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const Gap(AppSpacing.xs),
-                    Container(
-                      width: 3,
-                      height: 3,
-                      decoration: BoxDecoration(
-                        color: AppColors.textMutedDark,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const Gap(AppSpacing.xs),
-                    Text(
-                      _formatTimeAgo(activity.time),
-                      style: AppTypography.labelSmall.copyWith(
-                        color: AppColors.textMutedDark,
-                      ),
-                    ),
-                  ],
-                ),
-                const Gap(2),
-                Text(
-                  activity.action,
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textSecondaryDark,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Amount
-          Text(
-            activity.value,
-            style: AppTypography.titleSmall.copyWith(
-              color: activity.color,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
+            4.widthBox,
+            _formatTimeAgo(
+              activity.time,
+            ).text.xs.color(AppColors.textMutedDark).make(),
+          ]),
+          2.heightBox,
+          activity.action.text.sm.color(AppColors.textSecondaryDark).make(),
+        ]).expand(),
+        // Value
+        activity.value.text.bold.color(activity.color).make(),
+      ]),
     ).animate(delay: (80 * index).ms).fadeIn().slideX(begin: 0.03);
   }
 
@@ -760,15 +608,6 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   void _showAddBazarSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => const AddBazarSheet(),
-    );
-  }
-
-  void _showUnifiedEntrySheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -811,10 +650,5 @@ class _FeatureItem {
   final Color color;
   final String route;
 
-  _FeatureItem({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.route,
-  });
+  _FeatureItem(this.icon, this.label, this.color, this.route);
 }

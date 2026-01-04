@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mess_manager/core/models/ramadan.dart';
-import 'package:mess_manager/core/services/storage_service.dart';
+import 'package:mess_manager/core/database/isar_service.dart';
 
 /// Current active Ramadan season
 final activeRamadanSeasonProvider = Provider<RamadanSeason?>((ref) {
@@ -23,18 +23,11 @@ final ramadanSeasonsProvider =
 class RamadanSeasonsNotifier extends Notifier<List<RamadanSeason>> {
   @override
   List<RamadanSeason> build() {
-    return StorageService.loadList<RamadanSeason>(
-      boxName: 'ramadan_seasons',
-      fromJson: RamadanSeason.fromJson,
-    );
+    return IsarService.getAllRamadanSeasons();
   }
 
-  Future<void> _save() async {
-    await StorageService.saveList(
-      boxName: 'ramadan_seasons',
-      items: state,
-      toJson: (s) => s.toJson(),
-    );
+  void _save() {
+    IsarService.saveRamadanSeasons(state);
   }
 
   Future<void> createSeason({
@@ -53,7 +46,7 @@ class RamadanSeasonsNotifier extends Notifier<List<RamadanSeason>> {
       createdAt: DateTime.now(),
     );
     state = [...state, season];
-    await _save();
+    _save();
   }
 
   Future<void> optIn(String seasonId, String memberId) async {
@@ -63,7 +56,7 @@ class RamadanSeasonsNotifier extends Notifier<List<RamadanSeason>> {
       }
       return s;
     }).toList();
-    await _save();
+    _save();
   }
 
   Future<void> optOut(String seasonId, String memberId) async {
@@ -77,7 +70,7 @@ class RamadanSeasonsNotifier extends Notifier<List<RamadanSeason>> {
       }
       return s;
     }).toList();
-    await _save();
+    _save();
   }
 
   Future<void> endSeason(String seasonId) async {
@@ -87,7 +80,7 @@ class RamadanSeasonsNotifier extends Notifier<List<RamadanSeason>> {
       }
       return s;
     }).toList();
-    await _save();
+    _save();
   }
 
   /// Mark season as fully settled (hides from UI)
@@ -98,7 +91,7 @@ class RamadanSeasonsNotifier extends Notifier<List<RamadanSeason>> {
       }
       return s;
     }).toList();
-    await _save();
+    _save();
   }
 }
 
@@ -111,18 +104,11 @@ final ramadanMealsProvider =
 class RamadanMealsNotifier extends Notifier<List<RamadanMeal>> {
   @override
   List<RamadanMeal> build() {
-    return StorageService.loadList<RamadanMeal>(
-      boxName: 'ramadan_meals',
-      fromJson: RamadanMeal.fromJson,
-    );
+    return IsarService.getAllRamadanMeals();
   }
 
-  Future<void> _save() async {
-    await StorageService.saveList(
-      boxName: 'ramadan_meals',
-      items: state,
-      toJson: (m) => m.toJson(),
-    );
+  void _save() {
+    IsarService.saveRamadanMeals(state);
   }
 
   Future<void> addMeal({
@@ -144,12 +130,12 @@ class RamadanMealsNotifier extends Notifier<List<RamadanMeal>> {
       createdAt: DateTime.now(),
     );
     state = [...state, meal];
-    await _save();
+    _save();
   }
 
   Future<void> removeMeal(String mealId) async {
     state = state.where((m) => m.id != mealId).toList();
-    await _save();
+    IsarService.deleteRamadanMeal(mealId);
   }
 
   List<RamadanMeal> getMealsForDate(String seasonId, DateTime date) {
@@ -174,18 +160,11 @@ final ramadanBazarProvider =
 class RamadanBazarNotifier extends Notifier<List<RamadanBazar>> {
   @override
   List<RamadanBazar> build() {
-    return StorageService.loadList<RamadanBazar>(
-      boxName: 'ramadan_bazar',
-      fromJson: RamadanBazar.fromJson,
-    );
+    return IsarService.getAllRamadanBazar();
   }
 
-  Future<void> _save() async {
-    await StorageService.saveList(
-      boxName: 'ramadan_bazar',
-      items: state,
-      toJson: (b) => b.toJson(),
-    );
+  void _save() {
+    IsarService.saveRamadanBazars(state);
   }
 
   Future<void> addBazar({
@@ -206,7 +185,7 @@ class RamadanBazarNotifier extends Notifier<List<RamadanBazar>> {
       createdAt: DateTime.now(),
     );
     state = [...state, bazar];
-    await _save();
+    _save();
   }
 
   double getTotalForSeason(String seasonId) {

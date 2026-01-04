@@ -1,84 +1,45 @@
-import 'dart:convert';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:flutter/foundation.dart';
+import '../database/isar_service.dart';
 
-/// Storage service for persisting app data using Hive
+/// Storage service for persisting app data using Isar
+/// This is a compatibility layer that wraps IsarService
+///
+/// NOTE: Most usage should migrate directly to IsarService.
+/// This wrapper is kept temporarily for backward compatibility.
 class StorageService {
-  static const String _membersBox = 'members';
-  static const String _mealsBox = 'meals';
-  static const String _bazarBox = 'bazar';
-  static const String _bazarListBox = 'bazar_list';
-  static const String _transactionsBox = 'transactions';
-  static const String _scheduleBox = 'schedules';
-  static const String _settingsBox = 'settings';
-  static const String _ramadanSeasonsBox = 'ramadan_seasons';
-  static const String _ramadanMealsBox = 'ramadan_meals';
-  static const String _ramadanBazarBox = 'ramadan_bazar';
-  static const String _settlementsBox = 'settlements';
-  static const String _dutySchedulesBox = 'duty_schedules';
-  static const String _dutyAssignmentsBox = 'duty_assignments';
-
-  /// Initialize Hive
+  /// Initialize Isar (replaces Hive initialization)
   static Future<void> init() async {
-    await Hive.initFlutter();
-
-    // Open all boxes
-    await Hive.openBox<String>(_membersBox);
-    await Hive.openBox<String>(_mealsBox);
-    await Hive.openBox<String>(_bazarBox);
-    await Hive.openBox<String>(_bazarListBox);
-    await Hive.openBox<String>(_transactionsBox);
-    await Hive.openBox<String>(_scheduleBox);
-    await Hive.openBox<dynamic>(_settingsBox);
-    // Ramadan & Settlement
-    await Hive.openBox<String>(_ramadanSeasonsBox);
-    await Hive.openBox<String>(_ramadanMealsBox);
-    await Hive.openBox<String>(_ramadanBazarBox);
-    await Hive.openBox<String>(_settlementsBox);
-    // Duties
-    await Hive.openBox<String>(_dutySchedulesBox);
-    await Hive.openBox<String>(_dutyAssignmentsBox);
-    await Hive.openBox<String>('duty_debts');
+    await IsarService.init();
+    debugPrint('StorageService (Isar) initialized');
   }
 
-  // ============ Single JSON Object Storage ============
+  // ─────────────────────────────────────────────────────────────────────────
+  // GENERIC JSON STORAGE (Settings-based)
+  // ─────────────────────────────────────────────────────────────────────────
 
   /// Save a single JSON object
-  static Future<void> saveJson(String key, Map<String, dynamic> data) async {
-    final box = Hive.box<dynamic>(_settingsBox);
-    await box.put(key, jsonEncode(data));
+  static void saveJson(String key, Map<String, dynamic> data) {
+    IsarService.saveSetting(key, data);
   }
 
   /// Load a single JSON object
   static Map<String, dynamic>? loadJson(String key) {
-    final box = Hive.box<dynamic>(_settingsBox);
-    final jsonStr = box.get(key);
-    if (jsonStr == null || jsonStr is! String) return null;
-    try {
-      return jsonDecode(jsonStr) as Map<String, dynamic>;
-    } catch (_) {
-      return null;
-    }
+    return IsarService.getSetting<Map<String, dynamic>>(key);
   }
 
   /// Delete a single JSON object
-  static Future<void> deleteJson(String key) async {
-    final box = Hive.box<dynamic>(_settingsBox);
-    await box.delete(key);
+  static void deleteJson(String key) {
+    IsarService.removeSetting(key);
   }
 
-  // ============ Generic JSON Storage ============
-
   /// Save a list of items as JSON
-  static Future<void> saveList<T>({
+  static void saveList<T>({
     required String boxName,
     required List<T> items,
     required Map<String, dynamic> Function(T) toJson,
-  }) async {
-    final box = Hive.box<String>(boxName);
-    await box.clear();
-    for (var i = 0; i < items.length; i++) {
-      await box.put(i.toString(), jsonEncode(toJson(items[i])));
-    }
+  }) {
+    final jsonList = items.map(toJson).toList();
+    IsarService.saveSetting('list_$boxName', jsonList);
   }
 
   /// Load a list of items from JSON
@@ -86,227 +47,58 @@ class StorageService {
     required String boxName,
     required T Function(Map<String, dynamic>) fromJson,
   }) {
-    final box = Hive.box<String>(boxName);
-    final items = <T>[];
-    for (final key in box.keys) {
-      final json = box.get(key);
-      if (json != null) {
-        try {
-          items.add(fromJson(jsonDecode(json) as Map<String, dynamic>));
-        } catch (e) {
-          // Skip corrupted entries
-        }
-      }
-    }
-    return items;
+    final jsonList = IsarService.getSetting<List<dynamic>>('list_$boxName');
+    if (jsonList == null) return [];
+
+    return jsonList.map((e) => fromJson(Map<String, dynamic>.from(e))).toList();
   }
 
-  // ============ Members ============
+  // ─────────────────────────────────────────────────────────────────────────
+  // SETTINGS (Key-Value Store)
+  // ─────────────────────────────────────────────────────────────────────────
 
-  static Future<void> saveMembers(List<dynamic> members) async {
-    await saveList(
-      boxName: _membersBox,
-      items: members,
-      toJson: (m) => m.toJson(),
-    );
-  }
-
-  static List<Map<String, dynamic>> loadMembersJson() {
-    final box = Hive.box<String>(_membersBox);
-    final items = <Map<String, dynamic>>[];
-    for (final key in box.keys) {
-      final json = box.get(key);
-      if (json != null) {
-        try {
-          items.add(jsonDecode(json) as Map<String, dynamic>);
-        } catch (e) {
-          // Skip corrupted
-        }
-      }
-    }
-    return items;
-  }
-
-  // ============ Meals ============
-
-  static Future<void> saveMeals(List<dynamic> meals) async {
-    await saveList(boxName: _mealsBox, items: meals, toJson: (m) => m.toJson());
-  }
-
-  static List<Map<String, dynamic>> loadMealsJson() {
-    final box = Hive.box<String>(_mealsBox);
-    final items = <Map<String, dynamic>>[];
-    for (final key in box.keys) {
-      final json = box.get(key);
-      if (json != null) {
-        try {
-          items.add(jsonDecode(json) as Map<String, dynamic>);
-        } catch (e) {
-          // Skip
-        }
-      }
-    }
-    return items;
-  }
-
-  // ============ Bazar ============
-
-  static Future<void> saveBazarEntries(List<dynamic> entries) async {
-    await saveList(
-      boxName: _bazarBox,
-      items: entries,
-      toJson: (e) => e.toJson(),
-    );
-  }
-
-  static List<Map<String, dynamic>> loadBazarEntriesJson() {
-    final box = Hive.box<String>(_bazarBox);
-    final items = <Map<String, dynamic>>[];
-    for (final key in box.keys) {
-      final json = box.get(key);
-      if (json != null) {
-        try {
-          items.add(jsonDecode(json) as Map<String, dynamic>);
-        } catch (e) {
-          // Skip
-        }
-      }
-    }
-    return items;
-  }
-
-  // ============ Bazar List ============
-
-  static Future<void> saveBazarList(List<dynamic> items) async {
-    await saveList(
-      boxName: _bazarListBox,
-      items: items,
-      toJson: (i) => i.toJson(),
-    );
-  }
-
-  static List<Map<String, dynamic>> loadBazarListJson() {
-    final box = Hive.box<String>(_bazarListBox);
-    final items = <Map<String, dynamic>>[];
-    for (final key in box.keys) {
-      final json = box.get(key);
-      if (json != null) {
-        try {
-          items.add(jsonDecode(json) as Map<String, dynamic>);
-        } catch (e) {
-          // Skip
-        }
-      }
-    }
-    return items;
-  }
-
-  // ============ Transactions ============
-
-  static Future<void> saveTransactions(List<dynamic> transactions) async {
-    await saveList(
-      boxName: _transactionsBox,
-      items: transactions,
-      toJson: (t) => t.toJson(),
-    );
-  }
-
-  static List<Map<String, dynamic>> loadTransactionsJson() {
-    final box = Hive.box<String>(_transactionsBox);
-    final items = <Map<String, dynamic>>[];
-    for (final key in box.keys) {
-      final json = box.get(key);
-      if (json != null) {
-        try {
-          items.add(jsonDecode(json) as Map<String, dynamic>);
-        } catch (e) {
-          // Skip
-        }
-      }
-    }
-    return items;
-  }
-
-  // ============ Settings ============
-
-  static Future<void> saveSetting(String key, dynamic value) async {
-    final box = Hive.box<dynamic>(_settingsBox);
-    await box.put(key, value);
+  static void saveSetting(String key, dynamic value) {
+    IsarService.saveSetting(key, value);
   }
 
   static T? getSetting<T>(String key, {T? defaultValue}) {
-    final box = Hive.box<dynamic>(_settingsBox);
-    return box.get(key, defaultValue: defaultValue) as T?;
+    return IsarService.getSetting<T>(key, defaultValue: defaultValue);
   }
 
-  static Future<void> removeSetting(String key) async {
-    final box = Hive.box<dynamic>(_settingsBox);
-    await box.delete(key);
+  static void removeSetting(String key) {
+    IsarService.removeSetting(key);
   }
 
-  // ============ Theme ============
+  // ─────────────────────────────────────────────────────────────────────────
+  // THEME
+  // ─────────────────────────────────────────────────────────────────────────
 
-  static Future<void> saveThemeMode(bool isDark) async {
-    await saveSetting('isDarkMode', isDark);
+  static void saveThemeMode(bool isDark) {
+    IsarService.saveSetting('theme_mode', isDark);
   }
 
   static bool loadThemeMode() {
-    return getSetting<bool>('isDarkMode', defaultValue: true) ?? true;
+    return IsarService.getSetting<bool>('theme_mode', defaultValue: false) ??
+        false;
   }
 
-  // ============ Current Member ============
+  // ─────────────────────────────────────────────────────────────────────────
+  // CURRENT MEMBER
+  // ─────────────────────────────────────────────────────────────────────────
 
-  static Future<void> saveCurrentMemberId(String id) async {
-    await saveSetting('currentMemberId', id);
+  static void saveCurrentMemberId(String id) {
+    IsarService.saveSetting('current_member_id', id);
   }
 
   static String? loadCurrentMemberId() {
-    return getSetting<String>('currentMemberId');
+    return IsarService.getSetting<String>('current_member_id');
   }
 
-  // ============ Clear All ============
+  // ─────────────────────────────────────────────────────────────────────────
+  // CLEAR ALL
+  // ─────────────────────────────────────────────────────────────────────────
 
-  static Future<void> clearAll() async {
-    await Hive.box<String>(_membersBox).clear();
-    await Hive.box<String>(_mealsBox).clear();
-    await Hive.box<String>(_bazarBox).clear();
-    await Hive.box<String>(_bazarListBox).clear();
-    await Hive.box<String>(_transactionsBox).clear();
-  }
-
-  // ============ Unified Entries ============
-
-  static const String _unifiedEntriesBox = 'unified_entries';
-
-  static Future<void> initUnifiedBox() async {
-    if (!Hive.isBoxOpen(_unifiedEntriesBox)) {
-      await Hive.openBox<String>(_unifiedEntriesBox);
-    }
-  }
-
-  static Future<void> saveUnifiedEntries(List<dynamic> entries) async {
-    await initUnifiedBox();
-    await saveList(
-      boxName: _unifiedEntriesBox,
-      items: entries,
-      toJson: (e) => e.toJson(),
-    );
-  }
-
-  static List<Map<String, dynamic>> loadUnifiedEntriesJson() {
-    if (!Hive.isBoxOpen(_unifiedEntriesBox)) return [];
-    final box = Hive.box<String>(_unifiedEntriesBox);
-    final items = <Map<String, dynamic>>[];
-    for (final key in box.keys) {
-      final json = box.get(key);
-      if (json != null) {
-        try {
-          items.add(jsonDecode(json) as Map<String, dynamic>);
-        } catch (e) {
-          // Skip
-        }
-      }
-    }
-    return items;
+  static void clearAll() {
+    IsarService.clearAll();
   }
 }

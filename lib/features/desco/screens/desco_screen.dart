@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:gap/gap.dart';
+import 'package:velocity_x/velocity_x.dart';
+import 'package:getwidget/getwidget.dart';
+
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/services/desco_service.dart';
+import 'package:mess_manager/core/services/haptic_service.dart';
+import 'package:mess_manager/core/widgets/gf_components.dart';
 import 'package:mess_manager/features/desco/providers/desco_provider.dart';
 
+/// DESCO Screen - Uses GetWidget + VelocityX + flutter_animate + fl_chart
 class DescoScreen extends ConsumerStatefulWidget {
   const DescoScreen({super.key});
 
@@ -28,46 +34,42 @@ class _DescoScreenState extends ConsumerState<DescoScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            const Icon(LucideIcons.zap, color: AppColors.warning, size: 22),
-            const Gap(AppSpacing.sm),
-            const Text('Electricity'),
-          ],
-        ),
+        title: HStack([
+          const Icon(LucideIcons.zap, color: AppColors.warning, size: 22),
+          8.widthBox,
+          'Electricity'.text.make(),
+        ]),
         actions: [
-          IconButton(
+          GFIconButton(
             icon: const Icon(LucideIcons.refreshCw, size: 20),
+            type: GFButtonType.transparent,
             onPressed: () {
+              HapticService.lightTap();
               ref.invalidate(descoBalanceProvider);
               ref.invalidate(descoConsumptionProvider);
             },
-            tooltip: 'Refresh',
           ),
-          IconButton(
+          GFIconButton(
             icon: const Icon(LucideIcons.settings, size: 20),
+            type: GFButtonType.transparent,
             onPressed: () => _showMeterSetup(context),
-            tooltip: 'Meter Settings',
           ),
         ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Balance Card
-            _buildBalanceCard(balanceAsync, lowBalanceAsync, estimatedDays),
-            const Gap(AppSpacing.lg),
+        child: VStack(crossAlignment: CrossAxisAlignment.start, [
+          // Balance Card
+          _buildBalanceCard(balanceAsync, lowBalanceAsync, estimatedDays),
+          16.heightBox,
 
-            // Monthly Usage Chart
-            _buildUsageChartSection(consumptionAsync),
-            const Gap(AppSpacing.lg),
+          // Monthly Usage Chart
+          _buildUsageChartSection(consumptionAsync),
+          16.heightBox,
 
-            // Quick Stats
-            _buildQuickStats(consumptionAsync),
-          ],
-        ),
+          // Quick Stats
+          _buildQuickStats(consumptionAsync),
+        ]),
       ),
     );
   }
@@ -79,9 +81,7 @@ class _DescoScreenState extends ConsumerState<DescoScreen> {
   ) {
     return balanceAsync.when(
       data: (balance) {
-        if (balance == null) {
-          return _buildSetupPrompt();
-        }
+        if (balance == null) return _buildSetupPrompt();
 
         final lowStatus = lowBalanceAsync.when(
           data: (s) => s,
@@ -92,310 +92,201 @@ class _DescoScreenState extends ConsumerState<DescoScreen> {
             lowStatus == LowBalanceStatus.estimatedLow ||
             lowStatus == LowBalanceStatus.confirmedLow;
 
-        return Container(
+        return GFCard(
+          margin: EdgeInsets.zero,
           padding: const EdgeInsets.all(AppSpacing.lg),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: isLow
-                  ? [AppColors.error, AppColors.error.withValues(alpha: 0.7)]
-                  : [
-                      AppColors.warning,
-                      AppColors.warning.withValues(alpha: 0.7),
-                    ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            boxShadow: [
-              BoxShadow(
-                color: (isLow ? AppColors.error : AppColors.warning).withValues(
-                  alpha: 0.3,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          gradient: LinearGradient(
+            colors: isLow
+                ? [AppColors.error, AppColors.error.withValues(alpha: 0.7)]
+                : [AppColors.warning, AppColors.warning.withValues(alpha: 0.7)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          content: VStack(crossAlignment: CrossAxisAlignment.start, [
+            HStack([
+              Icon(
+                isLow ? LucideIcons.alertTriangle : LucideIcons.zap,
+                color: Colors.white,
+                size: 24,
+              ),
+              8.widthBox,
+              (balance.isEstimated ? 'Estimated Balance' : 'Current Balance')
+                  .text
+                  .sm
+                  .color(Colors.white.withValues(alpha: 0.8))
+                  .make()
+                  .expand(),
+              if (balance.isEstimated)
+                GFBadge(
+                  text: '~estimated',
+                  color: Colors.white.withValues(alpha: 0.2),
+                  textColor: Colors.white,
+                  size: GFSize.SMALL,
                 ),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
+            ]),
+            12.heightBox,
+            '৳${balance.currentBalance.toStringAsFixed(0)}'.text.xl4.white.bold
+                .make(),
+            if (estimatedDays != null) ...[
+              8.heightBox,
+              '~$estimatedDays days remaining'.text
+                  .color(Colors.white.withValues(alpha: 0.8))
+                  .make(),
+            ],
+            if (isLow) ...[
+              12.heightBox,
+              GFButton(
+                onPressed: () {
+                  HapticService.warning();
+                  _confirmLowBalance();
+                },
+                text: 'Confirm Balance',
+                icon: const Icon(
+                  LucideIcons.alertCircle,
+                  size: 18,
+                  color: AppColors.error,
+                ),
+                color: Colors.white,
+                textColor: AppColors.error,
+                fullWidthButton: true,
               ),
             ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    isLow ? LucideIcons.alertTriangle : LucideIcons.zap,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                  const Gap(AppSpacing.sm),
-                  Text(
-                    balance.isEstimated
-                        ? 'Estimated Balance'
-                        : 'Current Balance',
-                    style: AppTypography.labelMedium.copyWith(
-                      color: Colors.white.withValues(alpha: 0.8),
-                    ),
-                  ),
-                  const Spacer(),
-                  if (balance.isEstimated)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        '~estimated',
-                        style: AppTypography.labelSmall.copyWith(
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              const Gap(AppSpacing.md),
-              Text(
-                '৳${balance.currentBalance.toStringAsFixed(0)}',
-                style: AppTypography.displayMedium.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              if (estimatedDays != null) ...[
-                const Gap(AppSpacing.sm),
-                Text(
-                  '~$estimatedDays days remaining',
-                  style: AppTypography.bodyMedium.copyWith(
-                    color: Colors.white.withValues(alpha: 0.8),
-                  ),
-                ),
-              ],
-              if (isLow) ...[
-                const Gap(AppSpacing.md),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () => _confirmLowBalance(),
-                    icon: const Icon(LucideIcons.alertCircle, size: 18),
-                    label: const Text('Confirm Balance'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: AppColors.error,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        );
+          ]),
+        ).animate().fadeIn().scale(begin: const Offset(0.95, 0.95));
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const GFLoader(type: GFLoaderType.circle),
       error: (e, s) => _buildSetupPrompt(),
     );
   }
 
   Widget _buildSetupPrompt() {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: AppColors.cardDark,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: AppColors.warning.withValues(alpha: 0.5)),
-      ),
-      child: Column(
-        children: [
-          const Icon(LucideIcons.zap, size: 48, color: AppColors.warning),
-          const Gap(AppSpacing.md),
-          Text(
-            'Setup DESCO Meter',
-            style: AppTypography.titleMedium.copyWith(
-              color: AppColors.textPrimaryDark,
-            ),
-          ),
-          const Gap(AppSpacing.sm),
-          Text(
-            'Enter your account or meter number to view electricity balance',
-            style: AppTypography.bodySmall.copyWith(
-              color: AppColors.textSecondaryDark,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const Gap(AppSpacing.md),
-          ElevatedButton.icon(
-            onPressed: () => _showMeterSetup(context),
-            icon: const Icon(LucideIcons.settings, size: 18),
-            label: const Text('Setup Now'),
-          ),
-        ],
-      ),
-    );
+    return GFAppCard(
+      borderColor: AppColors.warning.withValues(alpha: 0.5),
+      child: VStack([
+        const Icon(LucideIcons.zap, size: 48, color: AppColors.warning),
+        12.heightBox,
+        'Setup DESCO Meter'.text.lg
+            .color(AppColors.textPrimaryDark)
+            .center
+            .make(),
+        8.heightBox,
+        'Enter your account or meter number to view electricity balance'.text.sm
+            .color(AppColors.textSecondaryDark)
+            .center
+            .make(),
+        16.heightBox,
+        GFPrimaryButton(
+          text: 'Setup Now',
+          icon: LucideIcons.settings,
+          onPressed: () => _showMeterSetup(context),
+        ),
+      ]).p16(),
+    ).animate().fadeIn();
   }
 
   Widget _buildUsageChartSection(
     AsyncValue<List<DescoConsumption>> consumptionAsync,
   ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Monthly Usage',
-              style: AppTypography.headlineSmall.copyWith(
-                color: AppColors.textPrimaryDark,
-              ),
+    return VStack(crossAlignment: CrossAxisAlignment.start, [
+      HStack([
+        'Monthly Usage'.text.xl.bold
+            .color(AppColors.textPrimaryDark)
+            .make()
+            .expand(),
+        SegmentedButton<bool>(
+          segments: [
+            ButtonSegment(
+              value: false,
+              label: DateTime.now().year.toString().text.make(),
             ),
-            SegmentedButton<bool>(
-              segments: [
-                ButtonSegment(
-                  value: false,
-                  label: Text(DateTime.now().year.toString()),
-                ),
-                ButtonSegment(
-                  value: true,
-                  label: Text((DateTime.now().year - 1).toString()),
-                ),
-              ],
-              selected: {_showPrevYear},
-              onSelectionChanged: (s) =>
-                  setState(() => _showPrevYear = s.first),
-              style: ButtonStyle(visualDensity: VisualDensity.compact),
+            ButtonSegment(
+              value: true,
+              label: (DateTime.now().year - 1).toString().text.make(),
             ),
           ],
+          selected: {_showPrevYear},
+          onSelectionChanged: (s) {
+            HapticService.selectionTick();
+            setState(() => _showPrevYear = s.first);
+          },
+          style: const ButtonStyle(visualDensity: VisualDensity.compact),
         ),
-        const Gap(AppSpacing.md),
-        Container(
-          height: 250,
-          padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
-            color: AppColors.cardDark,
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          ),
+      ]),
+      12.heightBox,
+      GFAppCard(
+        child: SizedBox(
+          height: 220,
           child: consumptionAsync.when(
             data: (data) => _buildUsageChart(data),
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, s) => Center(
-              child: Text(
-                'Failed to load data',
-                style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.textSecondaryDark,
-                ),
-              ),
-            ),
+            loading: () => const GFLoader(type: GFLoaderType.circle).centered(),
+            error: (e, s) => 'Failed to load data'.text
+                .color(AppColors.textSecondaryDark)
+                .makeCentered(),
           ),
         ),
-      ],
-    );
+      ),
+    ]).animate(delay: 200.ms).fadeIn().slideY(begin: 0.05);
   }
 
   Widget _buildUsageChart(List<DescoConsumption> data) {
     if (data.isEmpty) {
-      return Center(
-        child: Text(
-          'No consumption data',
-          style: AppTypography.bodyMedium.copyWith(
-            color: AppColors.textSecondaryDark,
-          ),
-        ),
-      );
+      return 'No consumption data'.text
+          .color(AppColors.textSecondaryDark)
+          .makeCentered();
     }
-
-    final maxY = data.map((e) => e.units).reduce((a, b) => a > b ? a : b);
 
     return BarChart(
       BarChartData(
         alignment: BarChartAlignment.spaceAround,
-        maxY: maxY * 1.2,
+        maxY: data.map((e) => e.units).reduce((a, b) => a > b ? a : b) * 1.2,
         barTouchData: BarTouchData(
-          enabled: true,
           touchTooltipData: BarTouchTooltipData(
+            getTooltipColor: (group) => AppColors.surfaceDark,
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
-              final consumption = data[groupIndex];
               return BarTooltipItem(
-                '${consumption.units.toStringAsFixed(0)} units\n৳${consumption.amount.toStringAsFixed(0)}',
+                '${data[group.x].units.toStringAsFixed(0)} kWh\n৳${data[group.x].amount.toStringAsFixed(0)}',
                 AppTypography.labelSmall.copyWith(color: Colors.white),
               );
             },
           ),
         ),
         titlesData: FlTitlesData(
-          topTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
-          ),
-          rightTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
-          ),
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 40,
-              getTitlesWidget: (value, meta) => Text(
-                value.toInt().toString(),
-                style: AppTypography.labelSmall.copyWith(
-                  color: AppColors.textMutedDark,
-                ),
-              ),
-            ),
-          ),
+          show: true,
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
               getTitlesWidget: (value, meta) {
-                final idx = value.toInt();
-                if (idx >= 0 && idx < data.length) {
-                  final month = data[idx].month;
-                  // Extract month abbreviation
-                  final parts = month.split('-');
-                  final monthNum = parts.length > 1
-                      ? int.tryParse(parts[1]) ?? 0
-                      : 0;
-                  final monthNames = [
-                    '',
-                    'Jan',
-                    'Feb',
-                    'Mar',
-                    'Apr',
-                    'May',
-                    'Jun',
-                    'Jul',
-                    'Aug',
-                    'Sep',
-                    'Oct',
-                    'Nov',
-                    'Dec',
-                  ];
-                  return Text(
-                    monthNum > 0 && monthNum <= 12
-                        ? monthNames[monthNum]
-                        : month,
-                    style: AppTypography.labelSmall.copyWith(
-                      color: AppColors.textMutedDark,
-                    ),
-                  );
+                if (value.toInt() < data.length) {
+                  return data[value.toInt()].month.text.xs
+                      .color(AppColors.textMutedDark)
+                      .make()
+                      .p4();
                 }
                 return const SizedBox.shrink();
               },
             ),
           ),
+          leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
         ),
         borderData: FlBorderData(show: false),
-        gridData: FlGridData(
-          show: true,
-          horizontalInterval: maxY / 4,
-          getDrawingHorizontalLine: (value) =>
-              FlLine(color: AppColors.borderDark, strokeWidth: 1),
-          drawVerticalLine: false,
-        ),
-        barGroups: data.asMap().entries.map((entry) {
+        gridData: const FlGridData(show: false),
+        barGroups: data.asMap().entries.map((e) {
           return BarChartGroupData(
-            x: entry.key,
+            x: e.key,
             barRods: [
               BarChartRodData(
-                toY: entry.value.units,
-                color: AppColors.warning,
+                toY: e.value.units,
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.warning,
+                    AppColors.warning.withValues(alpha: 0.6),
+                  ],
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                ),
                 width: 16,
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(4),
@@ -413,41 +304,44 @@ class _DescoScreenState extends ConsumerState<DescoScreen> {
       data: (data) {
         if (data.isEmpty) return const SizedBox.shrink();
 
-        final totalUnits = data.fold(0.0, (sum, c) => sum + c.units);
-        final totalAmount = data.fold(0.0, (sum, c) => sum + c.amount);
-        final avgUnits = totalUnits / data.length;
-        final avgRate = totalUnits > 0 ? totalAmount / totalUnits : 0.0;
+        final avgUnits =
+            data.map((e) => e.units).reduce((a, b) => a + b) / data.length;
+        final avgCost =
+            data.map((e) => e.amount).reduce((a, b) => a + b) / data.length;
+        final lastMonth = data.isNotEmpty ? data.last : null;
 
-        return Row(
-          children: [
-            Expanded(
-              child: _buildStatCard(
-                icon: LucideIcons.activity,
-                label: 'Avg/Month',
-                value: '${avgUnits.toStringAsFixed(0)} units',
-                color: AppColors.primary,
-              ),
+        return VStack([
+          'Quick Stats'.text.xl.bold
+              .color(AppColors.textPrimaryDark)
+              .make()
+              .wFull(context),
+          12.heightBox,
+          HStack([
+            _buildStatCard(
+              icon: LucideIcons.activity,
+              label: 'Avg Usage',
+              value: '${avgUnits.toStringAsFixed(0)} kWh',
+              color: AppColors.info,
+            ).expand(),
+            8.widthBox,
+            _buildStatCard(
+              icon: LucideIcons.wallet,
+              label: 'Avg Cost',
+              value: '৳${avgCost.toStringAsFixed(0)}',
+              color: AppColors.warning,
+            ).expand(),
+          ]),
+          8.heightBox,
+          if (lastMonth != null)
+            _buildStatCard(
+              icon: LucideIcons.calendar,
+              label: 'Last Month',
+              value:
+                  '${lastMonth.units.toStringAsFixed(0)} kWh • ৳${lastMonth.amount.toStringAsFixed(0)}',
+              color: AppColors.success,
+              fullWidth: true,
             ),
-            const Gap(AppSpacing.sm),
-            Expanded(
-              child: _buildStatCard(
-                icon: LucideIcons.trendingUp,
-                label: 'Total',
-                value: '${totalUnits.toStringAsFixed(0)} units',
-                color: AppColors.success,
-              ),
-            ),
-            const Gap(AppSpacing.sm),
-            Expanded(
-              child: _buildStatCard(
-                icon: LucideIcons.dollarSign,
-                label: 'Avg Rate',
-                value: '৳${avgRate.toStringAsFixed(2)}/unit',
-                color: AppColors.warning,
-              ),
-            ),
-          ],
-        );
+        ]).animate(delay: 400.ms).fadeIn().slideY(begin: 0.05);
       },
       loading: () => const SizedBox.shrink(),
       error: (e, s) => const SizedBox.shrink(),
@@ -459,54 +353,22 @@ class _DescoScreenState extends ConsumerState<DescoScreen> {
     required String label,
     required String value,
     required Color color,
+    bool fullWidth = false,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.cardDark,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 20),
-          const Gap(AppSpacing.xs),
-          Text(
-            label,
-            style: AppTypography.labelSmall.copyWith(
-              color: AppColors.textMutedDark,
-            ),
-          ),
-          const Gap(2),
-          Text(
-            value,
-            style: AppTypography.labelMedium.copyWith(
-              color: AppColors.textPrimaryDark,
-              fontWeight: FontWeight.w600,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _confirmLowBalance() async {
-    final status = await DescoService.checkLowBalance(confirm: true);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            status == LowBalanceStatus.confirmedLow
-                ? '⚠️ Balance is low! Recharge soon.'
-                : '✓ Balance is OK',
-          ),
-          backgroundColor: status == LowBalanceStatus.confirmedLow
-              ? AppColors.error
-              : AppColors.success,
+    return GFAppCard(
+      child: HStack([
+        GFAvatar(
+          size: 36,
+          backgroundColor: color.withValues(alpha: 0.15),
+          child: Icon(icon, color: color, size: 18),
         ),
-      );
-      ref.invalidate(descoBalanceProvider);
-    }
+        12.widthBox,
+        VStack(crossAlignment: CrossAxisAlignment.start, [
+          label.text.xs.color(AppColors.textMutedDark).make(),
+          value.text.color(AppColors.textPrimaryDark).bold.make(),
+        ]).expand(),
+      ]),
+    );
   }
 
   void _showMeterSetup(BuildContext context) {
@@ -517,9 +379,17 @@ class _DescoScreenState extends ConsumerState<DescoScreen> {
       builder: (context) => const _MeterSetupSheet(),
     );
   }
+
+  void _confirmLowBalance() {
+    // Trigger confirmed balance check & refresh
+    ref.invalidate(descoConfirmedBalanceProvider);
+    ref.invalidate(descoBalanceProvider);
+    showSuccessToast(context, 'Balance check triggered');
+  }
 }
 
-/// Meter Setup Bottom Sheet
+// ==================== Meter Setup Sheet ====================
+
 class _MeterSetupSheet extends ConsumerStatefulWidget {
   const _MeterSetupSheet();
 
@@ -528,31 +398,35 @@ class _MeterSetupSheet extends ConsumerStatefulWidget {
 }
 
 class _MeterSetupSheetState extends ConsumerState<_MeterSetupSheet> {
-  final _controller = TextEditingController();
+  final _meterController = TextEditingController();
+  final _accountController = TextEditingController();
   bool _isLoading = false;
-  DescoCustomerInfo? _foundInfo;
-  String? _error;
 
   @override
   void dispose() {
-    _controller.dispose();
+    _meterController.dispose();
+    _accountController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
+      padding: EdgeInsets.only(
+        left: AppSpacing.lg,
+        right: AppSpacing.lg,
+        top: AppSpacing.lg,
+        bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
+      ),
+      decoration: const BoxDecoration(
         color: AppColors.surfaceDark,
-        borderRadius: const BorderRadius.vertical(
+        borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppSpacing.radiusLg),
         ),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: SingleChildScrollView(
+        child: VStack(crossAlignment: CrossAxisAlignment.start, [
+          // Handle
           Center(
             child: Container(
               width: 40,
@@ -563,186 +437,91 @@ class _MeterSetupSheetState extends ConsumerState<_MeterSetupSheet> {
               ),
             ),
           ),
-          const Gap(AppSpacing.lg),
-          Text(
-            'Setup DESCO Meter',
-            style: AppTypography.headlineMedium.copyWith(
-              color: AppColors.textPrimaryDark,
-            ),
-          ),
-          const Gap(AppSpacing.md),
-          Text(
-            'Enter your account number (8 digits) or meter number (12 digits)',
-            style: AppTypography.bodySmall.copyWith(
-              color: AppColors.textSecondaryDark,
-            ),
-          ),
-          const Gap(AppSpacing.lg),
+          16.heightBox,
+
+          // Header
+          HStack([
+            const Icon(LucideIcons.zap, color: AppColors.warning),
+            8.widthBox,
+            'Setup DESCO Meter'.text.xl2
+                .color(AppColors.textPrimaryDark)
+                .make(),
+          ]),
+          16.heightBox,
+
+          // Meter Number
           TextField(
-            controller: _controller,
+            controller: _meterController,
+            decoration: const InputDecoration(
+              labelText: 'Meter Number',
+              prefixIcon: Icon(LucideIcons.hash, size: 18),
+            ),
             keyboardType: TextInputType.number,
-            style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textPrimaryDark,
-            ),
-            decoration: InputDecoration(
-              hintText: 'Account or Meter Number',
-              prefixIcon: const Icon(LucideIcons.hash, size: 18),
-              suffixIcon: _isLoading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : IconButton(
-                      icon: const Icon(LucideIcons.search, size: 18),
-                      onPressed: _lookup,
-                    ),
-            ),
-            onSubmitted: (_) => _lookup(),
           ),
-          if (_error != null) ...[
-            const Gap(AppSpacing.sm),
-            Text(
-              _error!,
-              style: AppTypography.bodySmall.copyWith(color: AppColors.error),
+          12.heightBox,
+
+          // Account Number
+          TextField(
+            controller: _accountController,
+            decoration: const InputDecoration(
+              labelText: 'Account Number (optional)',
+              prefixIcon: Icon(LucideIcons.creditCard, size: 18),
             ),
-          ],
-          if (_foundInfo != null) ...[
-            const Gap(AppSpacing.lg),
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: AppColors.success.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                border: Border.all(
-                  color: AppColors.success.withValues(alpha: 0.5),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(
-                        LucideIcons.checkCircle,
-                        color: AppColors.success,
-                        size: 20,
-                      ),
-                      const Gap(AppSpacing.sm),
-                      Text(
-                        'Meter Found',
-                        style: AppTypography.titleSmall.copyWith(
-                          color: AppColors.success,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Gap(AppSpacing.sm),
-                  _infoRow('Account', _foundInfo!.accountNo ?? '-'),
-                  _infoRow('Meter', _foundInfo!.meterNo ?? '-'),
-                  _infoRow('Name', _foundInfo!.customerName ?? '-'),
-                  _infoRow('Area', _foundInfo!.area ?? '-'),
-                ],
-              ),
-            ),
-            const Gap(AppSpacing.lg),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _save,
-                icon: const Icon(LucideIcons.check, size: 18),
-                label: const Text('Use This Meter'),
-              ),
-            ),
-          ],
-          const Gap(AppSpacing.lg),
-        ],
+          ),
+          24.heightBox,
+
+          // Submit
+          GFPrimaryButton(
+            text: 'Save Settings',
+            icon: LucideIcons.check,
+            isLoading: _isLoading,
+            onPressed: _save,
+          ),
+        ]),
       ),
     );
   }
 
-  Widget _infoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 4),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 60,
-            child: Text(
-              label,
-              style: AppTypography.labelSmall.copyWith(
-                color: AppColors.textMutedDark,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: AppTypography.bodySmall.copyWith(
-                color: AppColors.textPrimaryDark,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _lookup() async {
-    final input = _controller.text.trim();
-    if (input.isEmpty) return;
-
-    setState(() {
-      _isLoading = true;
-      _error = null;
-      _foundInfo = null;
-    });
-
-    // Determine input type by length
-    String? accountNo;
-    String? meterNo;
-
-    if (input.length == 8) {
-      accountNo = input;
-    } else if (input.length == 12) {
-      meterNo = input;
-    } else {
-      setState(() {
-        _isLoading = false;
-        _error = 'Enter 8-digit account or 12-digit meter number';
-      });
+  void _save() async {
+    if (_meterController.text.isEmpty) {
+      showErrorToast(context, 'Enter meter number');
       return;
     }
 
-    final info = await DescoService.lookupMeter(
-      inputAccountNo: accountNo,
-      inputMeterNo: meterNo,
-    );
+    setState(() => _isLoading = true);
+    HapticService.buttonPress();
 
-    setState(() {
-      _isLoading = false;
-      if (info != null && info.isValid) {
-        _foundInfo = info;
-      } else {
-        _error = 'Meter not found. Check the number.';
-      }
-    });
-  }
-
-  Future<void> _save() async {
-    if (_foundInfo == null) return;
-
-    final success = await DescoService.setupMeter(_foundInfo!);
-    if (success && mounted) {
-      ref.invalidate(descoBalanceProvider);
-      ref.invalidate(descoConsumptionProvider);
-      Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('✓ Meter setup complete'),
-          backgroundColor: AppColors.success,
-        ),
+    try {
+      // First lookup the meter
+      final info = await DescoService.lookupMeter(
+        inputMeterNo: _meterController.text.trim(),
+        inputAccountNo: _accountController.text.trim().isEmpty
+            ? null
+            : _accountController.text.trim(),
       );
+
+      if (info == null) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          showErrorToast(context, 'Meter not found');
+        }
+        return;
+      }
+
+      // Setup the meter
+      await DescoService.setupMeter(info);
+
+      // Refresh the balance provider
+      ref.invalidate(descoBalanceProvider);
+      if (mounted) {
+        Navigator.pop(context);
+        showSuccessToast(context, 'Meter setup complete');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        showErrorToast(context, 'Setup failed');
+      }
     }
   }
 }

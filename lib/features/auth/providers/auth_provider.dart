@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mess_manager/core/models/auth_user.dart';
-import 'package:mess_manager/core/services/storage_service.dart';
+import 'package:mess_manager/core/database/isar_service.dart';
 
 /// Auth state
 enum AuthStatus { initial, authenticated, unauthenticated }
@@ -47,8 +47,10 @@ class AuthNotifier extends Notifier<AuthState> {
     return const AuthState();
   }
 
-  void _checkAuth() async {
-    final userData = StorageService.loadJson('current_user');
+  void _checkAuth() {
+    final userData = IsarService.getSetting<Map<String, dynamic>>(
+      'current_user',
+    );
     if (userData != null) {
       try {
         final user = AuthUser.fromJson(userData);
@@ -73,10 +75,15 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   List<Mess> _loadMesses() {
-    return StorageService.loadList<Mess>(
-      boxName: 'messes',
-      fromJson: Mess.fromJson,
-    );
+    final messesJson = IsarService.getSetting<List<dynamic>>('messes');
+    if (messesJson == null) return [];
+    return messesJson
+        .map((m) => Mess.fromJson(Map<String, dynamic>.from(m)))
+        .toList();
+  }
+
+  void _saveMesses(List<Mess> messes) {
+    IsarService.saveSetting('messes', messes.map((m) => m.toJson()).toList());
   }
 
   Mess _createDefaultMess() {
@@ -106,7 +113,7 @@ class AuthNotifier extends Notifier<AuthState> {
         createdAt: DateTime.now(),
       );
 
-      await StorageService.saveJson('current_user', user.toJson());
+      IsarService.saveSetting('current_user', user.toJson());
 
       state = state.copyWith(
         status: AuthStatus.authenticated,
@@ -124,7 +131,9 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<bool> signIn({required String email, required String password}) async {
     try {
       // For local auth, just load user by email (simulate login)
-      final userData = StorageService.loadJson('current_user');
+      final userData = IsarService.getSetting<Map<String, dynamic>>(
+        'current_user',
+      );
       if (userData != null) {
         final user = AuthUser.fromJson(userData);
         if (user.email == email) {
@@ -149,7 +158,7 @@ class AuthNotifier extends Notifier<AuthState> {
         name: email.split('@').first,
         createdAt: DateTime.now(),
       );
-      await StorageService.saveJson('current_user', user.toJson());
+      IsarService.saveSetting('current_user', user.toJson());
 
       state = state.copyWith(
         status: AuthStatus.authenticated,
@@ -166,7 +175,7 @@ class AuthNotifier extends Notifier<AuthState> {
 
   /// Sign out
   Future<void> signOut() async {
-    await StorageService.deleteJson('current_user');
+    IsarService.removeSetting('current_user');
     state = const AuthState(status: AuthStatus.unauthenticated);
   }
 
@@ -186,11 +195,7 @@ class AuthNotifier extends Notifier<AuthState> {
     );
 
     final messes = [...state.availableMesses, mess];
-    await StorageService.saveList(
-      boxName: 'messes',
-      items: messes,
-      toJson: (m) => m.toJson(),
-    );
+    _saveMesses(messes);
 
     // Update user's current mess
     final updatedUser = AuthUser(
@@ -202,7 +207,7 @@ class AuthNotifier extends Notifier<AuthState> {
       createdAt: state.user!.createdAt,
       currentMessId: mess.id,
     );
-    await StorageService.saveJson('current_user', updatedUser.toJson());
+    IsarService.saveSetting('current_user', updatedUser.toJson());
 
     state = state.copyWith(
       user: updatedUser,
@@ -225,7 +230,7 @@ class AuthNotifier extends Notifier<AuthState> {
       createdAt: state.user!.createdAt,
       currentMessId: messId,
     );
-    await StorageService.saveJson('current_user', updatedUser.toJson());
+    IsarService.saveSetting('current_user', updatedUser.toJson());
 
     state = state.copyWith(user: updatedUser, currentMess: mess);
   }
@@ -251,11 +256,7 @@ class AuthNotifier extends Notifier<AuthState> {
       return m.id == mess.id ? updatedMess : m;
     }).toList();
 
-    await StorageService.saveList(
-      boxName: 'messes',
-      items: messes,
-      toJson: (m) => m.toJson(),
-    );
+    _saveMesses(messes);
 
     await selectMess(mess.id);
     return true;

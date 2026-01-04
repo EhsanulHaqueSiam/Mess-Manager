@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:velocity_x/velocity_x.dart';
+import 'package:getwidget/getwidget.dart';
 
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/router/app_router.dart';
 import 'package:mess_manager/core/services/auth_service.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
+import 'package:mess_manager/core/widgets/gf_components.dart';
 
+/// Profile Screen - Uses GetWidget + VelocityX + flutter_animate
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
@@ -55,391 +58,351 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           icon: const Icon(LucideIcons.arrowLeft),
           onPressed: () => context.pop(),
         ),
-        title: const Text('Profile'),
+        title: 'Profile'.text.make(),
         actions: [
           if (!_isEditing)
-            IconButton(
-              icon: const Icon(LucideIcons.pencil, size: 20),
+            GFIconButton(
+              icon: const Icon(
+                LucideIcons.pencil,
+                size: 20,
+                color: AppColors.primary,
+              ),
+              type: GFButtonType.transparent,
               onPressed: () {
                 HapticService.lightTap();
                 setState(() => _isEditing = true);
               },
-              tooltip: 'Edit Profile',
             ),
         ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          children: [
-            // Profile Avatar
-            Center(
-              child: Stack(
-                children: [
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: AppColors.gradientPrimary,
+        child: VStack([
+          // Profile Avatar
+          Center(
+            child: Stack(
+              children: [
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(colors: AppColors.gradientPrimary),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.3),
+                        blurRadius: 16,
+                        offset: const Offset(0, 8),
                       ),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.3),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
+                    ],
+                  ),
+                  child: Center(
+                    child: _getInitials(
+                      user?.displayName ?? user?.email ?? 'U',
+                    ).text.xl3.white.bold.make(),
+                  ),
+                ).animate().scale(delay: 100.ms),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: GFIconButton(
+                    icon: const Icon(
+                      LucideIcons.camera,
+                      size: 16,
+                      color: Colors.white,
                     ),
-                    child: Center(
-                      child: Text(
-                        _getInitials(user?.displayName ?? user?.email ?? 'U'),
-                        style: AppTypography.displaySmall.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ).animate().scale(delay: 100.ms),
-                  if (_isEditing)
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: AppColors.surfaceDark,
-                            width: 3,
-                          ),
-                        ),
-                        child: const Icon(
-                          LucideIcons.camera,
-                          size: 16,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            const Gap(AppSpacing.md),
-
-            // Email (non-editable)
-            Text(
-              user?.email ?? 'No email',
-              style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.textSecondaryDark,
-              ),
-            ).animate().fadeIn(delay: 200.ms),
-            const Gap(AppSpacing.xl),
-
-            // Profile Form
-            Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Name
-                  _buildFormField(
-                    label: 'Display Name',
-                    controller: _nameController,
-                    icon: LucideIcons.user,
-                    enabled: _isEditing,
-                    validator: (v) {
-                      if (v == null || v.isEmpty) return 'Name required';
-                      return null;
+                    size: GFSize.SMALL,
+                    color: AppColors.primary,
+                    shape: GFIconButtonShape.circle,
+                    onPressed: () {
+                      HapticService.lightTap();
+                      showSuccessToast(context, 'Photo upload coming soon');
                     },
-                  ).animate().fadeIn(delay: 300.ms).slideX(begin: 0.02),
-                  const Gap(AppSpacing.md),
-
-                  // Phone
-                  _buildFormField(
-                    label: 'Phone Number',
-                    controller: _phoneController,
-                    icon: LucideIcons.phone,
-                    enabled: _isEditing,
-                    keyboardType: TextInputType.phone,
-                  ).animate().fadeIn(delay: 400.ms).slideX(begin: 0.02),
-                  const Gap(AppSpacing.xl),
-
-                  // Action Buttons
-                  if (_isEditing) ...[
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {
-                              HapticService.lightTap();
-                              _loadUserData();
-                              setState(() => _isEditing = false);
-                            },
-                            child: const Text('Cancel'),
-                          ),
-                        ),
-                        const Gap(AppSpacing.md),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: _isLoading ? null : _saveProfile,
-                            child: _isLoading
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Text('Save'),
-                          ),
-                        ),
-                      ],
-                    ).animate().fadeIn(delay: 500.ms),
-                  ],
-                ],
-              ),
+                  ),
+                ),
+              ],
             ),
-            const Gap(AppSpacing.xxl),
+          ).animate().fadeIn(),
+          24.heightBox,
 
-            // Account Actions
-            _buildSectionHeader('Account'),
-            const Gap(AppSpacing.sm),
-            _buildActionTile(
-              icon: LucideIcons.key,
-              title: 'Change Password',
-              onTap: _showChangePassword,
-            ).animate().fadeIn(delay: 600.ms),
-            _buildActionTile(
-              icon: LucideIcons.logOut,
-              title: 'Sign Out',
-              onTap: _signOut,
-              isDestructive: true,
-            ).animate().fadeIn(delay: 700.ms),
-            _buildActionTile(
-              icon: LucideIcons.trash2,
-              title: 'Delete Account',
-              onTap: _showDeleteAccount,
-              isDestructive: true,
-            ).animate().fadeIn(delay: 800.ms),
-          ],
-        ),
+          // User Info
+          (user?.displayName ?? 'User').text.xl2.bold
+              .color(AppColors.textPrimaryDark)
+              .center
+              .make(),
+          4.heightBox,
+          (user?.email ?? '').text.sm
+              .color(AppColors.textSecondaryDark)
+              .center
+              .make(),
+          24.heightBox,
+
+          // Profile Form or Display
+          if (_isEditing) ...[_buildEditForm()] else ...[_buildInfoCards(user)],
+          32.heightBox,
+
+          // Actions
+          _buildActionButtons(),
+        ]),
       ),
     );
   }
 
-  Widget _buildFormField({
+  Widget _buildEditForm() {
+    return Form(
+      key: _formKey,
+      child: VStack([
+        'Edit Profile'.text.lg.bold
+            .color(AppColors.textPrimaryDark)
+            .make()
+            .wFull(context),
+        16.heightBox,
+        GFAppCard(
+          child: VStack([
+            TextFormField(
+              controller: _nameController,
+              decoration: const InputDecoration(
+                labelText: 'Display Name',
+                prefixIcon: Icon(LucideIcons.user, size: 18),
+              ),
+              validator: (v) => v?.isEmpty == true ? 'Name required' : null,
+            ),
+            16.heightBox,
+            TextFormField(
+              controller: _phoneController,
+              decoration: const InputDecoration(
+                labelText: 'Phone Number',
+                prefixIcon: Icon(LucideIcons.phone, size: 18),
+              ),
+              keyboardType: TextInputType.phone,
+            ),
+          ]),
+        ),
+        24.heightBox,
+        HStack([
+          GFSecondaryButton(
+            text: 'Cancel',
+            onPressed: () {
+              _loadUserData();
+              setState(() => _isEditing = false);
+            },
+          ).expand(),
+          16.widthBox,
+          GFPrimaryButton(
+            text: 'Save',
+            isLoading: _isLoading,
+            onPressed: _saveProfile,
+          ).expand(),
+        ]),
+      ]),
+    ).animate().fadeIn().slideY(begin: 0.05);
+  }
+
+  Widget _buildInfoCards(dynamic user) {
+    return VStack([
+      _buildInfoCard(
+        icon: LucideIcons.mail,
+        label: 'Email',
+        value: user?.email ?? 'Not set',
+        color: AppColors.primary,
+      ).animate(delay: 100.ms).fadeIn().slideX(begin: 0.05),
+      _buildInfoCard(
+        icon: LucideIcons.phone,
+        label: 'Phone',
+        value: user?.phoneNumber ?? 'Not set',
+        color: AppColors.info,
+      ).animate(delay: 150.ms).fadeIn().slideX(begin: 0.05),
+      _buildInfoCard(
+        icon: LucideIcons.shieldCheck,
+        label: 'Account Status',
+        value: user?.emailVerified == true ? 'Verified' : 'Not Verified',
+        color: user?.emailVerified == true
+            ? AppColors.success
+            : AppColors.warning,
+      ).animate(delay: 200.ms).fadeIn().slideX(begin: 0.05),
+      _buildInfoCard(
+        icon: LucideIcons.calendar,
+        label: 'Member Since',
+        value: _formatDate(user?.metadata?.creationTime),
+        color: AppColors.secondary,
+      ).animate(delay: 250.ms).fadeIn().slideX(begin: 0.05),
+    ]);
+  }
+
+  Widget _buildInfoCard({
+    required IconData icon,
     required String label,
-    required TextEditingController controller,
-    required IconData icon,
-    bool enabled = true,
-    TextInputType? keyboardType,
-    String? Function(String?)? validator,
+    required String value,
+    required Color color,
   }) {
-    return TextFormField(
-      controller: controller,
-      enabled: enabled,
-      keyboardType: keyboardType,
-      validator: validator,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, size: 20),
-        filled: true,
-        fillColor: enabled ? null : AppColors.cardDark.withValues(alpha: 0.5),
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(String title) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        title.toUpperCase(),
-        style: AppTypography.labelSmall.copyWith(
-          color: AppColors.textMutedDark,
-          letterSpacing: 1.2,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionTile({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-    bool isDestructive = false,
-  }) {
-    final color = isDestructive ? AppColors.error : AppColors.textPrimaryDark;
-
-    return Container(
+    return GFAppCard(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      decoration: BoxDecoration(
-        color: AppColors.cardDark,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: AppColors.borderDark.withValues(alpha: 0.5)),
-      ),
-      child: ListTile(
-        leading: Icon(icon, color: color, size: 20),
-        title: Text(title, style: TextStyle(color: color)),
-        trailing: Icon(
-          LucideIcons.chevronRight,
-          color: color.withValues(alpha: 0.5),
-          size: 18,
+      child: HStack([
+        GFAvatar(
+          size: 40,
+          backgroundColor: color.withValues(alpha: 0.15),
+          child: Icon(icon, color: color, size: 18),
         ),
-        onTap: () {
-          HapticService.lightTap();
-          onTap();
-        },
-      ),
+        12.widthBox,
+        VStack(crossAlignment: CrossAxisAlignment.start, [
+          label.text.xs.color(AppColors.textMutedDark).make(),
+          value.text.color(AppColors.textPrimaryDark).bold.make(),
+        ]).expand(),
+      ]),
     );
+  }
+
+  Widget _buildActionButtons() {
+    return VStack([
+      'Account Actions'.text.lg.bold
+          .color(AppColors.textPrimaryDark)
+          .make()
+          .wFull(context),
+      12.heightBox,
+      GFAppCard(
+        onTap: _changePassword,
+        child: HStack([
+          const Icon(LucideIcons.key, color: AppColors.info, size: 20),
+          12.widthBox,
+          'Change Password'.text
+              .color(AppColors.textPrimaryDark)
+              .make()
+              .expand(),
+          const Icon(
+            LucideIcons.chevronRight,
+            color: AppColors.textMutedDark,
+            size: 18,
+          ),
+        ]),
+      ).animate(delay: 300.ms).fadeIn(),
+      8.heightBox,
+      GFAppCard(
+        onTap: _verifyEmail,
+        child: HStack([
+          const Icon(LucideIcons.mailCheck, color: AppColors.success, size: 20),
+          12.widthBox,
+          'Verify Email'.text.color(AppColors.textPrimaryDark).make().expand(),
+          const Icon(
+            LucideIcons.chevronRight,
+            color: AppColors.textMutedDark,
+            size: 18,
+          ),
+        ]),
+      ).animate(delay: 350.ms).fadeIn(),
+      24.heightBox,
+      GFDangerButton(
+        text: 'Sign Out',
+        icon: LucideIcons.logOut,
+        onPressed: _signOut,
+      ).animate(delay: 400.ms).fadeIn(),
+      12.heightBox,
+      GFButton(
+        onPressed: _deleteAccount,
+        text: 'Delete Account',
+        type: GFButtonType.transparent,
+        textColor: AppColors.error,
+        icon: const Icon(LucideIcons.trash2, size: 16, color: AppColors.error),
+        fullWidthButton: true,
+      ).animate(delay: 450.ms).fadeIn(),
+    ]);
   }
 
   String _getInitials(String name) {
     final parts = name.trim().split(' ');
     if (parts.length >= 2) {
-      return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
     }
     return name.isNotEmpty ? name[0].toUpperCase() : 'U';
+  }
+
+  String _formatDate(DateTime? date) {
+    if (date == null) return 'Unknown';
+    return '${date.day}/${date.month}/${date.year}';
   }
 
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
-    HapticService.buttonPress();
     setState(() => _isLoading = true);
+    HapticService.buttonPress();
 
     try {
       await AuthService.updateDisplayName(_nameController.text.trim());
-
       if (mounted) {
-        HapticService.success();
+        showSuccessToast(context, 'Profile updated!');
         setState(() {
           _isEditing = false;
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile updated successfully'),
-            backgroundColor: AppColors.success,
-          ),
-        );
       }
     } catch (e) {
       if (mounted) {
-        HapticService.error();
+        showErrorToast(context, 'Failed to update profile');
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
       }
     }
   }
 
-  void _showChangePassword() {
-    HapticService.modalOpen();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surfaceDark,
-        title: const Text('Reset Password'),
-        content: const Text(
-          'We will send a password reset link to your email.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final email = AuthService.currentUser?.email;
-              if (email != null) {
-                await AuthService.sendPasswordResetEmail(email);
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Password reset email sent!'),
-                      backgroundColor: AppColors.success,
-                    ),
-                  );
-                }
-              }
-            },
-            child: const Text('Send Email'),
-          ),
-        ],
-      ),
-    );
+  void _changePassword() async {
+    HapticService.lightTap();
+    final email = AuthService.currentUser?.email;
+    if (email == null) {
+      showErrorToast(context, 'No email associated with account');
+      return;
+    }
+    try {
+      await AuthService.sendPasswordResetEmail(email);
+      if (mounted) showSuccessToast(context, 'Password reset email sent!');
+    } catch (e) {
+      if (mounted) showErrorToast(context, 'Failed to send reset email');
+    }
   }
 
-  void _signOut() {
-    HapticService.mediumTap();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surfaceDark,
-        title: const Text('Sign Out'),
-        content: const Text('Are you sure you want to sign out?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              await AuthService.signOut();
-              if (context.mounted) {
-                Navigator.pop(context);
-                context.go(AppRoutes.login);
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Sign Out'),
-          ),
-        ],
-      ),
-    );
+  void _verifyEmail() async {
+    HapticService.lightTap();
+    try {
+      await AuthService.currentUser?.sendEmailVerification();
+      if (mounted) showSuccessToast(context, 'Verification email sent!');
+    } catch (e) {
+      if (mounted) showErrorToast(context, 'Failed to send verification');
+    }
   }
 
-  void _showDeleteAccount() {
-    HapticService.heavyTap();
+  void _signOut() async {
+    HapticService.warning();
+    await AuthService.signOut();
+    if (mounted) context.go(AppRoutes.login);
+  }
+
+  void _deleteAccount() {
+    HapticService.warning();
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surfaceDark,
-        title: const Text('Delete Account'),
-        content: const Text(
-          'This action cannot be undone. All your data will be permanently deleted.',
-        ),
+        title: 'Delete Account?'.text.color(AppColors.textPrimaryDark).make(),
+        content:
+            'This action cannot be undone. All your data will be permanently deleted.'
+                .text
+                .color(AppColors.textSecondaryDark)
+                .make(),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            onPressed: () => Navigator.pop(ctx),
+            child: 'Cancel'.text.color(AppColors.textMutedDark).make(),
           ),
-          ElevatedButton(
+          TextButton(
             onPressed: () async {
-              final result = await AuthService.deleteAccount();
-              if (context.mounted) {
-                Navigator.pop(context);
-                if (result.isSuccess) {
-                  context.go(AppRoutes.login);
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(result.error ?? 'Failed to delete account'),
-                      backgroundColor: AppColors.error,
-                    ),
-                  );
-                }
+              Navigator.pop(ctx);
+              try {
+                await AuthService.deleteAccount();
+                if (mounted) context.go(AppRoutes.login);
+              } catch (e) {
+                if (mounted)
+                  showErrorToast(context, 'Failed to delete account');
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Delete Forever'),
+            child: 'Delete'.text.color(AppColors.error).make(),
           ),
         ],
       ),

@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mess_manager/core/services/storage_service.dart';
+import 'package:mess_manager/core/database/isar_service.dart';
 
 /// Notification types
 enum NotificationType {
@@ -82,15 +82,17 @@ class NotificationSettingsNotifier extends Notifier<NotificationSettings> {
   }
 
   NotificationSettings _load() {
-    final json = StorageService.loadJson('notification_settings');
+    final json = IsarService.getSetting<Map<String, dynamic>>(
+      'notification_settings',
+    );
     if (json != null) {
       return NotificationSettings.fromJson(json);
     }
     return const NotificationSettings();
   }
 
-  Future<void> _save() async {
-    await StorageService.saveJson('notification_settings', state.toJson());
+  void _save() {
+    IsarService.saveSetting('notification_settings', state.toJson());
   }
 
   Future<void> toggle(NotificationType type) async {
@@ -108,12 +110,12 @@ class NotificationSettingsNotifier extends Notifier<NotificationSettings> {
       case NotificationType.newEntry:
         state = state.copyWith(newEntry: !state.newEntry);
     }
-    await _save();
+    _save();
   }
 
   Future<void> toggleAll() async {
     state = state.copyWith(enabled: !state.enabled);
-    await _save();
+    _save();
   }
 }
 

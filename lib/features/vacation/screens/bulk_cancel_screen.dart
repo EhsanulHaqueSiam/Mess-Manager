@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:gap/gap.dart';
+import 'package:velocity_x/velocity_x.dart';
+import 'package:getwidget/getwidget.dart';
+
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/models/meal.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
+import 'package:mess_manager/core/widgets/gf_components.dart';
 
-/// Bulk Meal Cancellation Screen
-/// Cancel meals in bulk for a date range
+/// Bulk Meal Cancellation Screen - Uses GetWidget + VelocityX + flutter_animate
 class BulkCancelScreen extends ConsumerWidget {
   const BulkCancelScreen({super.key});
 
@@ -18,110 +20,51 @@ class BulkCancelScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            const Icon(
-              LucideIcons.calendarX,
-              color: AppColors.warning,
-              size: 22,
-            ),
-            const Gap(AppSpacing.sm),
-            const Text('Cancel Meals'),
-          ],
-        ),
+        title: HStack([
+          const Icon(LucideIcons.calendarX, color: AppColors.warning, size: 22),
+          8.widthBox,
+          'Cancel Meals'.text.make(),
+        ]),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Info Card
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: AppColors.info.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                border: Border.all(
-                  color: AppColors.info.withValues(alpha: 0.3),
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(LucideIcons.info, color: AppColors.info),
-                  const Gap(AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Bulk Cancel Meals',
-                          style: AppTypography.titleSmall.copyWith(
-                            color: AppColors.textPrimaryDark,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          'Select date range to cancel all meals. You won\'t receive meal notifications during cancelled days.',
-                          style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.textSecondaryDark,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ).animate().fadeIn().slideY(begin: -0.1),
-            const Gap(AppSpacing.lg),
+        child: VStack(crossAlignment: CrossAxisAlignment.start, [
+          // Info Card
+          GFAppCard(
+            color: AppColors.info.withValues(alpha: 0.1),
+            borderColor: AppColors.info.withValues(alpha: 0.3),
+            child: HStack([
+              const Icon(LucideIcons.info, color: AppColors.info),
+              12.widthBox,
+              VStack(crossAlignment: CrossAxisAlignment.start, [
+                'Bulk Cancel Meals'.text.bold
+                    .color(AppColors.textPrimaryDark)
+                    .make(),
+                'Select date range to cancel all meals. You won\'t receive meal notifications during cancelled days.'
+                    .text
+                    .sm
+                    .color(AppColors.textSecondaryDark)
+                    .make(),
+              ]).expand(),
+            ]),
+          ).animate().fadeIn().slideY(begin: -0.05),
+          16.heightBox,
 
-            // Active Cancellations
-            if (cancellations.isNotEmpty) ...[
-              Text(
-                'Active Cancellations',
-                style: AppTypography.headlineSmall.copyWith(
-                  color: AppColors.textPrimaryDark,
-                ),
-              ),
-              const Gap(AppSpacing.sm),
-              ...cancellations.asMap().entries.map(
-                (e) => _buildCancellationCard(context, ref, e.value, e.key),
-              ),
-              const Gap(AppSpacing.lg),
-            ],
-
-            // Empty State
-            if (cancellations.isEmpty)
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.xl),
-                decoration: BoxDecoration(
-                  color: AppColors.cardDark,
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                ),
-                child: Column(
-                  children: [
-                    Icon(
-                      LucideIcons.calendarCheck,
-                      color: AppColors.textMutedDark,
-                      size: 48,
-                    ),
-                    const Gap(AppSpacing.md),
-                    Text(
-                      'No meals cancelled',
-                      style: AppTypography.titleMedium.copyWith(
-                        color: AppColors.textSecondaryDark,
-                      ),
-                    ),
-                    Text(
-                      'All meals are active',
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textMutedDark,
-                      ),
-                    ),
-                  ],
-                ),
-              ).animate().fadeIn(),
+          // Active Cancellations
+          if (cancellations.isNotEmpty) ...[
+            'Active Cancellations'.text.xl.bold
+                .color(AppColors.textPrimaryDark)
+                .make(),
+            8.heightBox,
+            ...cancellations.asMap().entries.map(
+              (e) => _buildCancellationCard(context, ref, e.value, e.key),
+            ),
+            16.heightBox,
           ],
-        ),
+
+          // Empty State
+          if (cancellations.isEmpty) _buildEmptyState(),
+        ]),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
@@ -130,9 +73,30 @@ class BulkCancelScreen extends ConsumerWidget {
         },
         backgroundColor: AppColors.warning,
         icon: const Icon(LucideIcons.calendarMinus),
-        label: const Text('Cancel Meals'),
+        label: 'Cancel Meals'.text.make(),
       ).animate().scale(delay: 200.ms),
     );
+  }
+
+  Widget _buildEmptyState() {
+    return GFAppCard(
+      child: VStack([
+        const Icon(
+          LucideIcons.calendarCheck,
+          color: AppColors.textMutedDark,
+          size: 48,
+        ),
+        12.heightBox,
+        'No meals cancelled'.text.lg
+            .color(AppColors.textSecondaryDark)
+            .center
+            .make(),
+        'All meals are active'.text.sm
+            .color(AppColors.textMutedDark)
+            .center
+            .make(),
+      ]).p16(),
+    ).animate().fadeIn();
   }
 
   Widget _buildCancellationCard(
@@ -143,95 +107,73 @@ class BulkCancelScreen extends ConsumerWidget {
   ) {
     final isActive = cancellation.endDate.isAfter(DateTime.now());
 
-    return Container(
+    return GFAppCard(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.cardDark,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(
-          color: isActive
-              ? AppColors.warning.withValues(alpha: 0.5)
-              : AppColors.borderDark,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                isActive ? LucideIcons.calendarX : LucideIcons.calendarCheck,
-                color: isActive ? AppColors.warning : AppColors.textMutedDark,
-                size: 20,
-              ),
-              const Gap(AppSpacing.sm),
-              Expanded(
-                child: Text(
-                  isActive ? 'Meals Cancelled' : 'Past Cancellation',
-                  style: AppTypography.titleSmall.copyWith(
-                    color: AppColors.textPrimaryDark,
-                  ),
-                ),
-              ),
-              if (isActive)
-                IconButton(
-                  icon: const Icon(LucideIcons.trash2, size: 18),
-                  color: AppColors.error,
-                  onPressed: () {
-                    HapticService.itemDeleted();
-                    ref
-                        .read(mealCancellationsProvider.notifier)
-                        .removeCancellation(cancellation.id);
-                  },
-                ),
-            ],
+      borderColor: isActive
+          ? AppColors.warning.withValues(alpha: 0.5)
+          : AppColors.borderDark,
+      child: VStack(crossAlignment: CrossAxisAlignment.start, [
+        HStack([
+          Icon(
+            isActive ? LucideIcons.calendarX : LucideIcons.calendarCheck,
+            color: isActive ? AppColors.warning : AppColors.textMutedDark,
+            size: 20,
           ),
-          const Gap(AppSpacing.sm),
-
-          // Date Range
-          Row(
-            children: [
-              _buildDateChip(
-                'From: ${_formatDateMeal(cancellation.startDate, cancellation.startMeal)}',
-                AppColors.warning,
+          8.widthBox,
+          (isActive ? 'Meals Cancelled' : 'Past Cancellation').text
+              .color(AppColors.textPrimaryDark)
+              .make()
+              .expand(),
+          if (isActive)
+            GFIconButton(
+              icon: const Icon(
+                LucideIcons.trash2,
+                size: 18,
+                color: AppColors.error,
               ),
-              const Gap(AppSpacing.sm),
-              const Icon(
-                LucideIcons.arrowRight,
-                size: 14,
-                color: AppColors.textMutedDark,
-              ),
-              const Gap(AppSpacing.sm),
-              _buildDateChip(
-                'To: ${_formatDateMeal(cancellation.endDate, cancellation.endMeal)}',
-                AppColors.warning,
-              ),
-            ],
-          ),
-
-          // Cancelled meals count
-          const Gap(AppSpacing.sm),
-          Text(
-            '${cancellation.getCancelledMealsCount()} meals cancelled',
-            style: AppTypography.bodySmall.copyWith(
-              color: AppColors.textMutedDark,
+              type: GFButtonType.transparent,
+              size: GFSize.SMALL,
+              onPressed: () {
+                HapticService.itemDeleted();
+                ref
+                    .read(mealCancellationsProvider.notifier)
+                    .removeCancellation(cancellation.id);
+              },
             ),
+        ]),
+        8.heightBox,
+        // Date Range
+        HStack([
+          GFBadge(
+            text:
+                'From: ${_formatDateMeal(cancellation.startDate, cancellation.startMeal)}',
+            color: AppColors.warning.withValues(alpha: 0.2),
+            textColor: AppColors.warning,
+            size: GFSize.SMALL,
+            shape: GFBadgeShape.pills,
           ),
-        ],
-      ),
+          8.widthBox,
+          const Icon(
+            LucideIcons.arrowRight,
+            size: 14,
+            color: AppColors.textMutedDark,
+          ),
+          8.widthBox,
+          GFBadge(
+            text:
+                'To: ${_formatDateMeal(cancellation.endDate, cancellation.endMeal)}',
+            color: AppColors.warning.withValues(alpha: 0.2),
+            textColor: AppColors.warning,
+            size: GFSize.SMALL,
+            shape: GFBadgeShape.pills,
+          ),
+        ]),
+        8.heightBox,
+        '${cancellation.getCancelledMealsCount()} meals cancelled'.text.sm
+            .color(AppColors.textMutedDark)
+            .make(),
+      ]),
     ).animate(delay: (80 * index).ms).fadeIn().slideX(begin: 0.03);
-  }
-
-  Widget _buildDateChip(String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-      ),
-      child: Text(text, style: AppTypography.labelSmall.copyWith(color: color)),
-    );
   }
 
   String _formatDateMeal(DateTime date, MealType meal) {
@@ -277,140 +219,94 @@ class _CancelMealsSheetState extends ConsumerState<CancelMealsSheet> {
         top: AppSpacing.lg,
         bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
       ),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.surfaceDark,
-        borderRadius: const BorderRadius.vertical(
+        borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppSpacing.radiusLg),
         ),
       ),
       child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.borderDark,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const Gap(AppSpacing.lg),
-
-            // Header
-            Row(
-              children: [
-                const Icon(LucideIcons.calendarMinus, color: AppColors.warning),
-                const Gap(AppSpacing.sm),
-                Text(
-                  'Cancel Meals',
-                  style: AppTypography.headlineMedium.copyWith(
-                    color: AppColors.textPrimaryDark,
-                  ),
-                ),
-              ],
-            ),
-            const Gap(AppSpacing.md),
-
-            // Start
-            Text(
-              'Cancel from',
-              style: AppTypography.labelMedium.copyWith(
-                color: AppColors.textSecondaryDark,
-              ),
-            ),
-            const Gap(AppSpacing.sm),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildDatePicker('Start Date', _startDate, (d) {
-                    setState(() {
-                      _startDate = d;
-                      if (_endDate.isBefore(_startDate)) {
-                        _endDate = _startDate;
-                      }
-                    });
-                  }),
-                ),
-                const Gap(AppSpacing.sm),
-                Expanded(
-                  child: _buildMealSelector(_startMeal, (m) {
-                    setState(() => _startMeal = m);
-                  }),
-                ),
-              ],
-            ),
-            const Gap(AppSpacing.md),
-
-            // End
-            Text(
-              'Cancel until',
-              style: AppTypography.labelMedium.copyWith(
-                color: AppColors.textSecondaryDark,
-              ),
-            ),
-            const Gap(AppSpacing.sm),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildDatePicker('End Date', _endDate, (d) {
-                    setState(() => _endDate = d);
-                  }),
-                ),
-                const Gap(AppSpacing.sm),
-                Expanded(
-                  child: _buildMealSelector(_endMeal, (m) {
-                    setState(() => _endMeal = m);
-                  }),
-                ),
-              ],
-            ),
-            const Gap(AppSpacing.lg),
-
-            // Preview
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
+        child: VStack(crossAlignment: CrossAxisAlignment.start, [
+          // Handle
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
               decoration: BoxDecoration(
-                color: AppColors.warning.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-              ),
-              child: Row(
-                children: [
-                  const Icon(LucideIcons.alertCircle, color: AppColors.warning),
-                  const Gap(AppSpacing.md),
-                  Expanded(
-                    child: Text(
-                      'No meal notifications during this period',
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.warning,
-                      ),
-                    ),
-                  ),
-                ],
+                color: AppColors.borderDark,
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const Gap(AppSpacing.xl),
+          ),
+          16.heightBox,
 
-            // Submit
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _submit,
-                icon: const Icon(LucideIcons.check),
-                label: const Text('Cancel Meals'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.warning,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-                ),
-              ),
-            ),
-          ],
-        ),
+          // Header
+          HStack([
+            const Icon(LucideIcons.calendarMinus, color: AppColors.warning),
+            8.widthBox,
+            'Cancel Meals'.text.xl2.color(AppColors.textPrimaryDark).make(),
+          ]),
+          16.heightBox,
+
+          // Start
+          'Cancel from'.text.sm.color(AppColors.textSecondaryDark).make(),
+          8.heightBox,
+          HStack([
+            _buildDatePicker('Start Date', _startDate, (d) {
+              setState(() {
+                _startDate = d;
+                if (_endDate.isBefore(_startDate)) {
+                  _endDate = _startDate;
+                }
+              });
+            }).expand(),
+            8.widthBox,
+            _buildMealSelector(
+              _startMeal,
+              (m) => setState(() => _startMeal = m),
+            ).expand(),
+          ]),
+          16.heightBox,
+
+          // End
+          'Cancel until'.text.sm.color(AppColors.textSecondaryDark).make(),
+          8.heightBox,
+          HStack([
+            _buildDatePicker(
+              'End Date',
+              _endDate,
+              (d) => setState(() => _endDate = d),
+            ).expand(),
+            8.widthBox,
+            _buildMealSelector(
+              _endMeal,
+              (m) => setState(() => _endMeal = m),
+            ).expand(),
+          ]),
+          16.heightBox,
+
+          // Preview Warning
+          GFAppCard(
+            color: AppColors.warning.withValues(alpha: 0.1),
+            borderColor: AppColors.warning.withValues(alpha: 0.3),
+            child: HStack([
+              const Icon(LucideIcons.alertCircle, color: AppColors.warning),
+              12.widthBox,
+              'No meal notifications during this period'.text.sm
+                  .color(AppColors.warning)
+                  .make()
+                  .expand(),
+            ]),
+          ),
+          24.heightBox,
+
+          // Submit Button
+          GFPrimaryButton(
+            text: 'Cancel Meals',
+            icon: LucideIcons.check,
+            onPressed: _submit,
+          ),
+        ]),
       ),
     );
   }
@@ -431,28 +327,14 @@ class _CancelMealsSheetState extends ConsumerState<CancelMealsSheet> {
         );
         if (picked != null) onChanged(picked);
       },
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: AppColors.cardDark,
-          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-        ),
-        child: Row(
-          children: [
-            const Icon(
-              LucideIcons.calendar,
-              size: 18,
-              color: AppColors.warning,
-            ),
-            const Gap(AppSpacing.sm),
-            Text(
-              '${date.day}/${date.month}',
-              style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.textPrimaryDark,
-              ),
-            ),
-          ],
-        ),
+      child: GFAppCard(
+        child: HStack([
+          const Icon(LucideIcons.calendar, size: 18, color: AppColors.warning),
+          8.widthBox,
+          '${date.day}/${date.month}'.text
+              .color(AppColors.textPrimaryDark)
+              .make(),
+        ]),
       ),
     );
   }
@@ -462,24 +344,20 @@ class _CancelMealsSheetState extends ConsumerState<CancelMealsSheet> {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.cardDark,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        border: Border.all(color: AppColors.borderDark.withValues(alpha: 0.5)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<MealType>(
           value: selected,
           isExpanded: true,
           dropdownColor: AppColors.cardDark,
-          items: MealType.values
-              .map(
-                (m) => DropdownMenuItem(
-                  value: m,
-                  child: Text(
-                    _mealLabel(m),
-                    style: TextStyle(color: AppColors.textPrimaryDark),
-                  ),
-                ),
-              )
-              .toList(),
+          items: MealType.values.map((m) {
+            return DropdownMenuItem(
+              value: m,
+              child: _mealLabel(m).text.color(AppColors.textPrimaryDark).make(),
+            );
+          }).toList(),
           onChanged: (v) {
             HapticService.selectionTick();
             onChanged(v!);
@@ -510,6 +388,7 @@ class _CancelMealsSheetState extends ConsumerState<CancelMealsSheet> {
 
     ref.read(mealCancellationsProvider.notifier).addCancellation(cancellation);
     Navigator.of(context).pop();
+    showSuccessToast(context, 'Meals cancelled successfully');
   }
 }
 

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mess_manager/core/models/meal.dart';
-import 'package:mess_manager/core/services/storage_service.dart';
+import 'package:mess_manager/core/database/isar_service.dart';
 
 /// Generate sample meals for demo (used only if no persisted data)
 List<Meal> _generateSampleMeals() {
@@ -101,17 +101,17 @@ final mealsProvider = NotifierProvider<MealsNotifier, List<Meal>>(
 class MealsNotifier extends Notifier<List<Meal>> {
   @override
   List<Meal> build() {
-    // Try to load from storage first
-    final savedMeals = StorageService.loadMealsJson();
+    // Try to load from Isar first
+    final savedMeals = IsarService.getAllMeals();
     if (savedMeals.isNotEmpty) {
-      return savedMeals.map((json) => Meal.fromJson(json)).toList();
+      return savedMeals;
     }
     // Fall back to sample data
     return _generateSampleMeals();
   }
 
   void _persist() {
-    StorageService.saveMeals(state);
+    IsarService.saveMeals(state);
   }
 
   void addMeal(Meal meal) {
@@ -121,7 +121,7 @@ class MealsNotifier extends Notifier<List<Meal>> {
 
   void removeMeal(String id) {
     state = state.where((m) => m.id != id).toList();
-    _persist();
+    IsarService.deleteMeal(id);
   }
 
   void updateMeal(Meal meal) {
@@ -129,7 +129,7 @@ class MealsNotifier extends Notifier<List<Meal>> {
       for (final m in state)
         if (m.id == meal.id) meal else m,
     ];
-    _persist();
+    IsarService.saveMeal(meal);
   }
 
   List<Meal> getMealsForDate(DateTime date) {
