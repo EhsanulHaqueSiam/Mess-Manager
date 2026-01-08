@@ -9,13 +9,13 @@ name: Flutter CI/CD
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, dev]
     paths-ignore:
       - '**.md'
       - 'docs/**'
       - '.gitignore'
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop, dev]
   workflow_dispatch: # Manual trigger
 
 concurrency:
