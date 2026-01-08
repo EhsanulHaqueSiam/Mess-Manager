@@ -105,41 +105,44 @@ class IsarService {
   static void saveSetting<T>(String key, T value) {
     if (!isAvailable) return; // Skip on web
 
-    final String valueJson;
-    final String valueType;
+    instance.write((isar) {
+      final String valueJson;
+      final String valueType;
 
-    if (value is String) {
-      valueJson = value;
-      valueType = 'string';
-    } else if (value is int) {
-      valueJson = value.toString();
-      valueType = 'int';
-    } else if (value is double) {
-      valueJson = value.toString();
-      valueType = 'double';
-    } else if (value is bool) {
-      valueJson = value.toString();
-      valueType = 'bool';
-    } else {
-      valueJson = jsonEncode(value);
-      valueType = 'json';
-    }
+      if (value is String) {
+        valueJson = value;
+        valueType = 'string';
+      } else if (value is int) {
+        valueJson = value.toString();
+        valueType = 'int';
+      } else if (value is double) {
+        valueJson = value.toString();
+        valueType = 'double';
+      } else if (value is bool) {
+        valueJson = value.toString();
+        valueType = 'bool';
+      } else {
+        valueJson = jsonEncode(value);
+        valueType = 'json';
+      }
 
-    // Delete existing setting with same key
-    final existing = instance.settingsCollections
-        .where()
-        .keyEqualTo(key)
-        .findFirst();
-    if (existing != null) {
-      instance.settingsCollections.delete(existing.id);
-    }
+      // Delete existing setting with same key
+      final existing = isar.settingsCollections
+          .where()
+          .keyEqualTo(key)
+          .findFirst();
+      if (existing != null) {
+        isar.settingsCollections.delete(existing.id);
+      }
 
-    instance.settingsCollections.put(
-      SettingsCollection()
-        ..key = key
-        ..valueJson = valueJson
-        ..valueType = valueType,
-    );
+      isar.settingsCollections.put(
+        SettingsCollection()
+          ..id = 0
+          ..key = key
+          ..valueJson = valueJson
+          ..valueType = valueType,
+      );
+    });
   }
 
   static T? getSetting<T>(String key, {T? defaultValue}) {
@@ -181,13 +184,15 @@ class IsarService {
   static void removeSetting(String key) {
     if (!isAvailable) return; // Skip on web
 
-    final existing = instance.settingsCollections
-        .where()
-        .keyEqualTo(key)
-        .findFirst();
-    if (existing != null) {
-      instance.settingsCollections.delete(existing.id);
-    }
+    instance.write((isar) {
+      final existing = isar.settingsCollections
+          .where()
+          .keyEqualTo(key)
+          .findFirst();
+      if (existing != null) {
+        isar.settingsCollections.delete(existing.id);
+      }
+    });
   }
 
   // ═══════════════════════════════════════════════════════════════════════════

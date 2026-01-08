@@ -107,11 +107,13 @@ class Area51App extends ConsumerWidget {
     final router = createAppRouter(ref);
 
     // Determine initial theme for animated_theme_switcher
+    final platformBrightness =
+        WidgetsBinding.instance.platformDispatcher.platformBrightness;
     final isDark =
         savedThemeMode == AdaptiveThemeMode.dark ||
+        savedThemeMode == null && platformBrightness == Brightness.dark ||
         (savedThemeMode == AdaptiveThemeMode.system &&
-            WidgetsBinding.instance.platformDispatcher.platformBrightness ==
-                Brightness.dark);
+            platformBrightness == Brightness.dark);
 
     // Use DynamicColorBuilder for Android 12+ Material You support
     return DynamicColorBuilder(
@@ -133,7 +135,7 @@ class Area51App extends ConsumerWidget {
             return AdaptiveTheme(
               light: lightTheme,
               dark: darkTheme,
-              initial: savedThemeMode ?? AdaptiveThemeMode.dark,
+              initial: savedThemeMode ?? AdaptiveThemeMode.system,
               builder: (adaptiveLight, adaptiveDark) => MaterialApp.router(
                 title: 'Area51 - Mess Manager',
                 debugShowCheckedModeBanner: false,

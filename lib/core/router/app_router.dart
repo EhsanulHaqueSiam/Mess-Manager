@@ -263,7 +263,5 @@ GoRouter createAppRouter(WidgetRef ref) {
         ],
       ),
     ],
-    errorBuilder: (context, state) =>
-        Scaffold(body: Center(child: Text('Page not found: ${state.uri}'))),
   );
 }
