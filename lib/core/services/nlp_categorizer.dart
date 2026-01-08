@@ -1,10 +1,33 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mess_manager/core/models/unified_entry.dart';
 
 /// NLP-based categorizer for auto-detecting entry type
-/// Uses keyword matching initially, can be enhanced with ML later
+/// Uses keyword matching with support for Firestore-based keyword updates
 class NLPCategorizer {
+  // Singleton instance
+  static final NLPCategorizer _instance = NLPCategorizer._internal();
+  factory NLPCategorizer() => _instance;
+  NLPCategorizer._internal();
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // DYNAMIC KEYWORDS (fetched from Firestore)
+  // ════════════════════════════════════════════════════════════════════════════
+
+  /// Keywords loaded from Firestore (overrides defaults)
+  Map<String, MonthlyCategory> _remoteMonthlyKeywords = {};
+  Map<String, MonthlyCategory> _remoteFixedKeywords = {};
+  List<String> _remoteMealBazarKeywords = [];
+
+  /// Whether remote keywords have been loaded
+  bool _isLoaded = false;
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // DEFAULT KEYWORDS (fallback when Firestore unavailable)
+  // ════════════════════════════════════════════════════════════════════════════
+
   // Keywords that indicate monthly/amenity items
-  static const _monthlyKeywords = {
+  static const _defaultMonthlyKeywords = {
     // Amenities
     'soap': MonthlyCategory.soap,
     'সাবান': MonthlyCategory.soap,
@@ -25,7 +48,7 @@ class NLPCategorizer {
   };
 
   // Keywords that indicate fixed bills
-  static const _fixedKeywords = {
+  static const _defaultFixedKeywords = {
     'rent': MonthlyCategory.rent,
     'ভাড়া': MonthlyCategory.rent,
     'বাড়ি': MonthlyCategory.rent,
@@ -48,7 +71,7 @@ class NLPCategorizer {
   };
 
   // Keywords that indicate meal bazar
-  static const _mealBazarKeywords = [
+  static const _defaultMealBazarKeywords = [
     'rice',
     'চাল',
     'fish',
@@ -86,12 +109,145 @@ class NLPCategorizer {
     'বাজার',
   ];
 
+  // ════════════════════════════════════════════════════════════════════════════
+  // FIRESTORE LOADING
+  // ════════════════════════════════════════════════════════════════════════════
+
+  /// Load keywords from Firestore (call on app startup)
+  /// Falls back to defaults if Firestore is unavailable
+  Future<void> loadFromFirestore() async {
+    if (_isLoaded) return;
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('config')
+          .doc('nlp_keywords')
+          .get();
+
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data()!;
+
+        // Load monthly keywords
+        if (data['monthly'] is Map) {
+          _remoteMonthlyKeywords = _parseKeywordMap(
+            data['monthly'] as Map<String, dynamic>,
+          );
+          debugPrint(
+            '✅ Loaded ${_remoteMonthlyKeywords.length} monthly keywords from Firestore',
+          );
+        }
+
+        // Load fixed keywords
+        if (data['fixed'] is Map) {
+          _remoteFixedKeywords = _parseKeywordMap(
+            data['fixed'] as Map<String, dynamic>,
+          );
+          debugPrint(
+            '✅ Loaded ${_remoteFixedKeywords.length} fixed keywords from Firestore',
+          );
+        }
+
+        // Load meal bazar keywords
+        if (data['mealBazar'] is List) {
+          _remoteMealBazarKeywords = List<String>.from(
+            data['mealBazar'] as List,
+          );
+          debugPrint(
+            '✅ Loaded ${_remoteMealBazarKeywords.length} meal bazar keywords from Firestore',
+          );
+        }
+
+        _isLoaded = true;
+      } else {
+        debugPrint('ℹ️ No NLP keywords in Firestore, using defaults');
+      }
+    } catch (e) {
+      debugPrint('⚠️ Failed to load NLP keywords from Firestore: $e');
+      // Use defaults - no action needed
+    }
+  }
+
+  /// Parse Firestore map to MonthlyCategory map
+  Map<String, MonthlyCategory> _parseKeywordMap(Map<String, dynamic> data) {
+    final result = <String, MonthlyCategory>{};
+
+    for (final entry in data.entries) {
+      final category = _stringToCategory(entry.value as String);
+      if (category != null) {
+        result[entry.key.toLowerCase()] = category;
+      }
+    }
+
+    return result;
+  }
+
+  /// Convert string to MonthlyCategory enum
+  MonthlyCategory? _stringToCategory(String value) {
+    switch (value.toLowerCase()) {
+      case 'rent':
+        return MonthlyCategory.rent;
+      case 'electricity':
+        return MonthlyCategory.electricity;
+      case 'gas':
+        return MonthlyCategory.gas;
+      case 'wifi':
+        return MonthlyCategory.wifi;
+      case 'water':
+        return MonthlyCategory.water;
+      case 'maid':
+        return MonthlyCategory.maid;
+      case 'garbage':
+        return MonthlyCategory.garbage;
+      case 'soap':
+        return MonthlyCategory.soap;
+      case 'tissue':
+        return MonthlyCategory.tissue;
+      case 'toothpaste':
+        return MonthlyCategory.toothpaste;
+      case 'filter':
+        return MonthlyCategory.filter;
+      case 'coil':
+        return MonthlyCategory.coil;
+      case 'other':
+        return MonthlyCategory.other;
+      default:
+        return null;
+    }
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // KEYWORD GETTERS (merge remote + defaults)
+  // ════════════════════════════════════════════════════════════════════════════
+
+  /// Get monthly keywords (remote overrides defaults)
+  Map<String, MonthlyCategory> get monthlyKeywords {
+    return {..._defaultMonthlyKeywords, ..._remoteMonthlyKeywords};
+  }
+
+  /// Get fixed keywords (remote overrides defaults)
+  Map<String, MonthlyCategory> get fixedKeywords {
+    return {..._defaultFixedKeywords, ..._remoteFixedKeywords};
+  }
+
+  /// Get meal bazar keywords (remote extends defaults)
+  List<String> get mealBazarKeywords {
+    final combined = {
+      ..._defaultMealBazarKeywords,
+      ..._remoteMealBazarKeywords,
+    };
+    return combined.toList();
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // CATEGORIZATION LOGIC
+  // ════════════════════════════════════════════════════════════════════════════
+
   /// Categorize description and return detected type
-  static NLPResult categorize(String description) {
+  NLPResult categorize(String description) {
     final lower = description.toLowerCase().trim();
 
     // Check for fixed bills first (highest priority)
-    for (final entry in _fixedKeywords.entries) {
+    for (final entry in fixedKeywords.entries) {
       if (lower.contains(entry.key)) {
         return NLPResult(
           type: EntryType.fixed,
@@ -102,7 +258,7 @@ class NLPCategorizer {
     }
 
     // Check for monthly/amenity items
-    for (final entry in _monthlyKeywords.entries) {
+    for (final entry in monthlyKeywords.entries) {
       if (lower.contains(entry.key)) {
         return NLPResult(
           type: EntryType.monthly,
@@ -113,7 +269,7 @@ class NLPCategorizer {
     }
 
     // Check for meal bazar keywords
-    for (final keyword in _mealBazarKeywords) {
+    for (final keyword in mealBazarKeywords) {
       if (lower.contains(keyword)) {
         return NLPResult(
           type: EntryType.mealBazar,
@@ -132,7 +288,7 @@ class NLPCategorizer {
   }
 
   /// Get display name for entry type
-  static String getTypeName(EntryType type) {
+  String getTypeName(EntryType type) {
     switch (type) {
       case EntryType.mealBazar:
         return 'Meal Bazar';
@@ -144,7 +300,7 @@ class NLPCategorizer {
   }
 
   /// Get display name for category
-  static String getCategoryName(MonthlyCategory category) {
+  String getCategoryName(MonthlyCategory category) {
     switch (category) {
       case MonthlyCategory.rent:
         return 'ভাড়া (Rent)';

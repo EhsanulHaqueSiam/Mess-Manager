@@ -5,6 +5,7 @@
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.35+-02569B?logo=flutter)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.8+-0175C2?logo=dart)](https://dart.dev)
+[![CI/CD](https://github.com/YOUR_USERNAME/area51_app/actions/workflows/build.yml/badge.svg)](https://github.com/YOUR_USERNAME/area51_app/actions)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ## 📱 Screenshots
@@ -166,7 +167,13 @@ flutter build apk --release
 
 # Android App Bundle
 flutter build appbundle --release
+
+# Release with Obfuscation (Recommended for production)
+flutter build apk --release --obfuscate --split-debug-info=build/debug-info
+flutter build appbundle --release --obfuscate --split-debug-info=build/debug-info
 ```
+
+> **Note:** Debug info symbols are required for crash report deobfuscation. Keep them safe!
 
 ## Documentation
 

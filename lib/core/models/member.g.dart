@@ -61,6 +61,9 @@ _Member _$MemberFromJson(Map<String, dynamic> json) => _Member(
       ? null
       : DateTime.parse(json['activeToDate'] as String),
   isActive: json['isActive'] as bool? ?? true,
+  splitGroup:
+      $enumDecodeNullable(_$SplitGroupEnumMap, json['splitGroup']) ??
+      SplitGroup.standard,
 );
 
 Map<String, dynamic> _$MemberToJson(_Member instance) => <String, dynamic>{
@@ -76,6 +79,7 @@ Map<String, dynamic> _$MemberToJson(_Member instance) => <String, dynamic>{
   'activeFromDate': instance.activeFromDate?.toIso8601String(),
   'activeToDate': instance.activeToDate?.toIso8601String(),
   'isActive': instance.isActive,
+  'splitGroup': _$SplitGroupEnumMap[instance.splitGroup]!,
 };
 
 const _$MemberRoleEnumMap = {
@@ -86,4 +90,10 @@ const _$MemberRoleEnumMap = {
   MemberRole.member: 'member',
   MemberRole.temp: 'temp',
   MemberRole.guest: 'guest',
+};
+
+const _$SplitGroupEnumMap = {
+  SplitGroup.standard: 'standard',
+  SplitGroup.premium: 'premium',
+  SplitGroup.economy: 'economy',
 };

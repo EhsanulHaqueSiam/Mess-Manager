@@ -7,6 +7,7 @@ import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/models/money_transaction.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
 import 'package:mess_manager/features/money/providers/money_provider.dart';
+import 'package:mess_manager/core/services/haptic_service.dart';
 
 class AddTransactionSheet extends ConsumerStatefulWidget {
   final MoneyTransaction? existingTransaction;
@@ -132,7 +133,10 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                         ),
                       )
                       .toList(),
-                  onChanged: (v) => setState(() => _fromMemberId = v),
+                  onChanged: (v) {
+                    HapticService.selectionTick();
+                    setState(() => _fromMemberId = v);
+                  },
                 ),
               ),
             ),
@@ -177,7 +181,10 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                         ),
                       )
                       .toList(),
-                  onChanged: (v) => setState(() => _toMemberId = v),
+                  onChanged: (v) {
+                    HapticService.selectionTick();
+                    setState(() => _toMemberId = v);
+                  },
                 ),
               ),
             ),
@@ -277,6 +284,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
 
     // Block negative amounts
     if (amount <= 0) {
+      HapticService.error();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Amount must be greater than 0'),
@@ -288,6 +296,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
 
     // Confirm large amounts (>5,000 BDT for transactions)
     if (amount > 5000) {
+      HapticService.warning();
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
@@ -319,6 +328,9 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
       );
       if (confirmed != true || !context.mounted) return;
     }
+
+    // Premium haptic for successful transaction
+    HapticService.paymentConfirmed();
 
     if (_isEditing) {
       // Update existing transaction

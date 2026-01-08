@@ -40,6 +40,13 @@ sealed class FoodPreference with _$FoodPreference {
       _$FoodPreferenceFromJson(json);
 }
 
+/// Room split groups for unequal bill splitting (e.g., AC vs Non-AC)
+enum SplitGroup {
+  standard, // Default group - 1.0x multiplier
+  premium, // Premium rooms (AC) - configurable multiplier
+  economy, // Economy rooms - configurable multiplier
+}
+
 /// Mess member
 @freezed
 sealed class Member with _$Member {
@@ -57,6 +64,8 @@ sealed class Member with _$Member {
     DateTime? activeFromDate, // For temp members
     DateTime? activeToDate, // For temp members
     @Default(true) bool isActive,
+    // Split group for unequal fixed cost distribution
+    @Default(SplitGroup.standard) SplitGroup splitGroup,
   }) = _Member;
 
   factory Member.fromJson(Map<String, dynamic> json) => _$MemberFromJson(json);

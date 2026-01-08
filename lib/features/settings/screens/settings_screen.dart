@@ -16,6 +16,7 @@ import 'package:mess_manager/core/database/isar_service.dart';
 import 'package:mess_manager/core/services/backup_service.dart';
 import 'package:mess_manager/features/auth/providers/auth_provider.dart';
 import 'package:mess_manager/core/providers/role_provider.dart';
+import 'package:mess_manager/features/settings/providers/theme_color_provider.dart';
 import 'package:flutter/services.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -141,12 +142,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           // Appearance Section
           _buildSectionHeader('Appearance', 10),
           _buildAnimatedThemeTile(context, isDarkMode, 11),
+          _buildThemeColorTile(context, 12),
           _buildSettingsTile(
             icon: LucideIcons.bell,
             title: 'Notifications',
             subtitle: 'Configure meal reminders',
             onTap: () => context.go(AppRoutes.notificationSettings),
-            index: 12,
+            index: 13,
           ),
           const Gap(AppSpacing.lg),
 
@@ -742,6 +744,192 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
       ),
     ).animate(delay: (30 * index).ms).fadeIn().slideX(begin: 0.02);
+  }
+
+  /// Theme Color tile - select accent color
+  Widget _buildThemeColorTile(BuildContext context, int index) {
+    final currentColor = ref.watch(themeColorProvider);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: AppColors.cardDark,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        border: Border.all(color: AppColors.borderDark.withValues(alpha: 0.5)),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.xs,
+        ),
+        leading: Container(
+          padding: const EdgeInsets.all(AppSpacing.sm + 2),
+          decoration: BoxDecoration(
+            color: currentColor.effectiveColor.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+          ),
+          child: Icon(
+            LucideIcons.palette,
+            color: currentColor.effectiveColor,
+            size: 18,
+          ),
+        ),
+        title: Text(
+          'Theme Color',
+          style: AppTypography.titleSmall.copyWith(
+            color: AppColors.textPrimaryDark,
+          ),
+        ),
+        subtitle: Text(
+          currentColor.displayName,
+          style: AppTypography.bodySmall.copyWith(
+            color: AppColors.textSecondaryDark,
+          ),
+        ),
+        trailing: Container(
+          width: 24,
+          height: 24,
+          decoration: BoxDecoration(
+            color: currentColor.effectiveColor,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.3),
+              width: 2,
+            ),
+          ),
+        ),
+        onTap: () {
+          HapticService.lightTap();
+          _showThemeColorPicker(context);
+        },
+      ),
+    ).animate(delay: (30 * index).ms).fadeIn().slideX(begin: 0.02);
+  }
+
+  /// Show theme color picker bottom sheet
+  void _showThemeColorPicker(BuildContext context) {
+    final currentColor = ref.read(themeColorProvider);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surfaceDark,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Handle bar
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.borderDark,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const Gap(AppSpacing.lg),
+
+            // Title
+            Text(
+              'Choose Theme Color',
+              style: AppTypography.titleLarge.copyWith(
+                color: AppColors.textPrimaryDark,
+              ),
+            ),
+            const Gap(AppSpacing.xs),
+            Text(
+              'Select an accent color for the app',
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textMutedDark,
+              ),
+            ),
+            const Gap(AppSpacing.lg),
+
+            // Color grid
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: ThemeColorOption.values.map((option) {
+                final isSelected = option == currentColor;
+                final color = option.effectiveColor;
+
+                return GestureDetector(
+                  onTap: () {
+                    HapticService.selectionTick();
+                    ref.read(themeColorProvider.notifier).setColor(option);
+                    Navigator.pop(context);
+                    // Show restart hint
+                    showSuccessToast(
+                      context,
+                      'Theme color changed! Restart app for full effect.',
+                    );
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: option == ThemeColorOption.system ? 110 : 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: option == ThemeColorOption.system
+                          ? AppColors.cardDark
+                          : color,
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                      border: Border.all(
+                        color: isSelected ? Colors.white : Colors.transparent,
+                        width: 3,
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: color.withValues(alpha: 0.5),
+                                blurRadius: 12,
+                                spreadRadius: 2,
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: option == ThemeColorOption.system
+                        ? Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  LucideIcons.smartphone,
+                                  color: AppColors.textSecondaryDark,
+                                  size: 16,
+                                ),
+                                const Gap(4),
+                                Text(
+                                  'Auto',
+                                  style: AppTypography.labelSmall.copyWith(
+                                    color: AppColors.textSecondaryDark,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : isSelected
+                        ? const Icon(
+                            LucideIcons.check,
+                            color: Colors.white,
+                            size: 20,
+                          )
+                        : null,
+                  ),
+                );
+              }).toList(),
+            ),
+
+            const Gap(AppSpacing.lg),
+          ],
+        ),
+      ),
+    );
   }
 
   /// Invite Code tile - Display mess invite code for admins

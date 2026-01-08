@@ -46,7 +46,7 @@ class _AddEntrySheetState extends ConsumerState<AddEntrySheet> {
     final text = _descriptionController.text.trim();
     if (text.isEmpty) return;
 
-    final result = NLPCategorizer.categorize(text);
+    final result = NLPCategorizer().categorize(text);
     setState(() {
       _selectedType = result.type;
       _selectedCategory = result.category;

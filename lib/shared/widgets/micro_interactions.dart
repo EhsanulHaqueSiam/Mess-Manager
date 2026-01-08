@@ -57,7 +57,7 @@ class _TappableScaleState extends State<TappableScale>
       _isPressed = true;
       _controller.forward();
       if (widget.enableHaptic) {
-        HapticService.lightTap();
+        HapticService.bouncyTap();
       }
     }
   }
@@ -151,7 +151,7 @@ class _BouncyButtonState extends State<BouncyButton>
     return GestureDetector(
       onTapDown: (_) {
         _controller.forward();
-        HapticService.buttonPress();
+        HapticService.bouncyTap();
       },
       onTapUp: (_) {
         _controller.reverse();
@@ -212,7 +212,7 @@ class GlowingIconButton extends StatelessWidget {
 
     return TappableScale(
       onTap: () {
-        HapticService.buttonPress();
+        HapticService.bouncyTap();
         onPressed?.call();
       },
       child:
@@ -403,7 +403,7 @@ class AnimatedFAB extends StatelessWidget {
   Widget build(BuildContext context) {
     return FloatingActionButton(
           onPressed: () {
-            HapticService.buttonPress();
+            HapticService.bouncyTap();
             onPressed?.call();
           },
           tooltip: tooltip,

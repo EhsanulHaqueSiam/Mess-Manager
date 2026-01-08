@@ -87,7 +87,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
     final text = _descriptionController.text.trim();
     if (text.isEmpty) return;
 
-    final result = NLPCategorizer.categorize(text);
+    final result = NLPCategorizer().categorize(text);
     setState(() {
       _selectedType = result.type;
       _isAutoDetected = true;

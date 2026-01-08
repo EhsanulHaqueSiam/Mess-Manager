@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Area51 Mess Manager</string>
+    <string name="widget_description">View your balance and meal stats at a glance</string>
+</resources>

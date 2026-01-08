@@ -413,7 +413,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
 
               return GestureDetector(
                 onTap: () {
-                  HapticService.lightTap();
+                  HapticService.selectionTick();
                   setState(() => _totalMeals = count);
                 },
                 child: Container(
@@ -453,7 +453,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
   Widget _buildCountButton(IconData icon, VoidCallback onTap) {
     return GestureDetector(
       onTap: () {
-        HapticService.lightTap();
+        HapticService.numberTick();
         onTap();
       },
       child: Container(
@@ -554,7 +554,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
                   icon: const Icon(LucideIcons.minus, size: 16),
                   onPressed: count > 0 && !isLocked
                       ? () {
-                          HapticService.lightTap();
+                          HapticService.numberTick();
                           onChanged(count - 1);
                         }
                       : null,
@@ -580,7 +580,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
                   icon: const Icon(LucideIcons.plus, size: 16),
                   onPressed: !isLocked
                       ? () {
-                          HapticService.lightTap();
+                          HapticService.numberTick();
                           onChanged(count + 1);
                         }
                       : null,

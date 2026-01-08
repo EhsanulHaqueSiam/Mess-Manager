@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mess_manager/core/models/settlement.dart';
+import 'package:mess_manager/core/models/member.dart';
 
 import 'package:mess_manager/core/database/isar_service.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
@@ -136,6 +137,19 @@ final currentMonthBalancesProvider = Provider<List<MemberBalanceSummary>>((
   final monthStart = DateTime(year, month, 1);
   final monthEnd = DateTime(year, month, daysInMonth);
 
+  // Split group multipliers for unequal fixed cost distribution
+  // E.g., AC rooms pay 1.5x, economy pay 0.75x
+  double getSplitMultiplier(SplitGroup group) {
+    switch (group) {
+      case SplitGroup.premium:
+        return 1.5; // AC rooms pay 50% more
+      case SplitGroup.economy:
+        return 0.75; // Economy rooms pay 25% less
+      case SplitGroup.standard:
+        return 1.0;
+    }
+  }
+
   // Helper to calculate active days for a member in this month
   int getActiveDays(dynamic member) {
     if (!member.isActive) return 0;
@@ -154,10 +168,17 @@ final currentMonthBalancesProvider = Provider<List<MemberBalanceSummary>>((
     return effectiveEnd.difference(effectiveStart).inDays + 1;
   }
 
-  // Calculate total active days across all active members
-  final totalActiveDays = members
+  // Calculate weighted active days (activeDays * splitMultiplier)
+  double getWeightedDays(dynamic member) {
+    final days = getActiveDays(member);
+    final multiplier = getSplitMultiplier(member.splitGroup);
+    return days * multiplier;
+  }
+
+  // Calculate total weighted days across all active members
+  final totalWeightedDays = members
       .where((m) => m.isActive)
-      .fold(0, (sum, m) => sum + getActiveDays(m));
+      .fold(0.0, (sum, m) => sum + getWeightedDays(m));
 
   // Calculate per-member balances including opening balance
   return members.map((member) {
@@ -177,10 +198,10 @@ final currentMonthBalancesProvider = Provider<List<MemberBalanceSummary>>((
 
     final mealCost = memberMeals * mealRate;
 
-    // Pro-rata fixed expense share based on active days
-    final memberActiveDays = getActiveDays(member);
-    final monthlyShare = totalActiveDays > 0
-        ? (memberActiveDays / totalActiveDays) * totalFixedExpenses
+    // Pro-rata fixed expense share based on weighted days (includes splitGroup)
+    final memberWeightedDays = getWeightedDays(member);
+    final monthlyShare = totalWeightedDays > 0
+        ? (memberWeightedDays / totalWeightedDays) * totalFixedExpenses
         : 0.0;
 
     // Balance = Opening + Deposits (Bazar) - Expenses (Meals + Fixed)

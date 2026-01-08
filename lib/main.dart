@@ -15,6 +15,8 @@ import 'core/router/app_router.dart';
 import 'core/database/isar_service.dart';
 import 'core/services/firebase_service.dart';
 import 'core/services/fcm_service.dart';
+import 'core/services/nlp_categorizer.dart';
+import 'features/settings/providers/theme_color_provider.dart';
 
 void main() async {
   // Setup Flutter error handling
@@ -58,6 +60,9 @@ void main() async {
           debugPrint('✅ Crashlytics enabled for production');
         }
 
+        // Load NLP keywords from Firestore
+        await NLPCategorizer().loadFromFirestore();
+
         // Initialize FCM (non-web only)
         if (!kIsWeb) {
           await FCMService.initialize();
@@ -90,11 +95,14 @@ class Area51App extends ConsumerWidget {
 
   const Area51App({super.key, this.savedThemeMode});
 
-  // Default seed color for Material You fallback
-  static const _defaultSeedColor = AppColors.primary;
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Get the user-selected theme color from provider
+    // This uses Isar for persistence, loaded at app init
+    final themeColorNotifier = ref.watch(themeColorProvider.notifier);
+    final seedColor = themeColorNotifier.seedColor;
+    final useSystemColors = themeColorNotifier.isUsingSystemColor;
+
     // Create router with auth awareness
     final router = createAppRouter(ref);
 
@@ -108,14 +116,14 @@ class Area51App extends ConsumerWidget {
     // Use DynamicColorBuilder for Android 12+ Material You support
     return DynamicColorBuilder(
       builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
-        // Build themes using dynamic colors if available, otherwise use default
+        // Build themes using dynamic colors if available and selected, otherwise use user seed color
         final lightTheme = AppTheme.buildLightTheme(
-          dynamicColorScheme: lightDynamic,
-          seedColor: _defaultSeedColor,
+          dynamicColorScheme: useSystemColors ? lightDynamic : null,
+          seedColor: seedColor,
         );
         final darkTheme = AppTheme.buildDarkTheme(
-          dynamicColorScheme: darkDynamic,
-          seedColor: _defaultSeedColor,
+          dynamicColorScheme: useSystemColors ? darkDynamic : null,
+          seedColor: seedColor,
         );
 
         // Wrap with ThemeProvider for animated theme switching
