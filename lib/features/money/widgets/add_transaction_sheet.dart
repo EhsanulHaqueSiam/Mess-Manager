@@ -9,7 +9,9 @@ import 'package:mess_manager/core/providers/members_provider.dart';
 import 'package:mess_manager/features/money/providers/money_provider.dart';
 
 class AddTransactionSheet extends ConsumerStatefulWidget {
-  const AddTransactionSheet({super.key});
+  final MoneyTransaction? existingTransaction;
+
+  const AddTransactionSheet({super.key, this.existingTransaction});
 
   @override
   ConsumerState<AddTransactionSheet> createState() =>
@@ -17,10 +19,24 @@ class AddTransactionSheet extends ConsumerStatefulWidget {
 }
 
 class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
-  final _amountController = TextEditingController();
-  final _descController = TextEditingController();
+  late final TextEditingController _amountController;
+  late final TextEditingController _descController;
   String? _fromMemberId;
   String? _toMemberId;
+
+  bool get _isEditing => widget.existingTransaction != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final existing = widget.existingTransaction;
+    _amountController = TextEditingController(
+      text: existing?.amount.toStringAsFixed(0) ?? '',
+    );
+    _descController = TextEditingController(text: existing?.description ?? '');
+    _fromMemberId = existing?.fromMemberId;
+    _toMemberId = existing?.toMemberId;
+  }
 
   @override
   void dispose() {
@@ -69,13 +85,13 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
             // Title
             Row(
               children: [
-                const Icon(
-                  LucideIcons.arrowLeftRight,
+                Icon(
+                  _isEditing ? LucideIcons.edit2 : LucideIcons.arrowLeftRight,
                   color: AppColors.accentWarm,
                 ),
                 const Gap(AppSpacing.sm),
                 Text(
-                  'Add Transaction',
+                  _isEditing ? 'Edit Transaction' : 'Add Transaction',
                   style: AppTypography.headlineMedium.copyWith(
                     color: AppColors.textPrimaryDark,
                   ),
@@ -235,7 +251,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                   ),
                 ),
                 child: Text(
-                  'Add Transaction',
+                  _isEditing ? 'Update Transaction' : 'Add Transaction',
                   style: AppTypography.titleMedium.copyWith(
                     color: Colors.white,
                   ),
@@ -256,20 +272,79 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
         double.tryParse(_amountController.text) != null;
   }
 
-  void _submit() {
+  void _submit() async {
     final amount = double.parse(_amountController.text);
 
-    final transaction = MoneyTransaction(
-      id: const Uuid().v4(),
-      fromMemberId: _fromMemberId!,
-      toMemberId: _toMemberId!,
-      amount: amount,
-      description: _descController.text.isEmpty ? null : _descController.text,
-      date: DateTime.now(),
-      isSettled: false,
-    );
+    // Block negative amounts
+    if (amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Amount must be greater than 0'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
 
-    ref.read(moneyTransactionsProvider.notifier).addTransaction(transaction);
+    // Confirm large amounts (>5,000 BDT for transactions)
+    if (amount > 5000) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: AppColors.surfaceDark,
+          title: const Row(
+            children: [
+              Icon(LucideIcons.alertTriangle, color: AppColors.warning),
+              Gap(8),
+              Text('Large Transaction'),
+            ],
+          ),
+          content: Text(
+            'You are about to record a ৳${amount.toStringAsFixed(0)} transaction.\n\nThis is a significant amount. Are you sure?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Review'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.warning,
+              ),
+              child: const Text('Confirm'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !context.mounted) return;
+    }
+
+    if (_isEditing) {
+      // Update existing transaction
+      final existing = widget.existingTransaction!;
+      final updatedTransaction = existing.copyWith(
+        fromMemberId: _fromMemberId!,
+        toMemberId: _toMemberId!,
+        amount: amount,
+        description: _descController.text.isEmpty ? null : _descController.text,
+      );
+      ref
+          .read(moneyTransactionsProvider.notifier)
+          .updateTransaction(updatedTransaction);
+    } else {
+      // Create new transaction
+      final transaction = MoneyTransaction(
+        id: const Uuid().v4(),
+        fromMemberId: _fromMemberId!,
+        toMemberId: _toMemberId!,
+        amount: amount,
+        description: _descController.text.isEmpty ? null : _descController.text,
+        date: DateTime.now(),
+        isSettled: false,
+      );
+      ref.read(moneyTransactionsProvider.notifier).addTransaction(transaction);
+    }
     Navigator.of(context).pop();
   }
 }

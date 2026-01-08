@@ -1,9 +1,14 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mess_manager/core/models/auth_user.dart';
+import 'package:mess_manager/core/models/member.dart';
 import 'package:mess_manager/core/database/isar_service.dart';
+import 'package:mess_manager/core/services/firestore_service.dart';
+import 'package:mess_manager/features/auth/providers/approval_provider.dart';
+import 'package:mess_manager/core/providers/members_provider.dart';
 
 /// Auth state
-enum AuthStatus { initial, authenticated, unauthenticated }
+enum AuthStatus { initial, authenticated, unauthenticated, pendingApproval }
 
 /// Auth state class
 class AuthState {
@@ -42,34 +47,41 @@ class AuthState {
 class AuthNotifier extends Notifier<AuthState> {
   @override
   AuthState build() {
-    // Check if user is already logged in
-    _checkAuth();
+    // Defer auth check to next frame to avoid accessing state before initialization
+    Future.microtask(() => _checkAuth());
     return const AuthState();
   }
 
   void _checkAuth() {
-    final userData = IsarService.getSetting<Map<String, dynamic>>(
-      'current_user',
-    );
-    if (userData != null) {
-      try {
-        final user = AuthUser.fromJson(userData);
-        final messes = _loadMesses();
-        final currentMess = messes.firstWhere(
-          (m) => m.id == user.currentMessId,
-          orElse: () => messes.isNotEmpty ? messes.first : _createDefaultMess(),
-        );
+    try {
+      final userData = IsarService.getSetting<Map<String, dynamic>>(
+        'current_user',
+      );
+      if (userData != null) {
+        try {
+          final user = AuthUser.fromJson(userData);
+          final messes = _loadMesses();
+          final currentMess = messes.firstWhere(
+            (m) => m.id == user.currentMessId,
+            orElse: () =>
+                messes.isNotEmpty ? messes.first : _createDefaultMess(),
+          );
 
-        state = state.copyWith(
-          status: AuthStatus.authenticated,
-          user: user,
-          currentMess: currentMess,
-          availableMesses: messes,
-        );
-      } catch (_) {
+          state = state.copyWith(
+            status: AuthStatus.authenticated,
+            user: user,
+            currentMess: currentMess,
+            availableMesses: messes,
+          );
+        } catch (_) {
+          state = state.copyWith(status: AuthStatus.unauthenticated);
+        }
+      } else {
         state = state.copyWith(status: AuthStatus.unauthenticated);
       }
-    } else {
+    } catch (e) {
+      // On web or any error, default to unauthenticated
+      debugPrint('AuthProvider._checkAuth error: $e');
       state = state.copyWith(status: AuthStatus.unauthenticated);
     }
   }
@@ -97,14 +109,16 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   /// Sign up with email and password
+  /// Creates a pending approval request instead of direct authentication
   Future<bool> signUp({
     required String email,
     required String password,
     required String name,
     String? phone,
+    String? inviteCode,
   }) async {
     try {
-      // For local auth, just create user
+      // Create user record (but mark as pending)
       final user = AuthUser(
         id: 'user_${DateTime.now().millisecondsSinceEpoch}',
         email: email,
@@ -113,10 +127,22 @@ class AuthNotifier extends Notifier<AuthState> {
         createdAt: DateTime.now(),
       );
 
+      // Save user data for later (when approved)
       IsarService.saveSetting('current_user', user.toJson());
 
+      // Create pending approval request
+      ref
+          .read(approvalProvider.notifier)
+          .createRequest(
+            email: email,
+            name: name,
+            phone: phone,
+            inviteCode: inviteCode,
+          );
+
+      // Set state to pending approval (not fully authenticated)
       state = state.copyWith(
-        status: AuthStatus.authenticated,
+        status: AuthStatus.pendingApproval,
         user: user,
         error: null,
       );
@@ -179,6 +205,28 @@ class AuthNotifier extends Notifier<AuthState> {
     state = const AuthState(status: AuthStatus.unauthenticated);
   }
 
+  /// Update user profile
+  Future<void> updateProfile({
+    String? name,
+    String? phone,
+    String? avatarUrl,
+  }) async {
+    if (state.user == null) return;
+
+    final updatedUser = AuthUser(
+      id: state.user!.id,
+      email: state.user!.email,
+      name: name ?? state.user!.name,
+      phone: phone ?? state.user!.phone,
+      avatarUrl: avatarUrl ?? state.user!.avatarUrl,
+      createdAt: state.user!.createdAt,
+      currentMessId: state.user!.currentMessId,
+    );
+
+    IsarService.saveSetting('current_user', updatedUser.toJson());
+    state = state.copyWith(user: updatedUser);
+  }
+
   /// Create a new mess
   Future<Mess> createMess({
     required String name,
@@ -218,6 +266,29 @@ class AuthNotifier extends Notifier<AuthState> {
     return mess;
   }
 
+  /// Update current mess settings
+  Future<void> updateMess({required String name, String? address}) async {
+    if (state.currentMess == null) return;
+
+    final updatedMess = Mess(
+      id: state.currentMess!.id,
+      name: name,
+      address: address ?? state.currentMess!.address,
+      createdById: state.currentMess!.createdById,
+      createdAt: state.currentMess!.createdAt,
+      memberIds: state.currentMess!.memberIds,
+      inviteCode: state.currentMess!.inviteCode,
+    );
+
+    // Update in the available messes list
+    final messes = state.availableMesses
+        .map((m) => m.id == updatedMess.id ? updatedMess : m)
+        .toList();
+    _saveMesses(messes);
+
+    state = state.copyWith(currentMess: updatedMess, availableMesses: messes);
+  }
+
   /// Select a mess
   Future<void> selectMess(String messId) async {
     final mess = state.availableMesses.firstWhere((m) => m.id == messId);
@@ -236,30 +307,102 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   /// Join mess by invite code
+  /// Tries local lookup first, then falls back to Firestore for remote messes
   Future<bool> joinMess(String inviteCode) async {
-    final mess = state.availableMesses.firstWhere(
-      (m) => m.inviteCode == inviteCode,
-      orElse: () => throw Exception('Invalid invite code'),
+    final normalizedCode = inviteCode.toUpperCase().trim();
+
+    // 1. Try local lookup first
+    final localMess = state.availableMesses
+        .where((m) => m.inviteCode?.toUpperCase() == normalizedCode)
+        .firstOrNull;
+
+    if (localMess != null) {
+      // Local mess found - add user to members
+      final updatedMess = Mess(
+        id: localMess.id,
+        name: localMess.name,
+        address: localMess.address,
+        createdById: localMess.createdById,
+        createdAt: localMess.createdAt,
+        memberIds: [...localMess.memberIds, state.user!.id],
+        inviteCode: localMess.inviteCode,
+      );
+
+      final messes = state.availableMesses.map((m) {
+        return m.id == localMess.id ? updatedMess : m;
+      }).toList();
+
+      _saveMesses(messes);
+      await selectMess(localMess.id);
+      _createMemberProfile();
+      return true;
+    }
+
+    // 2. Fallback to Firestore for remote mess lookup
+    try {
+      final messId = await FirestoreService.joinMess(normalizedCode);
+      if (messId == null) {
+        throw Exception('Invalid invite code');
+      }
+
+      // Fetch the mess data from Firestore
+      final messData = await FirestoreService.getMess(messId);
+      if (messData == null) {
+        throw Exception('Could not load mess data');
+      }
+
+      // Convert Firestore data to Mess model
+      final remoteMess = Mess(
+        id: messId,
+        name: messData['name'] as String? ?? 'Unnamed Mess',
+        address: messData['address'] as String? ?? '',
+        createdById: messData['ownerId'] as String? ?? '',
+        createdAt:
+            (messData['createdAt'] as dynamic)?.toDate() ?? DateTime.now(),
+        memberIds: List<String>.from(messData['members'] ?? []),
+        inviteCode: messData['inviteCode'] as String?,
+      );
+
+      // Add to local messes
+      final messes = [...state.availableMesses, remoteMess];
+      _saveMesses(messes);
+
+      // Select the new mess
+      state = state.copyWith(availableMesses: messes);
+      await selectMess(messId);
+
+      // Create Member profile for the user in the new mess
+      _createMemberProfile();
+
+      debugPrint('Joined remote mess via Firestore: ${remoteMess.name}');
+      return true;
+    } catch (e) {
+      debugPrint('Firestore joinMess failed: $e');
+      throw Exception('Invalid invite code');
+    }
+  }
+
+  /// Create a Member profile for the current user in the current mess
+  void _createMemberProfile() {
+    if (state.user == null || state.currentMess == null) return;
+
+    // Check if member already exists
+    final members = ref.read(membersProvider);
+    final exists = members.any((m) => m.id == state.user!.id);
+    if (exists) return;
+
+    // Create new member profile
+    final member = Member(
+      id: state.user!.id,
+      name: state.user!.name,
+      phone: state.user!.phone ?? '',
+      email: state.user!.email,
+      joinedAt: DateTime.now(),
+      isActive: true,
     );
 
-    final updatedMess = Mess(
-      id: mess.id,
-      name: mess.name,
-      address: mess.address,
-      createdById: mess.createdById,
-      createdAt: mess.createdAt,
-      memberIds: [...mess.memberIds, state.user!.id],
-      inviteCode: mess.inviteCode,
-    );
-
-    final messes = state.availableMesses.map((m) {
-      return m.id == mess.id ? updatedMess : m;
-    }).toList();
-
-    _saveMesses(messes);
-
-    await selectMess(mess.id);
-    return true;
+    ref.read(membersProvider.notifier).addMember(member);
+    debugPrint('Created Member profile: ${member.name}');
   }
 
   String _generateInviteCode() {

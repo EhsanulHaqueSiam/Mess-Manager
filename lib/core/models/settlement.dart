@@ -9,6 +9,7 @@ enum SettlementStatus { pending, partial, completed }
 /// Monthly Settlement
 @freezed
 sealed class Settlement with _$Settlement {
+  @JsonSerializable(explicitToJson: true)
   const factory Settlement({
     required String id,
     required String messId,

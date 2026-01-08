@@ -229,6 +229,118 @@ class LocalNotificationService {
     );
   }
 
+  // ============== BILL DUE REMINDERS ==============
+
+  /// Schedule bill due reminder (fires 3 days before due date)
+  static Future<void> scheduleBillDueReminder({
+    required int id,
+    required String billName,
+    required double amount,
+    required DateTime dueDate,
+  }) async {
+    // Schedule reminder 3 days before
+    final reminderDate = dueDate.subtract(const Duration(days: 3));
+    if (reminderDate.isBefore(DateTime.now())) return;
+
+    await _notifications.zonedSchedule(
+      400 + id.hashCode,
+      '📅 Bill Due Soon: $billName',
+      '৳${amount.toStringAsFixed(0)} due on ${dueDate.day}/${dueDate.month}',
+      tz.TZDateTime.from(
+        DateTime(reminderDate.year, reminderDate.month, reminderDate.day, 9, 0),
+        tz.local,
+      ),
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          'bill_reminders',
+          'Bill Reminders',
+          channelDescription: 'Reminders for upcoming bills and fixed expenses',
+          importance: Importance.high,
+          priority: Priority.high,
+          color: const Color(0xFF4CAF50),
+        ),
+        iOS: const DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      payload: 'bill_due:$billName',
+    );
+
+    if (kDebugMode) {
+      debugPrint('Scheduled bill reminder for $billName on $reminderDate');
+    }
+  }
+
+  /// Cancel bill reminder
+  static Future<void> cancelBillReminder(int id) async {
+    await _notifications.cancel(400 + id.hashCode);
+  }
+
+  // ============== BAZAR ROSTER ALERTS ==============
+
+  /// Show "Your turn this week" bazar roster notification
+  static Future<void> showBazarRosterAlert({
+    required String memberName,
+    required DateTime weekStartDate,
+  }) async {
+    await _notifications.show(
+      500,
+      '🛒 Your Bazar Turn This Week',
+      '$memberName, you are on bazar duty starting ${weekStartDate.day}/${weekStartDate.month}',
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          'bazar_roster',
+          'Bazar Roster',
+          channelDescription: 'Weekly bazar duty notifications',
+          importance: Importance.high,
+          priority: Priority.high,
+          color: const Color(0xFF2196F3),
+        ),
+        iOS: const DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+      payload: 'bazar_roster',
+    );
+  }
+
+  // ============== PRICE SPIKE ALERTS ==============
+
+  /// Show price spike alert when an item exceeds historical average
+  static Future<void> showPriceSpikeAlert({
+    required String itemName,
+    required double currentPrice,
+    required double avgPrice,
+    required int percentIncrease,
+  }) async {
+    await _notifications.show(
+      600,
+      '📈 Price Spike: $itemName',
+      '৳${currentPrice.toStringAsFixed(0)} (+$percentIncrease% from avg ৳${avgPrice.toStringAsFixed(0)})',
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          'price_alerts',
+          'Price Alerts',
+          channelDescription: 'Alerts when prices exceed historical average',
+          importance: Importance.defaultImportance,
+          priority: Priority.defaultPriority,
+          color: const Color(0xFFFF9800),
+        ),
+        iOS: const DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+      payload: 'price_spike:$itemName',
+    );
+  }
+
   // ============== HELPERS ==============
 
   /// Get next instance of a specific time

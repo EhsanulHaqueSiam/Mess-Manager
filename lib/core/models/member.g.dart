@@ -44,6 +44,7 @@ _Member _$MemberFromJson(Map<String, dynamic> json) => _Member(
       MemberRole.member,
   avatarUrl: json['avatarUrl'] as String?,
   phone: json['phone'] as String?,
+  email: json['email'] as String?,
   preferences:
       (json['preferences'] as List<dynamic>?)
           ?.map((e) => FoodPreference.fromJson(e as Map<String, dynamic>))
@@ -68,6 +69,7 @@ Map<String, dynamic> _$MemberToJson(_Member instance) => <String, dynamic>{
   'role': _$MemberRoleEnumMap[instance.role]!,
   'avatarUrl': instance.avatarUrl,
   'phone': instance.phone,
+  'email': instance.email,
   'preferences': instance.preferences,
   'balance': instance.balance,
   'joinedAt': instance.joinedAt?.toIso8601String(),

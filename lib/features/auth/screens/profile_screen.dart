@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -5,12 +7,14 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:go_router/go_router.dart';
 import 'package:velocity_x/velocity_x.dart';
 import 'package:getwidget/getwidget.dart';
+import 'package:image_picker/image_picker.dart';
 
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/router/app_router.dart';
 import 'package:mess_manager/core/services/auth_service.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
 import 'package:mess_manager/core/widgets/gf_components.dart';
+import 'package:mess_manager/features/auth/providers/auth_provider.dart';
 
 /// Profile Screen - Uses GetWidget + VelocityX + flutter_animate
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -24,8 +28,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _imagePicker = ImagePicker();
   bool _isLoading = false;
   bool _isEditing = false;
+  String? _profileImagePath;
 
   @override
   void initState() {
@@ -46,6 +52,52 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _nameController.dispose();
     _phoneController.dispose();
     super.dispose();
+  }
+
+  /// Pick profile image from camera or gallery
+  Future<void> _pickProfileImage() async {
+    HapticService.lightTap();
+
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: AppColors.surfaceDark,
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(LucideIcons.camera, color: AppColors.primary),
+              title: const Text('Take Photo'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(LucideIcons.image, color: AppColors.primary),
+              title: const Text('Choose from Gallery'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (source == null) return;
+
+    try {
+      final pickedFile = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 85,
+      );
+
+      if (pickedFile != null) {
+        setState(() => _profileImagePath = pickedFile.path);
+        HapticService.success();
+        if (mounted) showSuccessToast(context, 'Profile photo updated!');
+      }
+    } catch (e) {
+      HapticService.error();
+      if (mounted) showErrorToast(context, 'Failed to pick image');
+    }
   }
 
   @override
@@ -87,7 +139,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   height: 100,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: LinearGradient(colors: AppColors.gradientPrimary),
+                    gradient: _profileImagePath == null
+                        ? LinearGradient(colors: AppColors.gradientPrimary)
+                        : null,
+                    image: _profileImagePath != null
+                        ? DecorationImage(
+                            image: FileImage(File(_profileImagePath!)),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
                     boxShadow: [
                       BoxShadow(
                         color: AppColors.primary.withValues(alpha: 0.3),
@@ -96,11 +156,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                     ],
                   ),
-                  child: Center(
-                    child: _getInitials(
-                      user?.displayName ?? user?.email ?? 'U',
-                    ).text.xl3.white.bold.make(),
-                  ),
+                  child: _profileImagePath == null
+                      ? Center(
+                          child: _getInitials(
+                            user?.displayName ?? user?.email ?? 'U',
+                          ).text.xl3.white.bold.make(),
+                        )
+                      : null,
                 ).animate().scale(delay: 100.ms),
                 Positioned(
                   bottom: 0,
@@ -114,10 +176,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     size: GFSize.SMALL,
                     color: AppColors.primary,
                     shape: GFIconButtonShape.circle,
-                    onPressed: () {
-                      HapticService.lightTap();
-                      showSuccessToast(context, 'Photo upload coming soon');
-                    },
+                    onPressed: _pickProfileImage,
                   ),
                 ),
               ],
@@ -327,7 +386,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     HapticService.buttonPress();
 
     try {
-      await AuthService.updateDisplayName(_nameController.text.trim());
+      final name = _nameController.text.trim();
+      final phone = _phoneController.text.trim();
+
+      await AuthService.updateDisplayName(name);
+
+      // Also save to local auth provider for persistence
+      await ref
+          .read(authProvider.notifier)
+          .updateProfile(
+            name: name,
+            phone: phone.isNotEmpty ? phone : null,
+            avatarUrl: _profileImagePath,
+          );
+
       if (mounted) {
         showSuccessToast(context, 'Profile updated!');
         setState(() {

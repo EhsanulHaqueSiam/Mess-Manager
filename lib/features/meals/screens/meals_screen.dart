@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
@@ -19,6 +20,7 @@ import 'package:mess_manager/features/meals/widgets/add_meal_sheet.dart';
 import 'package:mess_manager/features/meals/widgets/bulk_meal_sheet.dart';
 import 'package:mess_manager/features/meals/widgets/meal_schedule_tab.dart';
 import 'package:mess_manager/features/balance/providers/balance_provider.dart';
+import 'package:mess_manager/core/providers/role_provider.dart';
 
 /// Meals Screen - Uses GetWidget + VelocityX + flutter_animate
 class MealsScreen extends ConsumerStatefulWidget {
@@ -140,19 +142,48 @@ class _MealsScreenState extends ConsumerState<MealsScreen>
 }
 
 /// Entries Tab - Uses GetWidget + VelocityX
-class _EntriesTab extends StatelessWidget {
+class _EntriesTab extends StatefulWidget {
   final WidgetRef ref;
 
   const _EntriesTab({required this.ref});
 
   @override
+  State<_EntriesTab> createState() => _EntriesTabState();
+}
+
+class _EntriesTabState extends State<_EntriesTab> {
+  String _searchQuery = '';
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  WidgetRef get ref => widget.ref;
+
+  @override
   Widget build(BuildContext context) {
-    final meals = ref.watch(mealsProvider);
+    final allMeals = ref.watch(mealsProvider);
     final members = ref.watch(membersProvider);
     final mealsByMember = ref.watch(mealsByMemberProvider);
     final mealRate = ref.watch(mealRateProvider);
 
-    if (meals.isEmpty) {
+    // Filter meals by search query (member name)
+    final meals = _searchQuery.isEmpty
+        ? allMeals
+        : allMeals.where((meal) {
+            final member = members.firstWhere(
+              (m) => m.id == meal.memberId,
+              orElse: () => members.first,
+            );
+            return member.name.toString().toLowerCase().contains(
+              _searchQuery.toLowerCase(),
+            );
+          }).toList();
+
+    if (allMeals.isEmpty) {
       return EmptyStateWidget.noMeals(
         action: ShimmerCTAButton(
           text: 'Add First Meal',
@@ -182,12 +213,42 @@ class _EntriesTab extends StatelessWidget {
       slivers: [
         SliverToBoxAdapter(
           child: VStack([
+            // Search Bar
+            TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search by member name...',
+                prefixIcon: const Icon(LucideIcons.search, size: 18),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(LucideIcons.x, size: 16),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _searchQuery = '');
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: AppColors.cardDark,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.sm,
+                ),
+              ),
+              onChanged: (value) => setState(() => _searchQuery = value),
+            ),
+            16.heightBox,
+
             // Stats Row
             HStack([
               _buildStatCard(
                 icon: LucideIcons.utensils,
                 label: 'Total Meals',
-                value: meals
+                value: allMeals
                     .fold(0.0, (sum, m) => sum + m.count)
                     .toStringAsFixed(1),
                 color: AppColors.mealColor,
@@ -227,7 +288,7 @@ class _EntriesTab extends StatelessWidget {
             delegate: SliverChildBuilderDelegate((context, index) {
               final date = sortedDates[index];
               final dateMeals = mealsByDate[date]!;
-              return _buildDateSection(date, dateMeals, members);
+              return _buildDateSection(context, date, dateMeals, members);
             }, childCount: sortedDates.length),
           ),
         ),
@@ -288,7 +349,12 @@ class _EntriesTab extends StatelessWidget {
     ).pOnly(bottom: AppSpacing.sm);
   }
 
-  Widget _buildDateSection(DateTime date, List<Meal> meals, List members) {
+  Widget _buildDateSection(
+    BuildContext context,
+    DateTime date,
+    List<Meal> meals,
+    List members,
+  ) {
     final dateLabel = _formatDate(date);
 
     return VStack(crossAlignment: CrossAxisAlignment.start, [
@@ -298,43 +364,120 @@ class _EntriesTab extends StatelessWidget {
           (m) => m.id == meal.memberId,
           orElse: () => members.first,
         );
-        return _buildMealRow(meal, member);
+        return _buildMealRow(context, meal, member);
       }),
       8.heightBox,
     ]);
   }
 
-  Widget _buildMealRow(Meal meal, dynamic member) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 4),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      decoration: BoxDecoration(
-        color: AppColors.cardDark.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+  Widget _buildMealRow(BuildContext context, Meal meal, dynamic member) {
+    return Slidable(
+      key: Key(meal.id),
+      endActionPane: ActionPane(
+        motion: const DrawerMotion(),
+        children: [
+          if (_canEditMeal(meal))
+            SlidableAction(
+              onPressed: (_) {
+                HapticService.buttonPress();
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (ctx) => AddMealSheet(existingMeal: meal),
+                );
+              },
+              backgroundColor: AppColors.info,
+              foregroundColor: Colors.white,
+              icon: LucideIcons.edit2,
+              label: 'Edit',
+              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+            ),
+          SlidableAction(
+            onPressed: (_) async {
+              final confirm =
+                  await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      backgroundColor: AppColors.surfaceDark,
+                      title: const Text('Delete Meal?'),
+                      content: Text(
+                        'Remove ${member.name}\'s ${meal.type.name} meal?',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text('Cancel'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.error,
+                          ),
+                          child: const Text('Delete'),
+                        ),
+                      ],
+                    ),
+                  ) ??
+                  false;
+              if (confirm) {
+                final deletedMeal = meal;
+                ref.read(mealsProvider.notifier).removeMeal(meal.id);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${member.name}\'s meal deleted'),
+                    action: SnackBarAction(
+                      label: 'Undo',
+                      textColor: AppColors.accentWarm,
+                      onPressed: () {
+                        ref.read(mealsProvider.notifier).addMeal(deletedMeal);
+                      },
+                    ),
+                    backgroundColor: AppColors.cardDark,
+                    duration: const Duration(seconds: 4),
+                  ),
+                );
+              }
+            },
+            backgroundColor: AppColors.error,
+            foregroundColor: Colors.white,
+            icon: LucideIcons.trash2,
+            label: 'Delete',
+            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+          ),
+        ],
       ),
-      child: HStack([
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: AppColors.mealColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Icon(
-            _getMealIcon(meal.type),
-            color: AppColors.mealColor,
-            size: 14,
-          ),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 4),
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        decoration: BoxDecoration(
+          color: AppColors.cardDark.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
         ),
-        8.widthBox,
-        member.name
-            .toString()
-            .text
-            .sm
-            .color(AppColors.textPrimaryDark)
-            .make()
-            .expand(),
-        '${meal.count}'.text.sm.color(AppColors.mealColor).bold.make(),
-      ]),
+        child: HStack([
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: AppColors.mealColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Icon(
+              _getMealIcon(meal.type),
+              color: AppColors.mealColor,
+              size: 14,
+            ),
+          ),
+          8.widthBox,
+          member.name
+              .toString()
+              .text
+              .sm
+              .color(AppColors.textPrimaryDark)
+              .make()
+              .expand(),
+          '${meal.count}'.text.sm.color(AppColors.mealColor).bold.make(),
+        ]),
+      ),
     );
   }
 
@@ -358,5 +501,12 @@ class _EntriesTab extends StatelessWidget {
     if (dateOnly == today) return 'Today';
     if (dateOnly == yesterday) return 'Yesterday';
     return '${date.day}/${date.month}';
+  }
+
+  /// Check if current user can edit this meal (admin or meal owner)
+  bool _canEditMeal(Meal meal) {
+    final isAdmin = ref.watch(isAdminProvider);
+    final currentMemberId = ref.watch(currentMemberIdProvider);
+    return isAdmin || meal.memberId == currentMemberId;
   }
 }

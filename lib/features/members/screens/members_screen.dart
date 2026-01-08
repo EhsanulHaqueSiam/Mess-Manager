@@ -13,6 +13,7 @@ import 'package:mess_manager/core/widgets/gf_components.dart';
 import 'package:mess_manager/core/widgets/animated_widgets.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
 import 'package:mess_manager/features/members/widgets/add_edit_member_sheet.dart';
+import 'package:mess_manager/features/members/widgets/member_actions_sheet.dart';
 import 'package:mess_manager/features/balance/providers/balance_provider.dart';
 
 /// Members Screen - Uses GetWidget + VelocityX + flutter_animate
@@ -91,6 +92,15 @@ class MembersScreen extends ConsumerWidget {
     );
   }
 
+  void _showMemberActions(BuildContext context, Member member) {
+    HapticService.modalOpen();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => MemberActionsSheet(member: member),
+    );
+  }
+
   Widget _buildMemberCard(
     BuildContext context,
     Member member,
@@ -117,6 +127,7 @@ class MembersScreen extends ConsumerWidget {
       ),
       content: InkWell(
         onTap: () => _showAddEditSheet(context, member: member),
+        onLongPress: () => _showMemberActions(context, member),
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
         child: VStack([
           // Header Row

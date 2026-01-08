@@ -20,10 +20,12 @@ class _BulkMealSheetState extends ConsumerState<BulkMealSheet> {
   String? _selectedMemberId;
   DateTime _startDate = DateTime.now();
   int _numberOfDays = 3; // Default to 3 days
+  int _guestCount = 0; // Guest meals per entry
 
   final Set<MealType> _selectedMealTypes = {MealType.lunch, MealType.dinner};
 
-  int get _totalMeals => _numberOfDays * _selectedMealTypes.length;
+  int get _totalMeals =>
+      _numberOfDays * _selectedMealTypes.length * (1 + _guestCount);
 
   @override
   void initState() {
@@ -100,6 +102,58 @@ class _BulkMealSheetState extends ConsumerState<BulkMealSheet> {
               ],
             ),
             const Gap(AppSpacing.xl),
+
+            // Quick Templates
+            Text(
+              'Quick Templates',
+              style: AppTypography.labelMedium.copyWith(
+                color: AppColors.textSecondaryDark,
+              ),
+            ),
+            const Gap(AppSpacing.sm),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildTemplateChip(
+                    'Normal Week',
+                    'Mon-Fri L+D',
+                    LucideIcons.briefcase,
+                    () => _applyTemplate(
+                      days: 5,
+                      startFromMonday: true,
+                      types: {MealType.lunch, MealType.dinner},
+                    ),
+                  ),
+                  const Gap(AppSpacing.sm),
+                  _buildTemplateChip(
+                    'Weekend Only',
+                    'Sat-Sun All',
+                    LucideIcons.partyPopper,
+                    () => _applyTemplate(
+                      days: 2,
+                      startFromSaturday: true,
+                      types: {
+                        MealType.breakfast,
+                        MealType.lunch,
+                        MealType.dinner,
+                      },
+                    ),
+                  ),
+                  const Gap(AppSpacing.sm),
+                  _buildTemplateChip(
+                    'Full Week',
+                    '7 Days L+D',
+                    LucideIcons.calendar,
+                    () => _applyTemplate(
+                      days: 7,
+                      types: {MealType.lunch, MealType.dinner},
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Gap(AppSpacing.lg),
 
             // Member Selector
             Text(
@@ -210,6 +264,80 @@ class _BulkMealSheetState extends ConsumerState<BulkMealSheet> {
                 _buildMealTypeChip(MealType.lunch, 'Lunch', LucideIcons.sun),
                 _buildMealTypeChip(MealType.dinner, 'Dinner', LucideIcons.moon),
               ],
+            ),
+            const Gap(AppSpacing.lg),
+
+            // Guest Count
+            Text(
+              'Guest meals per entry',
+              style: AppTypography.labelMedium.copyWith(
+                color: AppColors.textSecondaryDark,
+              ),
+            ),
+            const Gap(AppSpacing.sm),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.cardDark,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                border: Border.all(color: AppColors.borderDark),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        LucideIcons.users,
+                        size: 18,
+                        color: _guestCount > 0
+                            ? AppColors.mealColor
+                            : AppColors.textMutedDark,
+                      ),
+                      const Gap(AppSpacing.sm),
+                      Text(
+                        _guestCount > 0 ? '$_guestCount guest(s)' : 'No guests',
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: _guestCount > 0
+                              ? AppColors.textPrimaryDark
+                              : AppColors.textMutedDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(LucideIcons.minus, size: 18),
+                        onPressed: _guestCount > 0
+                            ? () => setState(() => _guestCount--)
+                            : null,
+                        color: AppColors.textPrimaryDark,
+                        disabledColor: AppColors.textMutedDark,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 32,
+                          minHeight: 32,
+                        ),
+                      ),
+                      const Gap(AppSpacing.xs),
+                      IconButton(
+                        icon: const Icon(LucideIcons.plus, size: 18),
+                        onPressed: () => setState(() => _guestCount++),
+                        color: AppColors.mealColor,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 32,
+                          minHeight: 32,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
             const Gap(AppSpacing.lg),
 
@@ -328,6 +456,104 @@ class _BulkMealSheetState extends ConsumerState<BulkMealSheet> {
     );
   }
 
+  Widget _buildTemplateChip(
+    String title,
+    String subtitle,
+    IconData icon,
+    VoidCallback onTap,
+  ) {
+    return Material(
+      color: AppColors.cardDark,
+      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
+          ),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: AppColors.mealColor.withValues(alpha: 0.3),
+            ),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: AppColors.mealColor, size: 18),
+              const Gap(AppSpacing.sm),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: AppTypography.labelMedium.copyWith(
+                      color: AppColors.textPrimaryDark,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.textMutedDark,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _applyTemplate({
+    required int days,
+    required Set<MealType> types,
+    bool startFromMonday = false,
+    bool startFromSaturday = false,
+  }) {
+    DateTime newStartDate = DateTime.now();
+
+    if (startFromMonday) {
+      // Find next Monday
+      final weekday = newStartDate.weekday;
+      final daysUntilMonday = weekday == DateTime.monday
+          ? 0
+          : (8 - weekday) % 7;
+      newStartDate = newStartDate.add(Duration(days: daysUntilMonday));
+    } else if (startFromSaturday) {
+      // Find next Saturday
+      final weekday = newStartDate.weekday;
+      final daysUntilSaturday = weekday == DateTime.saturday
+          ? 0
+          : (13 - weekday) % 7;
+      newStartDate = newStartDate.add(Duration(days: daysUntilSaturday));
+    }
+
+    setState(() {
+      _numberOfDays = days;
+      _startDate = newStartDate;
+      _selectedMealTypes
+        ..clear()
+        ..addAll(types);
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Template applied: $days days, ${types.length} meal types',
+        ),
+        backgroundColor: AppColors.mealColor,
+        duration: const Duration(seconds: 1),
+      ),
+    );
+  }
+
   Widget _buildMealTypeChip(MealType type, String label, IconData icon) {
     final isSelected = _selectedMealTypes.contains(type);
     return FilterChip(
@@ -433,6 +659,8 @@ class _BulkMealSheetState extends ConsumerState<BulkMealSheet> {
           memberId: _selectedMemberId!,
           date: date,
           count: 1,
+          guestCount: _guestCount,
+          guestName: _guestCount > 0 ? 'Bulk entry guests' : null,
           type: mealType,
           createdAt: DateTime.now(),
         );

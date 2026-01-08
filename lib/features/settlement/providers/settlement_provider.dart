@@ -5,6 +5,8 @@ import 'package:mess_manager/core/database/isar_service.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
 import 'package:mess_manager/features/bazar/providers/bazar_provider.dart';
 import 'package:mess_manager/features/meals/providers/meals_provider.dart';
+import 'package:mess_manager/features/vacation/providers/fixed_expenses_provider.dart';
+import 'package:mess_manager/features/settlement/providers/month_lock_provider.dart';
 
 /// All settlements history
 final settlementsProvider =
@@ -73,15 +75,37 @@ class SettlementsNotifier extends Notifier<List<Settlement>> {
     }).toList();
     _save();
   }
+
+  /// Super Admin: Force mark all items as paid
+  Future<void> forceSettleAll(String settlementId) async {
+    state = state.map((s) {
+      if (s.id == settlementId) {
+        final updatedItems = s.items.map((item) {
+          return item.copyWith(isPaid: true, paidAt: DateTime.now());
+        }).toList();
+
+        return s.copyWith(
+          items: updatedItems,
+          status: SettlementStatus.completed,
+          settledAt: DateTime.now(),
+        );
+      }
+      return s;
+    }).toList();
+    _save();
+  }
 }
 
 /// Current month balance summary per member
+/// Formula: Balance = Opening + Deposits (Bazar) - Expenses (Meals + Fixed)
 final currentMonthBalancesProvider = Provider<List<MemberBalanceSummary>>((
   ref,
 ) {
   final members = ref.watch(membersProvider);
   final bazarEntries = ref.watch(bazarEntriesProvider);
   final meals = ref.watch(mealsProvider);
+  final fixedExpenses = ref.watch(fixedExpensesProvider);
+  final monthLockState = ref.watch(monthLockProvider);
 
   final now = DateTime.now();
   final year = now.year;
@@ -101,8 +125,49 @@ final currentMonthBalancesProvider = Provider<List<MemberBalanceSummary>>((
   final totalMeals = monthMeals.fold(0, (sum, m) => sum + m.count);
   final mealRate = totalMeals > 0 ? totalBazar / totalMeals : 0.0;
 
-  // Calculate per-member balances
+  // Calculate fixed expenses total
+  final totalFixedExpenses = fixedExpenses.fold<double>(
+    0.0,
+    (sum, e) => sum + e.amount,
+  );
+
+  // Calculate total active days across all members (for pro-rata)
+  final daysInMonth = DateTime(year, month + 1, 0).day;
+  final monthStart = DateTime(year, month, 1);
+  final monthEnd = DateTime(year, month, daysInMonth);
+
+  // Helper to calculate active days for a member in this month
+  int getActiveDays(dynamic member) {
+    if (!member.isActive) return 0;
+
+    final fromDate = member.activeFromDate ?? member.joinedAt ?? monthStart;
+    final toDate = member.activeToDate ?? monthEnd;
+
+    // Clamp dates to current month
+    final effectiveStart = fromDate.isBefore(monthStart)
+        ? monthStart
+        : fromDate;
+    final effectiveEnd = toDate.isAfter(monthEnd) ? monthEnd : toDate;
+
+    if (effectiveStart.isAfter(effectiveEnd)) return 0;
+
+    return effectiveEnd.difference(effectiveStart).inDays + 1;
+  }
+
+  // Calculate total active days across all active members
+  final totalActiveDays = members
+      .where((m) => m.isActive)
+      .fold(0, (sum, m) => sum + getActiveDays(m));
+
+  // Calculate per-member balances including opening balance
   return members.map((member) {
+    // Get opening balance from previous month carry-forward
+    final openingBalance = monthLockState.getOpeningBalance(
+      member.id,
+      year,
+      month,
+    );
+
     final memberBazar = monthBazar
         .where((b) => b.memberId == member.id)
         .fold(0.0, (sum, b) => sum + b.amount);
@@ -112,12 +177,19 @@ final currentMonthBalancesProvider = Provider<List<MemberBalanceSummary>>((
 
     final mealCost = memberMeals * mealRate;
 
+    // Pro-rata fixed expense share based on active days
+    final memberActiveDays = getActiveDays(member);
+    final monthlyShare = totalActiveDays > 0
+        ? (memberActiveDays / totalActiveDays) * totalFixedExpenses
+        : 0.0;
+
+    // Balance = Opening + Deposits (Bazar) - Expenses (Meals + Fixed)
     return MemberBalanceSummary(
       memberId: member.id,
       totalBazar: memberBazar,
       mealCost: mealCost,
-      monthlyShare: 0.0, // TODO: Add monthly expenses
-      balance: memberBazar - mealCost,
+      monthlyShare: monthlyShare,
+      balance: openingBalance + memberBazar - mealCost - monthlyShare,
     );
   }).toList();
 });

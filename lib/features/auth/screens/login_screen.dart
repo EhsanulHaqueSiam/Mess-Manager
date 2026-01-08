@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -12,6 +13,10 @@ import 'package:mess_manager/core/router/app_router.dart';
 import 'package:mess_manager/core/services/auth_service.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
 import 'package:mess_manager/core/widgets/gf_components.dart';
+import 'package:mess_manager/core/database/isar_service.dart';
+import 'package:mess_manager/core/models/member.dart';
+import 'package:mess_manager/core/models/auth_user.dart';
+import 'package:mess_manager/core/services/mock_data_service.dart';
 import 'package:mess_manager/features/auth/providers/auth_provider.dart';
 
 /// Login Screen - Uses AnimatedTextKit + GetWidget + VelocityX
@@ -191,22 +196,94 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ]).animate().fadeIn(delay: 900.ms),
                 12.heightBox,
 
-                // Skip for demo
-                Center(
-                  child: GFButton(
-                    onPressed: _skipLogin,
-                    text: 'Continue as Guest (Demo)',
-                    type: GFButtonType.transparent,
-                    textColor: AppColors.textMutedDark,
-                    size: GFSize.SMALL,
+                // Skip for demo (DEBUG MODE ONLY)
+                if (kDebugMode)
+                  Center(
+                    child: GFButton(
+                      onPressed: _skipLogin,
+                      text: 'Continue as Guest (Demo)',
+                      type: GFButtonType.transparent,
+                      textColor: AppColors.textMutedDark,
+                      size: GFSize.SMALL,
+                    ),
+                  ).animate().fadeIn(delay: 1000.ms),
+
+                // === DEV MODE: Quick Role Testing ===
+                if (kDebugMode) ...[
+                  24.heightBox,
+                  const Divider(color: AppColors.borderDark),
+                  8.heightBox,
+                  '🛠️ DEV MODE: Quick Login'.text.sm.bold
+                      .color(AppColors.warning)
+                      .make(),
+                  8.heightBox,
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      _buildDevRoleButton(
+                        '👑 Super Admin',
+                        MemberRole.superAdmin,
+                      ),
+                      _buildDevRoleButton('🔧 Admin', MemberRole.admin),
+                      _buildDevRoleButton(
+                        '🍽️ Meal Manager',
+                        MemberRole.mealManager,
+                      ),
+                      _buildDevRoleButton('👤 Member', MemberRole.member),
+                    ],
                   ),
-                ).animate().fadeIn(delay: 1000.ms),
+                  8.heightBox,
+                  'These buttons bypass login for testing'.text.xs
+                      .color(AppColors.textMutedDark)
+                      .italic
+                      .make(),
+                ],
               ]),
             ),
           ]),
         ),
       ),
     );
+  }
+
+  Widget _buildDevRoleButton(String label, MemberRole role) {
+    return GFButton(
+      onPressed: () => _devLoginAs(role),
+      text: label,
+      size: GFSize.SMALL,
+      type: GFButtonType.outline,
+      color: AppColors.warning,
+    );
+  }
+
+  Future<void> _devLoginAs(MemberRole role) async {
+    HapticService.buttonPress();
+
+    // Create a dev user with the specified role
+    final user = AuthUser(
+      id: 'dev_${role.name}_${DateTime.now().millisecondsSinceEpoch}',
+      email: '${role.name}@dev.test',
+      name: 'Dev ${role.name.toUpperCase()}',
+      createdAt: DateTime.now(),
+    );
+
+    // Save user and set role in member data
+    IsarService.saveSetting('current_user', user.toJson());
+    IsarService.saveSetting('current_user_role', role.index);
+
+    // 🌱 Seed mock data for realistic testing
+    await MockDataService.seedAll();
+
+    await ref
+        .read(authProvider.notifier)
+        .signIn(email: user.email, password: 'dev123');
+
+    if (mounted) {
+      HapticService.success();
+      context.go(AppRoutes.dashboard);
+    }
   }
 
   Widget _buildErrorCard() {

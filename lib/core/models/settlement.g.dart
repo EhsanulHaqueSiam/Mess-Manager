@@ -30,7 +30,7 @@ Map<String, dynamic> _$SettlementToJson(_Settlement instance) =>
       'year': instance.year,
       'month': instance.month,
       'calculatedAt': instance.calculatedAt.toIso8601String(),
-      'items': instance.items,
+      'items': instance.items.map((e) => e.toJson()).toList(),
       'status': _$SettlementStatusEnumMap[instance.status]!,
       'settledAt': instance.settledAt?.toIso8601String(),
     };

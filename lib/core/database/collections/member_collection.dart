@@ -20,6 +20,7 @@ class MemberCollection {
 
   String? avatarUrl;
   String? phone;
+  String? email; // For auth user linking
 
   late double balance;
 
@@ -54,6 +55,7 @@ class MemberCollection {
       role: MemberRole.values[roleIndex],
       avatarUrl: avatarUrl,
       phone: phone,
+      email: email,
       preferences: preferences,
       balance: balance,
       joinedAt: joinedAt,
@@ -76,6 +78,7 @@ class MemberCollection {
       ..roleIndex = m.role.index
       ..avatarUrl = m.avatarUrl
       ..phone = m.phone
+      ..email = m.email
       ..balance = m.balance
       ..joinedAt = m.joinedAt
       ..activeFromDate = m.activeFromDate

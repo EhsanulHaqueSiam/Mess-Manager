@@ -12,6 +12,7 @@ dependencies:
 
   # Core State Management & Routing
   flutter_riverpod: ^3.1.0
+  riverpod: ^3.1.0 # Explicit dependency for Override type visibility
   riverpod_annotation: ^4.0.0
   go_router: ^17.0.1
 
@@ -30,8 +31,11 @@ dependencies:
   gap: ^3.0.0                 # Clean spacing utility
 
   # Trending UI/UX Libraries (2025-2026)
-  flutter_slidable: ^3.1.1    # Swipe actions for lists
-  shimmer: ^3.0.0             # Skeleton loading states
+  flutter_slidable: ^4.0.3    # Swipe actions for lists
+  skeletonizer: ^2.1.2        # Modern skeleton loading (replaces shimmer)
+  toastification: ^3.0.3      # Beautiful toast notifications
+  flutter_form_builder: ^10.2.0 # Advanced form handling
+  form_builder_validators: ^11.2.0 # Form validation
   cached_network_image: ^3.4.1 # Efficient image loading & caching
   flutter_svg: ^2.0.16        # SVG support for scalable graphics
   lottie: ^3.3.1              # JSON-based animations
@@ -44,23 +48,22 @@ dependencies:
   dio: ^5.4.0                 # Powerful HTTP client
   uuid: ^4.5.2                # Unique ID generation
   image_picker: ^1.2.1        # Camera/gallery access
-  http: ^1.6.0                # HTTP requests
 
   # Firebase (All Free Tier Services)
-  firebase_core: ^3.9.0               # Firebase core
-  firebase_auth: ^5.5.1               # Authentication (50K MAUs free)
-  cloud_firestore: ^5.6.0             # Database (1GB, 50K reads/day)
-  firebase_messaging: ^15.2.0         # Push notifications (unlimited)
-  firebase_analytics: ^11.4.0         # Analytics (500 events, unlimited)
-  firebase_crashlytics: ^4.3.0        # Crash reporting (unlimited)
-  firebase_performance: ^0.10.1+10    # Performance monitoring (free)
-  firebase_remote_config: ^5.5.0      # Remote config (free)
-  firebase_app_check: ^0.3.2+10       # App security (free)
-  firebase_in_app_messaging: ^0.8.1+10 # In-app messages (free)
-  google_sign_in: ^6.2.2              # Google Sign-In
+  firebase_core: ^4.3.0               # Firebase core
+  firebase_auth: ^6.1.3               # Authentication (50K MAUs free)
+  cloud_firestore: ^6.1.1             # Database (1GB, 50K reads/day)
+  firebase_messaging: ^16.1.0         # Push notifications (unlimited)
+  firebase_analytics: ^12.1.0         # Analytics (500 events, unlimited)
+  firebase_crashlytics: ^5.0.6        # Crash reporting (unlimited)
+  firebase_performance: ^0.11.1+3    # Performance monitoring (free)
+  firebase_remote_config: ^6.1.3      # Remote config (free)
+  firebase_app_check: ^0.4.1+3       # App security (free)
+  firebase_in_app_messaging: ^0.9.0+5 # In-app messages (free)
+  google_sign_in: ^6.2.2              # Google Sign-In (Pinned to 6.x to avoid v7 breaking changes)
 
   # AI/ML (Firebase AI Logic)
-  firebase_ai: ^2.3.0                 # Firebase AI Logic SDK (Gemini via Firebase)
+  firebase_ai: ^3.6.1                 # Firebase AI Logic SDK (Gemini via Firebase)
 
 
   # Export & Sharing
@@ -90,11 +93,25 @@ dependencies:
   animated_theme_switcher: ^2.0.10
   isar_plus: ^1.2.0
   isar_plus_flutter_libs: ^1.2.0
+  syncfusion_flutter_xlsio: ^32.1.21
+  file_picker: ^10.3.8
+  timeago: ^3.7.1
+  flutter_secure_storage: ^10.0.0
+  permission_handler: ^12.0.1
+  money2: ^6.1.0
+  logger: ^2.6.2
+  mobile_scanner: ^7.1.4
+  flutter_displaymode: ^0.7.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  integration_test:
+    sdk: flutter
   flutter_lints: ^6.0.0
+  mocktail: ^1.0.4              # Mocking library for tests
+  flutter_native_splash: ^2.4.0   # Splash screen generator
+  flutter_launcher_icons: ^0.14.3 # App icon generator
   
   # Code Generation
   build_runner: ^2.10.4
@@ -114,3 +131,25 @@ dependency_overrides:
 
 flutter:
   uses-material-design: true
+
+# Splash Screen Configuration
+flutter_native_splash:
+  color: "#1a1a2e"
+  color_dark: "#0f0f1a"
+  image: assets/images/logo.png
+  android_12:
+    color: "#1a1a2e"
+    color_dark: "#0f0f1a"
+    image: assets/images/logo.png
+  ios: true
+  web: true
+  fullscreen: true
+
+# App Icon Configuration  
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/logo.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#1a1a2e"
+  adaptive_icon_foreground: "assets/images/logo.png"

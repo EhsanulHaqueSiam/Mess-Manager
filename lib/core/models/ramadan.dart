@@ -35,7 +35,8 @@ sealed class RamadanMeal with _$RamadanMeal {
     required DateTime date,
     required RamadanMealType type,
     @Default(1) int count,
-    String? guestName,
+    @Default(0) int guestCount, // Number of guest meals (sponsor pays)
+    String? guestName, // Optional guest name(s) for reference
     DateTime? createdAt,
   }) = _RamadanMeal;
 
@@ -75,4 +76,20 @@ sealed class RamadanBalance with _$RamadanBalance {
 
   factory RamadanBalance.fromJson(Map<String, dynamic> json) =>
       _$RamadanBalanceFromJson(json);
+}
+
+/// Ramadan Payment - tracks paid credit/debt items
+@freezed
+sealed class RamadanPayment with _$RamadanPayment {
+  const factory RamadanPayment({
+    required String id,
+    required String seasonId,
+    required String fromMemberId, // Debtor who paid
+    required String toMemberId, // Creditor who received
+    required double amount,
+    required DateTime paidAt,
+  }) = _RamadanPayment;
+
+  factory RamadanPayment.fromJson(Map<String, dynamic> json) =>
+      _$RamadanPaymentFromJson(json);
 }

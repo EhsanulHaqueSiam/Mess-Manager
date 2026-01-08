@@ -4,12 +4,14 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:velocity_x/velocity_x.dart';
 import 'package:getwidget/getwidget.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/models/ramadan.dart';
 import 'package:mess_manager/core/models/money_transaction.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
+import 'package:mess_manager/core/services/prayer_times_service.dart';
 import 'package:mess_manager/core/widgets/gf_components.dart';
 import 'package:mess_manager/features/ramadan/providers/ramadan_provider.dart';
 import 'package:mess_manager/features/money/providers/money_provider.dart';
@@ -23,6 +25,27 @@ class RamadanScreen extends ConsumerStatefulWidget {
 }
 
 class _RamadanScreenState extends ConsumerState<RamadanScreen> {
+  String _selectedDistrict = 'Dhaka';
+  PrayerTimes? _prayerTimes;
+  bool _isLoadingTimes = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPrayerTimes();
+  }
+
+  Future<void> _loadPrayerTimes() async {
+    setState(() => _isLoadingTimes = true);
+    final times = await PrayerTimesService.getTimesForDistrict(
+      district: _selectedDistrict,
+    );
+    setState(() {
+      _prayerTimes = times;
+      _isLoadingTimes = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final season = ref.watch(activeRamadanSeasonProvider);
@@ -38,6 +61,14 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
           'Ramadan'.text.make(),
         ]),
         actions: [
+          // Calendar button - always visible when season exists
+          if (season != null)
+            IconButton(
+              onPressed: () => context.push('/ramadan-calendar'),
+              icon: const Icon(LucideIcons.calendar, size: 20),
+              tooltip: 'View Calendar',
+            ),
+          // New Season button - only when no season
           if (season == null)
             TextButton.icon(
               onPressed: () => _showCreateSeasonSheet(context),
@@ -56,6 +87,10 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
                   season,
                   mealRate,
                 ).animate().fadeIn().scale(begin: const Offset(0.95, 0.95)),
+                16.heightBox,
+
+                // Prayer Times Card (Iftar/Sehri)
+                _buildPrayerTimesCard(),
                 16.heightBox,
 
                 // Quick Actions
@@ -163,6 +198,146 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
       value.text.lg.white.bold.make(),
       label.text.xs.color(Colors.white.withValues(alpha: 0.8)).make(),
     ]);
+  }
+
+  /// Prayer times card with Sehri/Iftar countdown - uses live API
+  Widget _buildPrayerTimesCard() {
+    final now = DateTime.now();
+    final times = _prayerTimes;
+
+    // Fallback times if API not loaded
+    final sehriTime = times?.sehriEnd ?? '04:30';
+    final iftarTime = times?.iftarTime ?? '18:15';
+
+    // Parse times for countdown
+    DateTime? sehriDt;
+    DateTime? iftarDt;
+    try {
+      final sehriParts = sehriTime.split(':');
+      final iftarParts = iftarTime.split(':');
+      sehriDt = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        int.parse(sehriParts[0]),
+        int.parse(sehriParts[1]),
+      );
+      iftarDt = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        int.parse(iftarParts[0]),
+        int.parse(iftarParts[1]),
+      );
+    } catch (_) {}
+
+    // Countdown logic
+    String countdownText;
+    bool isCountingToIftar;
+
+    if (sehriDt != null && now.isBefore(sehriDt)) {
+      final diff = sehriDt.difference(now);
+      countdownText = '${diff.inHours}h ${diff.inMinutes % 60}m to Sehri';
+      isCountingToIftar = false;
+    } else if (iftarDt != null && now.isBefore(iftarDt)) {
+      final diff = iftarDt.difference(now);
+      countdownText = '${diff.inHours}h ${diff.inMinutes % 60}m to Iftar';
+      isCountingToIftar = true;
+    } else {
+      countdownText = 'Iftar complete • Fast tomorrow';
+      isCountingToIftar = false;
+    }
+
+    return GFAppCard(
+      borderColor: AppColors.primary.withValues(alpha: 0.3),
+      child: VStack(crossAlignment: CrossAxisAlignment.start, [
+        // Header with district selector
+        HStack([
+          const Icon(LucideIcons.clock, color: AppColors.primary, size: 18),
+          8.widthBox,
+          "Today's Times".text.bold.color(AppColors.textPrimaryDark).make(),
+          const Spacer(),
+          // District dropdown
+          _isLoadingTimes
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : PopupMenuButton<String>(
+                  initialValue: _selectedDistrict,
+                  onSelected: (district) {
+                    setState(() => _selectedDistrict = district);
+                    _loadPrayerTimes();
+                  },
+                  itemBuilder: (context) {
+                    return PrayerTimesService.getAvailableDistricts()
+                        .map((d) => PopupMenuItem(value: d, child: Text(d)))
+                        .toList();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: HStack([
+                      _selectedDistrict.text.sm.color(AppColors.primary).make(),
+                      4.widthBox,
+                      const Icon(
+                        LucideIcons.chevronDown,
+                        size: 14,
+                        color: AppColors.primary,
+                      ),
+                    ]),
+                  ),
+                ),
+        ]),
+        12.heightBox,
+        HStack(alignment: MainAxisAlignment.spaceEvenly, [
+          // Sehri
+          VStack([
+            const Icon(LucideIcons.sunrise, color: AppColors.info, size: 28),
+            4.heightBox,
+            'Sehri'.text.sm.color(AppColors.textSecondaryDark).make(),
+            '$sehriTime AM'.text.lg.bold.color(AppColors.info).make(),
+          ]),
+          Container(width: 1, height: 50, color: AppColors.borderDark),
+          // Iftar
+          VStack([
+            const Icon(LucideIcons.sunset, color: AppColors.warning, size: 28),
+            4.heightBox,
+            'Iftar'.text.sm.color(AppColors.textSecondaryDark).make(),
+            '$iftarTime PM'.text.lg.bold.color(AppColors.warning).make(),
+          ]),
+        ]),
+        12.heightBox,
+        // Countdown Banner
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(AppSpacing.sm),
+          decoration: BoxDecoration(
+            color: (isCountingToIftar ? AppColors.warning : AppColors.info)
+                .withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+          ),
+          child: HStack(alignment: MainAxisAlignment.center, [
+            Icon(
+              isCountingToIftar ? LucideIcons.sunset : LucideIcons.sunrise,
+              size: 16,
+              color: isCountingToIftar ? AppColors.warning : AppColors.info,
+            ),
+            8.widthBox,
+            countdownText.text.sm.bold
+                .color(isCountingToIftar ? AppColors.warning : AppColors.info)
+                .make(),
+          ]),
+        ),
+      ]).p12(),
+    ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.05);
   }
 
   Widget _buildQuickActions(RamadanSeason season) {
@@ -380,7 +555,17 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
   void _markRamadanPayment(RamadanCreditDebt cd) {
     HapticService.success();
 
-    // Create a settled money transaction to record the payment
+    // Record payment in RamadanPayments to filter from credit/debt list
+    ref
+        .read(ramadanPaymentsProvider.notifier)
+        .addPayment(
+          seasonId: cd.seasonId,
+          fromMemberId: cd.fromMemberId,
+          toMemberId: cd.toMemberId,
+          amount: cd.amount,
+        );
+
+    // Also create a settled money transaction for the record
     final transaction = MoneyTransaction(
       id: 'ramadan_${DateTime.now().millisecondsSinceEpoch}',
       fromMemberId: cd.fromMemberId, // Debtor pays
@@ -627,7 +812,8 @@ class _AddRamadanMealSheetState extends ConsumerState<_AddRamadanMealSheet> {
           date: DateTime.now(),
           type: _mealType,
           count: _portions.toInt(),
-          guestName: _guests > 0 ? 'Guest(s): $_guests' : null,
+          guestCount: _guests,
+          guestName: _guests > 0 ? 'Guest(s)' : null,
         );
 
     Navigator.pop(context);

@@ -20,6 +20,7 @@ sealed class BazarItem with _$BazarItem {
 /// Bazar expense entry
 @freezed
 sealed class BazarEntry with _$BazarEntry {
+  @JsonSerializable(explicitToJson: true)
   const factory BazarEntry({
     required String id,
     required String memberId,

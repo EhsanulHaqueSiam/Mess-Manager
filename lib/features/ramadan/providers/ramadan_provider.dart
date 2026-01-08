@@ -117,6 +117,7 @@ class RamadanMealsNotifier extends Notifier<List<RamadanMeal>> {
     required DateTime date,
     required RamadanMealType type,
     int count = 1,
+    int guestCount = 0,
     String? guestName,
   }) async {
     final meal = RamadanMeal(
@@ -126,6 +127,7 @@ class RamadanMealsNotifier extends Notifier<List<RamadanMeal>> {
       date: date,
       type: type,
       count: count,
+      guestCount: guestCount,
       guestName: guestName,
       createdAt: DateTime.now(),
     );
@@ -201,6 +203,57 @@ class RamadanBazarNotifier extends Notifier<List<RamadanBazar>> {
   }
 }
 
+/// Ramadan payments (tracks which credit/debt items have been paid)
+final ramadanPaymentsProvider =
+    NotifierProvider<RamadanPaymentsNotifier, List<RamadanPayment>>(
+      RamadanPaymentsNotifier.new,
+    );
+
+class RamadanPaymentsNotifier extends Notifier<List<RamadanPayment>> {
+  @override
+  List<RamadanPayment> build() {
+    return IsarService.getAllRamadanPayments();
+  }
+
+  void _save() {
+    IsarService.saveRamadanPayments(state);
+  }
+
+  Future<void> addPayment({
+    required String seasonId,
+    required String fromMemberId,
+    required String toMemberId,
+    required double amount,
+  }) async {
+    final payment = RamadanPayment(
+      id: 'rpay_${DateTime.now().millisecondsSinceEpoch}',
+      seasonId: seasonId,
+      fromMemberId: fromMemberId,
+      toMemberId: toMemberId,
+      amount: amount,
+      paidAt: DateTime.now(),
+    );
+    state = [...state, payment];
+    _save();
+  }
+
+  /// Get total paid amount between two members for a season
+  double getPaidAmount(
+    String seasonId,
+    String fromMemberId,
+    String toMemberId,
+  ) {
+    return state
+        .where(
+          (p) =>
+              p.seasonId == seasonId &&
+              p.fromMemberId == fromMemberId &&
+              p.toMemberId == toMemberId,
+        )
+        .fold(0.0, (sum, p) => sum + p.amount);
+  }
+}
+
 /// Calculate Ramadan balance for each opted-in member
 final ramadanBalancesProvider = Provider<List<RamadanBalance>>((ref) {
   final season = ref.watch(activeRamadanSeasonProvider);
@@ -212,18 +265,18 @@ final ramadanBalancesProvider = Provider<List<RamadanBalance>>((ref) {
       .toList();
   final bazar = ref.watch(ramadanBazarProvider);
 
-  // Calculate total meals and meal rate
-  final totalMeals = meals.fold(0, (sum, m) => sum + m.count);
+  // Calculate total meals and meal rate (including guest meals)
+  final totalMeals = meals.fold(0, (sum, m) => sum + m.count + m.guestCount);
   final totalBazar = bazar
       .where((b) => b.seasonId == season.id)
       .fold(0.0, (sum, b) => sum + b.amount);
   final mealRate = totalMeals > 0 ? totalBazar / totalMeals : 0.0;
 
-  // Calculate per-member balances
+  // Calculate per-member balances (sponsor pays for their guests)
   return season.optedInMemberIds.map((memberId) {
     final memberMeals = meals
         .where((m) => m.memberId == memberId)
-        .fold(0, (sum, m) => sum + m.count);
+        .fold(0, (sum, m) => sum + m.count + m.guestCount);
     final memberBazar = bazar
         .where((b) => b.seasonId == season.id && b.memberId == memberId)
         .fold(0.0, (sum, b) => sum + b.amount);
@@ -298,6 +351,7 @@ final ramadanSeasonNeedingSettlementProvider = Provider<RamadanSeason?>((ref) {
 });
 
 /// Ramadan credit/debt items (who owes whom within Ramadan)
+/// Filters out amounts that have already been paid
 final ramadanCreditDebtProvider = Provider<List<RamadanCreditDebt>>((ref) {
   final season =
       ref.watch(activeRamadanSeasonProvider) ??
@@ -308,6 +362,7 @@ final ramadanCreditDebtProvider = Provider<List<RamadanCreditDebt>>((ref) {
       .watch(ramadanBalancesProvider)
       .where((b) => b.seasonId == season.id)
       .toList();
+  final payments = ref.watch(ramadanPaymentsProvider);
 
   // Separate creditors and debtors
   final creditors = balances.where((b) => b.balance > 1).toList()
@@ -337,14 +392,29 @@ final ramadanCreditDebtProvider = Provider<List<RamadanCreditDebt>>((ref) {
         : debtorAmounts[d];
 
     if (amount > 1) {
-      items.add(
-        RamadanCreditDebt(
-          seasonId: season.id,
-          fromMemberId: debtors[d].memberId,
-          toMemberId: creditors[c].memberId,
-          amount: amount,
-        ),
-      );
+      // Calculate already paid amount for this pair
+      final paidAmount = payments
+          .where(
+            (p) =>
+                p.seasonId == season.id &&
+                p.fromMemberId == debtors[d].memberId &&
+                p.toMemberId == creditors[c].memberId,
+          )
+          .fold(0.0, (sum, p) => sum + p.amount);
+
+      final remainingAmount = amount - paidAmount;
+
+      // Only show if there's still an unpaid balance
+      if (remainingAmount > 1) {
+        items.add(
+          RamadanCreditDebt(
+            seasonId: season.id,
+            fromMemberId: debtors[d].memberId,
+            toMemberId: creditors[c].memberId,
+            amount: remainingAmount,
+          ),
+        );
+      }
     }
 
     creditorAmounts[c] -= amount;

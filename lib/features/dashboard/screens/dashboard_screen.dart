@@ -22,6 +22,10 @@ import 'package:mess_manager/shared/widgets/smart_suggestion_card.dart';
 import 'package:mess_manager/shared/widgets/party_splitter_sheet.dart';
 import 'package:mess_manager/shared/widgets/test_mode_switcher.dart';
 import 'package:mess_manager/features/dashboard/widgets/notification_alerts.dart';
+import 'package:mess_manager/features/dashboard/widgets/meal_rate_breakdown_card.dart';
+import 'package:mess_manager/features/money/widgets/add_transaction_sheet.dart';
+import 'package:mess_manager/core/widgets/speed_dial_fab.dart';
+import 'package:mess_manager/core/providers/role_provider.dart';
 
 /// Dashboard Screen - Uses GetWidget + VelocityX + flutter_animate
 class DashboardScreen extends ConsumerWidget {
@@ -109,6 +113,10 @@ class DashboardScreen extends ConsumerWidget {
                 _buildFeatureGrid(context),
                 16.heightBox,
 
+                // Meal Rate Breakdown
+                const MealRateBreakdownCard(),
+                16.heightBox,
+
                 // Recent Activity Header
                 HStack([
                   _sectionHeader(
@@ -140,21 +148,49 @@ class DashboardScreen extends ConsumerWidget {
           ],
         ),
       ),
-      floatingActionButton:
-          FloatingActionButton.extended(
-                onPressed: () {
-                  HapticService.buttonPress();
-                  _showAddBazarSheet(context);
-                },
-                icon: const Icon(LucideIcons.plus, size: 22),
-                label: 'Add Entry'.text.bold.make(),
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-              )
-              .animate()
-              .scale(delay: 500.ms)
-              .shimmer(delay: 1.seconds, duration: 1500.ms),
+      floatingActionButton: _buildSpeedDial(context, ref),
     );
+  }
+
+  Widget _buildSpeedDial(BuildContext context, WidgetRef ref) {
+    final canMeal = ref.watch(canAddMealProvider);
+    final canBazar = ref.watch(canAddBazarProvider);
+    final canTransaction = ref.watch(canAddTransactionProvider);
+
+    final items = <SpeedDialItem>[
+      SpeedDialItem(
+        label: 'Add Duty',
+        icon: LucideIcons.clipboardList,
+        color: AppColors.success,
+        onPressed: () => context.push(AppRoutes.duties),
+      ),
+      if (canTransaction)
+        SpeedDialItem(
+          label: 'Add Money',
+          icon: LucideIcons.banknote,
+          color: AppColors.warning,
+          onPressed: () => _showAddMoneySheet(context),
+        ),
+      if (canBazar)
+        SpeedDialItem(
+          label: 'Add Bazar',
+          icon: LucideIcons.shoppingCart,
+          color: AppColors.bazarColor,
+          onPressed: () => _showAddBazarSheet(context),
+        ),
+      if (canMeal)
+        SpeedDialItem(
+          label: 'Add Meal',
+          icon: LucideIcons.utensils,
+          color: AppColors.mealColor,
+          onPressed: () => _showAddMealSheet(context),
+        ),
+    ];
+
+    // If user has no permissions, hide FAB entirely
+    if (items.length <= 1) return const SizedBox.shrink();
+
+    return SpeedDialFAB(items: items);
   }
 
   Widget _buildProfileAvatar() {
@@ -500,6 +536,9 @@ class DashboardScreen extends ConsumerWidget {
   ) {
     final activities = <_Activity>[];
 
+    // Guard: Return empty list if no members to avoid .first crash
+    if (members.isEmpty) return activities;
+
     // Add recent meals
     final recentMeals = [...meals]
       ..sort(
@@ -613,6 +652,15 @@ class DashboardScreen extends ConsumerWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => const AddBazarSheet(),
+    );
+  }
+
+  void _showAddMoneySheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const AddTransactionSheet(),
     );
   }
 

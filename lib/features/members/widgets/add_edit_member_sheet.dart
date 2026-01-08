@@ -20,7 +20,9 @@ class _AddEditMemberSheetState extends ConsumerState<AddEditMemberSheet> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
+  late TextEditingController _allergenController;
   late MemberRole _selectedRole;
+  late Set<RestrictionType> _selectedRestrictions;
   bool _isLoading = false;
 
   @override
@@ -28,13 +30,26 @@ class _AddEditMemberSheetState extends ConsumerState<AddEditMemberSheet> {
     super.initState();
     _nameController = TextEditingController(text: widget.member?.name ?? '');
     _phoneController = TextEditingController(text: widget.member?.phone ?? '');
+    _allergenController = TextEditingController();
     _selectedRole = widget.member?.role ?? MemberRole.member;
+
+    // Initialize restrictions from existing preferences
+    _selectedRestrictions = {};
+    if (widget.member != null) {
+      for (final pref in widget.member!.preferences) {
+        _selectedRestrictions.add(pref.type);
+        if (pref.type == RestrictionType.allergic && pref.allergen != null) {
+          _allergenController.text = pref.allergen!;
+        }
+      }
+    }
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
+    _allergenController.dispose();
     super.dispose();
   }
 
@@ -138,6 +153,62 @@ class _AddEditMemberSheetState extends ConsumerState<AddEditMemberSheet> {
                 if (val != null) setState(() => _selectedRole = val);
               },
             ),
+            const Gap(AppSpacing.md),
+
+            // Dietary Preferences
+            Text(
+              'Dietary Preferences',
+              style: AppTypography.labelMedium.copyWith(
+                color: AppColors.textSecondaryDark,
+              ),
+            ),
+            const Gap(AppSpacing.sm),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildRestrictionChip(
+                  RestrictionType.noBeef,
+                  'No Beef',
+                  LucideIcons.leafyGreen,
+                ),
+                _buildRestrictionChip(
+                  RestrictionType.noPork,
+                  'No Pork',
+                  LucideIcons.ban,
+                ),
+                _buildRestrictionChip(
+                  RestrictionType.vegetarian,
+                  'Vegetarian',
+                  LucideIcons.salad,
+                ),
+                _buildRestrictionChip(
+                  RestrictionType.vegan,
+                  'Vegan',
+                  LucideIcons.vegan,
+                ),
+                _buildRestrictionChip(
+                  RestrictionType.allergic,
+                  'Allergic',
+                  LucideIcons.alertTriangle,
+                ),
+              ],
+            ),
+
+            // Allergen field (only if allergic selected)
+            if (_selectedRestrictions.contains(RestrictionType.allergic)) ...[
+              const Gap(AppSpacing.sm),
+              TextFormField(
+                controller: _allergenController,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.textPrimaryDark,
+                ),
+                decoration: const InputDecoration(
+                  labelText: 'Allergens (e.g., Peanuts, Shellfish)',
+                  prefixIcon: Icon(LucideIcons.alertCircle, size: 18),
+                ),
+              ),
+            ],
             const Gap(AppSpacing.xl),
 
             // Save Button
@@ -161,6 +232,55 @@ class _AddEditMemberSheetState extends ConsumerState<AddEditMemberSheet> {
     );
   }
 
+  Widget _buildRestrictionChip(
+    RestrictionType type,
+    String label,
+    IconData icon,
+  ) {
+    final isSelected = _selectedRestrictions.contains(type);
+    return FilterChip(
+      label: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 14,
+            color: isSelected ? Colors.white : AppColors.textSecondaryDark,
+          ),
+          const Gap(4),
+          Text(label),
+        ],
+      ),
+      selected: isSelected,
+      onSelected: (selected) {
+        setState(() {
+          if (selected) {
+            _selectedRestrictions.add(type);
+          } else {
+            _selectedRestrictions.remove(type);
+          }
+        });
+      },
+      selectedColor: AppColors.warning,
+      checkmarkColor: Colors.white,
+      labelStyle: TextStyle(
+        color: isSelected ? Colors.white : AppColors.textPrimaryDark,
+        fontSize: 12,
+      ),
+    );
+  }
+
+  List<FoodPreference> _buildPreferences() {
+    return _selectedRestrictions.map((type) {
+      return FoodPreference(
+        type: type,
+        allergen: type == RestrictionType.allergic
+            ? _allergenController.text.trim()
+            : null,
+      );
+    }).toList();
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -169,6 +289,7 @@ class _AddEditMemberSheetState extends ConsumerState<AddEditMemberSheet> {
     try {
       final name = _nameController.text.trim();
       final phone = _phoneController.text.trim();
+      final preferences = _buildPreferences();
 
       if (widget.member != null) {
         // Edit mode
@@ -176,6 +297,7 @@ class _AddEditMemberSheetState extends ConsumerState<AddEditMemberSheet> {
           name: name,
           phone: phone.isNotEmpty ? phone : null,
           role: _selectedRole,
+          preferences: preferences,
         );
         await ref.read(membersProvider.notifier).updateMember(updated);
       } else {
@@ -185,6 +307,7 @@ class _AddEditMemberSheetState extends ConsumerState<AddEditMemberSheet> {
           name: name,
           phone: phone.isNotEmpty ? phone : null,
           role: _selectedRole,
+          preferences: preferences,
           joinedAt: DateTime.now(),
         );
         await ref.read(membersProvider.notifier).addMember(newMember);

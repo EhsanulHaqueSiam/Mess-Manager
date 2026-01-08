@@ -7,11 +7,12 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:syncfusion_flutter_xlsio/xlsio.dart' as xlsio;
 
 import 'package:mess_manager/core/models/settlement.dart';
 import 'package:mess_manager/core/models/member.dart';
 
-/// Export service for generating PDFs, CSVs, and sharing files
+/// Export service for generating PDFs, CSVs, XLSX, and sharing files
 class ExportService {
   /// Generate Settlement PDF
   static Future<Uint8List> generateSettlementPdf({
@@ -300,5 +301,141 @@ class ExportService {
     await SharePlus.instance.share(
       ShareParams(files: [XFile(file.path)], text: 'Mess Manager Export'),
     );
+  }
+
+  // ==================== EXCEL (XLSX) EXPORT ====================
+
+  /// Generate Excel (XLSX) file for balances
+  static Uint8List generateBalancesXlsx({
+    required int year,
+    required int month,
+    required double totalBazar,
+    required double mealRate,
+    required List<MemberBalanceSummary> balances,
+    required List<Member> members,
+    String messName = 'Mess Manager',
+  }) {
+    final monthNames = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+
+    // Create workbook & sheet
+    final workbook = xlsio.Workbook();
+    final sheet = workbook.worksheets[0];
+    sheet.name = '${monthNames[month - 1]} $year';
+
+    // Define styles
+    final headerStyle = workbook.styles.add('headerStyle');
+    headerStyle.bold = true;
+    headerStyle.fontColor = '#FFFFFF';
+    headerStyle.backColor = '#2196F3';
+    headerStyle.hAlign = xlsio.HAlignType.center;
+
+    final titleStyle = workbook.styles.add('titleStyle');
+    titleStyle.bold = true;
+    titleStyle.fontSize = 16;
+
+    final currencyStyle = workbook.styles.add('currencyStyle');
+    currencyStyle.hAlign = xlsio.HAlignType.right;
+    currencyStyle.numberFormat = '৳#,##0.00';
+
+    final positiveStyle = workbook.styles.add('positiveStyle');
+    positiveStyle.fontColor = '#4CAF50';
+    positiveStyle.hAlign = xlsio.HAlignType.right;
+
+    final negativeStyle = workbook.styles.add('negativeStyle');
+    negativeStyle.fontColor = '#F44336';
+    negativeStyle.hAlign = xlsio.HAlignType.right;
+
+    // Title row
+    sheet.getRangeByName('A1').setText('$messName - Settlement Report');
+    sheet.getRangeByName('A1').cellStyle = titleStyle;
+    sheet.getRangeByName('A1:E1').merge();
+
+    // Summary row
+    sheet.getRangeByName('A3').setText('Month:');
+    sheet.getRangeByName('B3').setText('${monthNames[month - 1]} $year');
+    sheet.getRangeByName('C3').setText('Total Bazar:');
+    sheet.getRangeByName('D3').setNumber(totalBazar);
+    sheet.getRangeByName('D3').cellStyle = currencyStyle;
+    sheet.getRangeByName('A4').setText('Members:');
+    sheet.getRangeByName('B4').setNumber(balances.length.toDouble());
+    sheet.getRangeByName('C4').setText('Meal Rate:');
+    sheet.getRangeByName('D4').setNumber(mealRate);
+    sheet.getRangeByName('D4').cellStyle = currencyStyle;
+
+    // Headers
+    sheet.getRangeByName('A6').setText('Member');
+    sheet.getRangeByName('B6').setText('Total Bazar');
+    sheet.getRangeByName('C6').setText('Meal Cost');
+    sheet.getRangeByName('D6').setText('Monthly Share');
+    sheet.getRangeByName('E6').setText('Balance');
+    for (var col in ['A6', 'B6', 'C6', 'D6', 'E6']) {
+      sheet.getRangeByName(col).cellStyle = headerStyle;
+    }
+
+    // Data rows
+    var row = 7;
+    for (final b in balances) {
+      final member = members.firstWhere(
+        (m) => m.id == b.memberId,
+        orElse: () =>
+            Member(id: b.memberId, name: 'Unknown', role: MemberRole.member),
+      );
+
+      sheet.getRangeByName('A$row').setText(member.name);
+      sheet.getRangeByName('B$row').setNumber(b.totalBazar);
+      sheet.getRangeByName('B$row').cellStyle = currencyStyle;
+      sheet.getRangeByName('C$row').setNumber(b.mealCost);
+      sheet.getRangeByName('C$row').cellStyle = currencyStyle;
+      sheet.getRangeByName('D$row').setNumber(b.monthlyShare);
+      sheet.getRangeByName('D$row').cellStyle = currencyStyle;
+      sheet.getRangeByName('E$row').setNumber(b.balance);
+      sheet.getRangeByName('E$row').cellStyle = b.balance >= 0
+          ? positiveStyle
+          : negativeStyle;
+
+      row++;
+    }
+
+    // Auto-fit columns
+    for (var i = 1; i <= 5; i++) {
+      sheet.autoFitColumn(i);
+    }
+
+    // Save and cleanup
+    final bytes = workbook.saveAsStream();
+    workbook.dispose();
+
+    return Uint8List.fromList(bytes);
+  }
+
+  /// Share Excel file
+  static Future<void> shareXlsx(Uint8List xlsxBytes, String filename) async {
+    final tempDir = await getTemporaryDirectory();
+    final file = File('${tempDir.path}/$filename');
+    await file.writeAsBytes(xlsxBytes);
+
+    await SharePlus.instance.share(
+      ShareParams(files: [XFile(file.path)], text: 'Mess Manager Excel Export'),
+    );
+  }
+
+  /// Save Excel to file
+  static Future<File> saveXlsx(Uint8List xlsxBytes, String filename) async {
+    final dir = await getApplicationDocumentsDirectory();
+    final file = File('${dir.path}/$filename');
+    return file.writeAsBytes(xlsxBytes);
   }
 }

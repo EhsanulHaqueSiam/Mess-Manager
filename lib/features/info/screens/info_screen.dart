@@ -6,16 +6,36 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:velocity_x/velocity_x.dart';
 import 'package:getwidget/getwidget.dart';
 
+import 'package:mess_manager/features/info/providers/info_provider.dart';
+import 'package:mess_manager/features/info/widgets/edit_info_sheet.dart';
+import 'package:mess_manager/core/providers/members_provider.dart';
+import 'package:mess_manager/core/models/member.dart';
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
 import 'package:mess_manager/core/widgets/gf_components.dart';
+import 'package:mess_manager/core/models/mess_info.dart';
 
 /// Info Screen - Uses GetWidget + VelocityX + flutter_animate
 class InfoScreen extends ConsumerWidget {
   const InfoScreen({super.key});
 
+  void _showEditSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const EditInfoSheet(),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final info = ref.watch(messInfoProvider);
+    final currentMember = ref.watch(currentMemberProvider);
+    final canEdit =
+        currentMember?.role == MemberRole.superAdmin ||
+        currentMember?.role == MemberRole.admin;
+
     return Scaffold(
       appBar: AppBar(
         title: [
@@ -23,6 +43,13 @@ class InfoScreen extends ConsumerWidget {
           8.widthBox,
           'Important Info'.text.make(),
         ].hStack(),
+        actions: [
+          if (canEdit)
+            IconButton(
+              icon: const Icon(LucideIcons.edit2, size: 20),
+              onPressed: () => _showEditSheet(context),
+            ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.md),
@@ -32,7 +59,8 @@ class InfoScreen extends ConsumerWidget {
             context,
             icon: LucideIcons.wifi,
             title: 'WiFi Password',
-            value: 'MessWifi@2026',
+            value: info.wifiPassword,
+            subValue: 'Auto-off: ${info.wifiOffTime}',
             color: AppColors.primary,
             onCopy: true,
           ).animate().fadeIn().slideY(begin: 0.05),
@@ -43,8 +71,8 @@ class InfoScreen extends ConsumerWidget {
             context,
             icon: LucideIcons.home,
             title: 'Landlord',
-            name: 'Mr. Rahim',
-            phone: '+880 1712-345678',
+            name: info.landlordName,
+            phone: info.landlordPhone,
             note: 'Call for maintenance issues',
             color: AppColors.accentWarm,
           ).animate(delay: 100.ms).fadeIn().slideY(begin: 0.05),
@@ -58,7 +86,7 @@ class InfoScreen extends ConsumerWidget {
             icon: LucideIcons.phone,
             title: 'Police',
             name: 'Local Police Station',
-            phone: '999',
+            phone: info.policePhone,
             color: AppColors.moneyNegative,
           ).animate(delay: 150.ms).fadeIn(),
           8.heightBox,
@@ -67,7 +95,7 @@ class InfoScreen extends ConsumerWidget {
             icon: LucideIcons.flame,
             title: 'Fire Service',
             name: 'Fire Department',
-            phone: '199',
+            phone: info.fireServicePhone,
             color: AppColors.accentWarm,
           ).animate(delay: 200.ms).fadeIn(),
           8.heightBox,
@@ -76,7 +104,7 @@ class InfoScreen extends ConsumerWidget {
             icon: LucideIcons.heartPulse,
             title: 'Ambulance',
             name: 'Emergency Medical',
-            phone: '199',
+            phone: info.ambulancePhone,
             color: AppColors.moneyPositive,
           ).animate(delay: 250.ms).fadeIn(),
           16.heightBox,
@@ -84,7 +112,7 @@ class InfoScreen extends ConsumerWidget {
           // House Rules
           _buildSectionHeader('House Rules'),
           8.heightBox,
-          _buildRulesCard().animate(delay: 300.ms).fadeIn(),
+          _buildRulesCard(info).animate(delay: 300.ms).fadeIn(),
           16.heightBox,
 
           // Utility Info
@@ -93,7 +121,7 @@ class InfoScreen extends ConsumerWidget {
           _buildInfoTile(
             icon: LucideIcons.zap,
             title: 'DESCO Account',
-            subtitle: 'Account: 12345678',
+            subtitle: 'Account: ${info.descoAccount}',
             color: AppColors.accentWarm,
           ),
           _buildInfoTile(
@@ -119,6 +147,7 @@ class InfoScreen extends ConsumerWidget {
     required IconData icon,
     required String title,
     required String value,
+    String? subValue,
     required Color color,
     bool onCopy = false,
   }) {
@@ -142,6 +171,10 @@ class InfoScreen extends ConsumerWidget {
           title.text.sm.color(AppColors.textSecondaryDark).make(),
           4.heightBox,
           value.text.xl.color(AppColors.textPrimaryDark).bold.make(),
+          if (subValue != null) ...[
+            2.heightBox,
+            subValue.text.xs.gray500.make(),
+          ],
         ]).expand(),
         if (onCopy)
           GFIconButton(
@@ -208,32 +241,39 @@ class InfoScreen extends ConsumerWidget {
     ]);
   }
 
-  Widget _buildRulesCard() {
-    final rules = [
-      'No loud noises after 10 PM',
-      'Guests must be informed in advance',
-      'Keep common areas clean',
-      'Pay rent by 5th of each month',
-      'Garbage disposal on Tue/Fri',
-      'AC usage: 25°C minimum',
-    ];
-
+  Widget _buildRulesCard(MessInfo info) {
     return GFAppCard(
-      child: VStack(
-        rules.asMap().entries.map((entry) {
-          return HStack([
-            GFBadge(
-              text: '${entry.key + 1}',
-              color: AppColors.primary.withValues(alpha: 0.1),
-              textColor: AppColors.primary,
-              size: GFSize.SMALL,
-              shape: GFBadgeShape.circle,
-            ),
-            8.widthBox,
-            entry.value.text.color(AppColors.textPrimaryDark).make().expand(),
-          ]).py4();
-        }).toList(),
-      ),
+      child: VStack([
+        HStack([
+          const Icon(LucideIcons.clock, size: 16, color: AppColors.warning),
+          8.widthBox,
+          'Gate closes at ${info.gateCloseTime}'.text
+              .color(AppColors.textPrimaryDark)
+              .make(),
+        ]),
+        8.heightBox,
+        HStack([
+          const Icon(LucideIcons.wifiOff, size: 16, color: AppColors.error),
+          8.widthBox,
+          'WiFi turns off at ${info.wifiOffTime}'.text
+              .color(AppColors.textPrimaryDark)
+              .make(),
+        ]),
+        12.heightBox,
+        const Divider(color: AppColors.borderDark),
+        12.heightBox,
+        HStack([
+          GFBadge(size: GFSize.SMALL, text: '1'),
+          8.widthBox,
+          info.rule1.text.color(AppColors.textSecondaryDark).make().expand(),
+        ]),
+        8.heightBox,
+        HStack([
+          GFBadge(size: GFSize.SMALL, text: '2'),
+          8.widthBox,
+          info.rule2.text.color(AppColors.textSecondaryDark).make().expand(),
+        ]),
+      ]),
     );
   }
 

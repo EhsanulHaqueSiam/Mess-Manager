@@ -3,12 +3,34 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:mess_manager/core/services/firebase_service.dart';
+import 'package:mess_manager/core/database/isar_service.dart';
+import 'package:mess_manager/core/models/app_notification.dart';
 
 /// Background message handler (must be top-level function)
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // Handle background message
   debugPrint('Background message: ${message.messageId}');
+
+  if (message.notification != null) {
+    try {
+      await IsarService.init();
+      final type = FCMService.getTypeFromData(message.data);
+      final n = AppNotification(
+        id:
+            message.messageId ??
+            DateTime.now().millisecondsSinceEpoch.toString(),
+        title: message.notification!.title ?? 'New Message',
+        body: message.notification!.body ?? '',
+        type: type,
+        timestamp: message.sentTime ?? DateTime.now(),
+        payload: message.data.toString(),
+      );
+      IsarService.saveNotification(n);
+    } catch (e) {
+      debugPrint('Bg Save Error: $e');
+    }
+  }
 }
 
 /// Firebase Cloud Messaging Service
@@ -68,12 +90,24 @@ class FCMService {
 
   /// Setup token refresh listener
   static void _setupTokenRefresh() {
-    _messaging.onTokenRefresh.listen((newToken) {
+    _messaging.onTokenRefresh.listen((newToken) async {
       _token = newToken;
       if (kDebugMode) {
         debugPrint('FCM Token refreshed: $newToken');
       }
-      // TODO: Update token in Firestore for user
+
+      // Persist token locally
+      IsarService.saveSetting('fcm_token', newToken);
+
+      // Optionally sync to Firestore if user is authenticated
+      try {
+        await FirebaseService.logEvent(
+          name: 'fcm_token_refreshed',
+          parameters: {'token_length': newToken.length},
+        );
+      } catch (e) {
+        debugPrint('FCM token sync failed: $e');
+      }
     });
   }
 
@@ -109,8 +143,45 @@ class FCMService {
         parameters: {'title': notification.title ?? 'No title'},
       );
 
-      // You can show a local notification here if needed
-      // Or update app state
+      // Save to history
+      try {
+        final type = getTypeFromData(message.data);
+        final n = AppNotification(
+          id:
+              message.messageId ??
+              DateTime.now().millisecondsSinceEpoch.toString(),
+          title: notification.title ?? 'New Message',
+          body: notification.body ?? '',
+          type: type,
+          timestamp: message.sentTime ?? DateTime.now(),
+          payload: message.data.toString(),
+        );
+        IsarService.saveNotification(n);
+      } catch (e) {
+        debugPrint('Save Error: $e');
+      }
+    }
+  }
+
+  /// Parse notification type
+  static NotificationType getTypeFromData(Map<String, dynamic> data) {
+    final type = data['type'] as String?;
+    switch (type) {
+      case 'bill':
+      case 'bill_due':
+        return NotificationType.bill;
+      case 'duty':
+        return NotificationType.duty;
+      case 'chat':
+        return NotificationType.chat;
+      case 'bazar_alert':
+        return NotificationType.warning;
+      case 'success':
+        return NotificationType.success;
+      case 'error':
+        return NotificationType.error;
+      default:
+        return NotificationType.info;
     }
   }
 

@@ -169,3 +169,59 @@ final mealsByMemberProvider = Provider<Map<String, double>>((ref) {
   }
   return result;
 });
+
+/// Guest stats for tracking who brings guests most often
+class GuestStats {
+  final String memberId;
+  final int totalGuests;
+  final int guestMealCount; // Number of times they brought guests
+  final double avgGuestsPerVisit;
+
+  GuestStats({
+    required this.memberId,
+    required this.totalGuests,
+    required this.guestMealCount,
+    required this.avgGuestsPerVisit,
+  });
+}
+
+/// Provider for guest history - tracks who brings guests most often (VIP Guest List)
+final guestStatsProvider = Provider<List<GuestStats>>((ref) {
+  final meals = ref.watch(mealsProvider);
+  final guestData = <String, (int totalGuests, int timesWithGuests)>{};
+
+  for (final meal in meals) {
+    if (meal.guestCount > 0) {
+      final current = guestData[meal.memberId] ?? (0, 0);
+      guestData[meal.memberId] = (current.$1 + meal.guestCount, current.$2 + 1);
+    }
+  }
+
+  final stats = guestData.entries.map((e) {
+    return GuestStats(
+      memberId: e.key,
+      totalGuests: e.value.$1,
+      guestMealCount: e.value.$2,
+      avgGuestsPerVisit: e.value.$2 > 0 ? e.value.$1 / e.value.$2 : 0,
+    );
+  }).toList();
+
+  // Sort by total guests descending (VIP = most guests)
+  stats.sort((a, b) => b.totalGuests.compareTo(a.totalGuests));
+  return stats;
+});
+
+/// Top guest bringers (top 3 members who bring most guests)
+final topGuestBringersProvider = Provider<List<GuestStats>>((ref) {
+  final stats = ref.watch(guestStatsProvider);
+  return stats.take(3).toList();
+});
+
+/// Total guests this month
+final monthlyGuestCountProvider = Provider<int>((ref) {
+  final meals = ref.watch(mealsProvider);
+  final now = DateTime.now();
+  return meals
+      .where((m) => m.date.year == now.year && m.date.month == now.month)
+      .fold(0, (sum, m) => sum + m.guestCount);
+});

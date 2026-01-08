@@ -17,7 +17,7 @@ export 'package:velocity_x/velocity_x.dart';
 // ═══════════════════════════════════════════════════════════════════════════
 export 'package:flutter_animate/flutter_animate.dart';
 export 'package:lottie/lottie.dart';
-export 'package:rive/rive.dart';
+export 'package:rive/rive.dart' hide PaintingStyle, PathFillType;
 export 'package:animated_text_kit/animated_text_kit.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -49,4 +49,6 @@ export 'package:flutter_hooks/flutter_hooks.dart';
 // EXISTING CORE EXPORTS
 // ═══════════════════════════════════════════════════════════════════════════
 export 'package:gap/gap.dart';
-export 'package:shimmer/shimmer.dart';
+export 'package:skeletonizer/skeletonizer.dart' hide ShimmerEffect;
+export 'package:toastification/toastification.dart';
+export 'package:flutter_form_builder/flutter_form_builder.dart';

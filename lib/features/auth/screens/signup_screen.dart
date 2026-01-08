@@ -12,6 +12,7 @@ import 'package:mess_manager/core/router/app_router.dart';
 import 'package:mess_manager/core/services/auth_service.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
 import 'package:mess_manager/core/widgets/gf_components.dart';
+import 'package:mess_manager/features/auth/providers/auth_provider.dart';
 
 /// Signup Screen - Uses AnimatedTextKit + GetWidget + VelocityX
 class SignupScreen extends ConsumerStatefulWidget {
@@ -287,20 +288,27 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       _errorMessage = null;
     });
 
-    final result = await AuthService.signUpWithEmail(
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
-      displayName: _nameController.text.trim(),
-    );
+    // Use authProvider to create pending approval request
+    final success = await ref
+        .read(authProvider.notifier)
+        .signUp(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+          name: _nameController.text.trim(),
+          phone: _phoneController.text.trim().isEmpty
+              ? null
+              : _phoneController.text.trim(),
+        );
 
     setState(() => _isLoading = false);
 
-    if (result.isSuccess && mounted) {
+    if (success && mounted) {
       HapticService.success();
-      context.go(AppRoutes.messSelection);
-    } else if (mounted && result.error != null) {
+      // Redirect to pending approval screen instead of direct access
+      context.go(AppRoutes.pendingApproval);
+    } else if (mounted) {
       HapticService.error();
-      setState(() => _errorMessage = result.error);
+      setState(() => _errorMessage = 'Signup failed. Please try again.');
     }
   }
 }

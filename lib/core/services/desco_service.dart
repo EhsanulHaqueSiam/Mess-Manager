@@ -1,5 +1,6 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
+import 'package:mess_manager/core/api/desco_api.dart';
 import 'package:mess_manager/core/database/isar_service.dart';
 
 /// DESCO Prepaid Meter API Service
@@ -11,7 +12,19 @@ import 'package:mess_manager/core/database/isar_service.dart';
 /// - Show "estimated" balance based on consumption patterns
 /// - "Confirm" button for critical low-balance verification
 class DescoService {
-  static const String _baseUrl = 'https://prepaid.desco.org.bd/api';
+  // Retrofit API client
+  static DescoApi? _api;
+
+  static DescoApi get api {
+    _api ??= DescoApi(
+      Dio()
+        ..options = BaseOptions(
+          connectTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 45),
+        ),
+    );
+    return _api!;
+  }
 
   // Default account/meter numbers (configurable in settings)
   static String accountNo = '33012161';
@@ -69,21 +82,13 @@ class DescoService {
     if (inputMeterNo != null && inputMeterNo.length != 12) return null;
 
     try {
-      final url =
-          '$_baseUrl/tkdes/customer/getCustomerInfo'
-          '?accountNo=${inputAccountNo ?? ''}&meterNo=${inputMeterNo ?? ''}';
-      final response = await http
-          .get(Uri.parse(url))
-          .timeout(
-            const Duration(seconds: 30),
-            onTimeout: () => throw Exception('DESCO API timeout'),
-          );
+      final response = await api.getCustomerInfo(
+        accountNo: inputAccountNo,
+        meterNo: inputMeterNo,
+      );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['data'] != null) {
-          return DescoCustomerInfo.fromJson(data);
-        }
+      if (response.isSuccess && response.data != null) {
+        return DescoCustomerInfo.fromJson({'data': response.data});
       }
     } catch (_) {}
     return null;
@@ -145,19 +150,10 @@ class DescoService {
     }
 
     try {
-      final url =
-          '$_baseUrl/tkdes/customer/getBalance'
-          '?accountNo=$accountNo&meterNo=$meterNo';
-      final response = await http
-          .get(Uri.parse(url))
-          .timeout(
-            const Duration(seconds: 30),
-            onTimeout: () => throw Exception('DESCO API timeout'),
-          );
+      final response = await api.getBalance(accountNo, meterNo);
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final balance = DescoBalance.fromJson(data);
+      if (response.isSuccess && response.data != null) {
+        final balance = DescoBalance.fromJson({'data': response.data});
         await _cacheBalance(balance);
         await _updateUsageStats(balance);
         return balance;
@@ -222,24 +218,19 @@ class DescoService {
     }
 
     try {
-      final url =
-          '$_baseUrl/tkdes/customer/getCustomerMonthlyConsumption'
-          '?accountNo=$accountNo&meterNo='
-          '&monthFrom=$year-01&monthTo=$year-12';
-      final response = await http
-          .get(Uri.parse(url))
-          .timeout(const Duration(seconds: 45));
+      final response = await api.getMonthlyConsumption(
+        accountNo,
+        meterNo,
+        '$year-01',
+        '$year-12',
+      );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final list = (data['data'] as List? ?? [])
+      if (response.isSuccess && response.data != null) {
+        final list = (response.data as List? ?? [])
             .map((e) => DescoConsumption.fromJson(e))
             .toList();
-        IsarService.saveSetting(cacheKey, jsonEncode(data['data']));
-        IsarService.saveSetting(
-          cacheTs,
-          DateTime.now().toIso8601String(),
-        );
+        IsarService.saveSetting(cacheKey, jsonEncode(response.data));
+        IsarService.saveSetting(cacheTs, DateTime.now().toIso8601String());
         return list;
       }
     } catch (_) {}
@@ -278,24 +269,20 @@ class DescoService {
           '${from.year}-${from.month.toString().padLeft(2, '0')}-${from.day.toString().padLeft(2, '0')}';
       final toStr =
           '${to.year}-${to.month.toString().padLeft(2, '0')}-${to.day.toString().padLeft(2, '0')}';
-      final url =
-          '$_baseUrl/tkdes/customer/getRechargeHistory'
-          '?accountNo=$accountNo&meterNo='
-          '&dateFrom=$fromStr&dateTo=$toStr';
-      final response = await http
-          .get(Uri.parse(url))
-          .timeout(const Duration(seconds: 45));
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final list = (data['data'] as List? ?? [])
+      final response = await api.getRechargeHistory(
+        accountNo,
+        meterNo,
+        fromStr,
+        toStr,
+      );
+
+      if (response.isSuccess && response.data != null) {
+        final list = (response.data as List? ?? [])
             .map((e) => DescoRecharge.fromJson(e))
             .toList();
-        IsarService.saveSetting(cacheKey, jsonEncode(data['data']));
-        IsarService.saveSetting(
-          cacheTs,
-          DateTime.now().toIso8601String(),
-        );
+        IsarService.saveSetting(cacheKey, jsonEncode(response.data));
+        IsarService.saveSetting(cacheTs, DateTime.now().toIso8601String());
         return list;
       }
     } catch (_) {}
@@ -314,15 +301,11 @@ class DescoService {
     }
 
     try {
-      final url = '$_baseUrl/common/getCustomerLocation?accountNo=$accountNo';
-      final response = await http
-          .get(Uri.parse(url))
-          .timeout(const Duration(seconds: 30));
+      final response = await api.getCustomerLocation(accountNo);
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final location = DescoLocation.fromJson(data);
-        IsarService.saveSetting(_locationCacheKey, jsonEncode(data));
+      if (response.isSuccess && response.data != null) {
+        final location = DescoLocation.fromJson({'data': response.data});
+        IsarService.saveSetting(_locationCacheKey, jsonEncode(response.data));
         return location;
       }
     } catch (_) {}
@@ -351,10 +334,7 @@ class DescoService {
   }
 
   static Future<void> _cacheBalance(DescoBalance balance) async {
-    IsarService.saveSetting(
-      _balanceCacheKey,
-      jsonEncode(balance.toJson()),
-    );
+    IsarService.saveSetting(_balanceCacheKey, jsonEncode(balance.toJson()));
     IsarService.saveSetting(
       _balanceTimestampKey,
       DateTime.now().toIso8601String(),

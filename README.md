@@ -111,6 +111,47 @@ lib/
 | `/members` | Members |
 | `/settings` | Settings |
 
+## Web Testing
+
+### Development Mode (Recommended)
+```bash
+# Run in debug mode with hot reload
+flutter run -d chrome
+
+# Or with a specific port
+flutter run -d chrome --web-port=8080
+```
+
+### Production Build
+```bash
+# Build for web
+flutter build web --release
+
+# Option 1: Quick local server (may have SharedArrayBuffer issues)
+cd build/web && python3 -m http.server 8080
+
+# Option 2: With proper COOP/COEP headers (Recommended for CanvasKit)
+python3 serve_web.py
+# Then open http://localhost:8000
+```
+
+### Troubleshooting Web Issues
+
+| Issue | Solution |
+|-------|----------|
+| White screen on release | Use `serve_web.py` for proper COOP/COEP headers |
+| SharedArrayBuffer error | Same as above - headers required for CanvasKit |
+| Cache issues | Hard reload with Ctrl+Shift+R or clear Service Worker |
+| Firebase errors | Ensure web/index.html has Firebase config |
+
+### serve_web.py
+The project includes a custom server script that sets required headers:
+```python
+# Located at: area51_app/serve_web.py
+# Adds Cross-Origin-Opener-Policy and Cross-Origin-Embedder-Policy headers
+# Required for CanvasKit SharedArrayBuffer support
+```
+
 ## Building
 
 ```bash
@@ -120,8 +161,11 @@ flutter build web --release
 # Linux
 flutter build linux --release
 
-# Serve web locally
-flutter build web --release && (cd build/web && python3 -m http.server 8080)
+# Android APK
+flutter build apk --release
+
+# Android App Bundle
+flutter build appbundle --release
 ```
 
 ## Documentation

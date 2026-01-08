@@ -3,11 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:gap/gap.dart';
+import 'package:velocity_x/velocity_x.dart';
 
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/models/meal.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
 import 'package:mess_manager/features/meals/providers/meals_provider.dart';
+
+// Time-lock deadlines for meal editing
+const int kBreakfastDeadlineHour = 8; // 8:00 AM
+const int kLunchDeadlineHour = 12; // 12:00 PM
+const int kDinnerDeadlineHour = 19; // 7:00 PM
 
 /// Add Meal Sheet - Flexible Meal System
 ///
@@ -15,15 +21,41 @@ import 'package:mess_manager/features/meals/providers/meals_provider.dart';
 /// Quick mode: Total count with auto guest detection
 /// Detailed mode: Per-meal breakdown
 class AddMealSheet extends ConsumerStatefulWidget {
-  const AddMealSheet({super.key});
+  /// Existing meal for edit mode (null for add mode)
+  final Meal? existingMeal;
+
+  const AddMealSheet({super.key, this.existingMeal});
 
   @override
   ConsumerState<AddMealSheet> createState() => _AddMealSheetState();
 }
 
 class _AddMealSheetState extends ConsumerState<AddMealSheet> {
-  DateTime _selectedDate = DateTime.now();
+  late DateTime _selectedDate;
   bool _isDetailedMode = false;
+
+  bool get _isEditMode => widget.existingMeal != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDate = widget.existingMeal?.date ?? DateTime.now();
+    if (widget.existingMeal != null) {
+      _totalMeals = widget.existingMeal!.count;
+      // Set detailed mode values based on meal type
+      switch (widget.existingMeal!.type) {
+        case MealType.breakfast:
+          _breakfastCount = widget.existingMeal!.count;
+          break;
+        case MealType.lunch:
+          _lunchCount = widget.existingMeal!.count;
+          break;
+        case MealType.dinner:
+          _dinnerCount = widget.existingMeal!.count;
+          break;
+      }
+    }
+  }
 
   // Quick mode - total count
   int _totalMeals = 2;
@@ -45,6 +77,45 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
   int get _guestMeals {
     final total = _isDetailedMode ? _totalFromDetailedMode : _totalMeals;
     return total > _standardMeals ? total - _standardMeals : 0;
+  }
+
+  /// Check if a meal type is past its editing deadline
+  bool _isTimeLocked(MealType type) {
+    final now = DateTime.now();
+    // Only enforce time-lock for today's date
+    if (_selectedDate.year != now.year ||
+        _selectedDate.month != now.month ||
+        _selectedDate.day != now.day) {
+      return false;
+    }
+
+    switch (type) {
+      case MealType.breakfast:
+        return now.hour >= kBreakfastDeadlineHour;
+      case MealType.lunch:
+        return now.hour >= kLunchDeadlineHour;
+      case MealType.dinner:
+        return now.hour >= kDinnerDeadlineHour;
+    }
+  }
+
+  String? get _timeLockWarning {
+    final now = DateTime.now();
+    // Only show warning for today
+    if (_selectedDate.year != now.year ||
+        _selectedDate.month != now.month ||
+        _selectedDate.day != now.day) {
+      return null;
+    }
+
+    if (now.hour >= kDinnerDeadlineHour) {
+      return 'Past 7 PM deadline. All meals locked for today.';
+    } else if (now.hour >= kLunchDeadlineHour) {
+      return 'Past 12 PM. Breakfast & Lunch locked. Only Dinner editable.';
+    } else if (now.hour >= kBreakfastDeadlineHour) {
+      return 'Past 8 AM. Breakfast locked. Lunch & Dinner editable.';
+    }
+    return null;
   }
 
   @override
@@ -148,6 +219,40 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
                 ],
               ),
             ).animate().fadeIn(delay: 100.ms),
+
+            // Time-lock warning
+            if (_timeLockWarning != null) ...[
+              const Gap(AppSpacing.sm),
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                  border: Border.all(
+                    color: AppColors.warning.withValues(alpha: 0.5),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      LucideIcons.clock,
+                      color: AppColors.warning,
+                      size: 14,
+                    ),
+                    const Gap(AppSpacing.sm),
+                    Expanded(
+                      child: _timeLockWarning!.text.xs
+                          .color(AppColors.warning)
+                          .make(),
+                    ),
+                  ],
+                ),
+              ).animate().fadeIn().shake(
+                delay: 200.ms,
+                hz: 2,
+                offset: const Offset(2, 0),
+              ),
+            ],
             const Gap(AppSpacing.lg),
 
             // Mode specific input
@@ -384,6 +489,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
             count: _breakfastCount,
             onChanged: (v) => setState(() => _breakfastCount = v),
             color: AppColors.warning,
+            isLocked: _isTimeLocked(MealType.breakfast),
           ),
 
         _buildMealTypeRow(
@@ -392,6 +498,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
           count: _lunchCount,
           onChanged: (v) => setState(() => _lunchCount = v),
           color: AppColors.mealColor,
+          isLocked: _isTimeLocked(MealType.lunch),
         ),
 
         _buildMealTypeRow(
@@ -400,6 +507,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
           count: _dinnerCount,
           onChanged: (v) => setState(() => _dinnerCount = v),
           color: AppColors.primary,
+          isLocked: _isTimeLocked(MealType.dinner),
         ),
       ],
     ).animate().fadeIn(delay: 200.ms);
@@ -411,7 +519,9 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
     required int count,
     required ValueChanged<int> onChanged,
     required Color color,
+    bool isLocked = false,
   }) {
+    final effectiveColor = isLocked ? AppColors.textMutedDark : color;
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -442,7 +552,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
               children: [
                 IconButton(
                   icon: const Icon(LucideIcons.minus, size: 16),
-                  onPressed: count > 0
+                  onPressed: count > 0 && !isLocked
                       ? () {
                           HapticService.lightTap();
                           onChanged(count - 1);
@@ -461,17 +571,19 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
                   child: Text(
                     '$count',
                     style: AppTypography.titleMedium.copyWith(
-                      color: color,
+                      color: effectiveColor,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
                 IconButton(
                   icon: const Icon(LucideIcons.plus, size: 16),
-                  onPressed: () {
-                    HapticService.lightTap();
-                    onChanged(count + 1);
-                  },
+                  onPressed: !isLocked
+                      ? () {
+                          HapticService.lightTap();
+                          onChanged(count + 1);
+                        }
+                      : null,
                   iconSize: 20,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(
@@ -482,6 +594,15 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
               ],
             ),
           ),
+          if (isLocked)
+            Padding(
+              padding: const EdgeInsets.only(left: AppSpacing.xs),
+              child: Icon(
+                LucideIcons.lock,
+                size: 14,
+                color: AppColors.textMutedDark,
+              ),
+            ),
         ],
       ),
     );
@@ -706,24 +827,41 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
 
     final ownMeals = total > _standardMeals ? _standardMeals : total;
 
-    final meal = Meal(
-      id: 'meal_${DateTime.now().millisecondsSinceEpoch}',
-      memberId: 'current_user', // Will use test user or auth user
-      date: _selectedDate,
-      count: ownMeals,
-      type: MealType.lunch, // Combined as daily total
-      guestCount: _guestMeals,
-      createdAt: DateTime.now(),
-    );
+    if (_isEditMode) {
+      // Update existing meal
+      final updatedMeal = widget.existingMeal!.copyWith(
+        date: _selectedDate,
+        count: ownMeals,
+        guestCount: _guestMeals,
+      );
+      ref.read(mealsProvider.notifier).updateMeal(updatedMeal);
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Meal updated: $total meal${total > 1 ? 's' : ''}'),
+          backgroundColor: AppColors.info,
+        ),
+      );
+    } else {
+      // Add new meal
+      final meal = Meal(
+        id: 'meal_${DateTime.now().millisecondsSinceEpoch}',
+        memberId: 'current_user', // Will use test user or auth user
+        date: _selectedDate,
+        count: ownMeals,
+        type: MealType.lunch, // Combined as daily total
+        guestCount: _guestMeals,
+        createdAt: DateTime.now(),
+      );
 
-    ref.read(mealsProvider.notifier).addMeal(meal);
-    Navigator.of(context).pop();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Added $total meal${total > 1 ? 's' : ''} for today'),
-        backgroundColor: AppColors.success,
-      ),
-    );
+      ref.read(mealsProvider.notifier).addMeal(meal);
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Added $total meal${total > 1 ? 's' : ''} for today'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    }
   }
 }

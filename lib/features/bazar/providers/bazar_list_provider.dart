@@ -1,7 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mess_manager/core/models/bazar_list_item.dart';
+import 'package:mess_manager/core/database/isar_service.dart';
 
-/// Sample shopping list items
+const _bazarListKey = 'bazar_shopping_list';
+
+/// Sample shopping list items (used only for first-time setup)
 List<BazarListItem> _generateSampleShoppingList() {
   final now = DateTime.now();
   return [
@@ -39,14 +42,45 @@ final bazarListProvider =
 
 class BazarListNotifier extends Notifier<List<BazarListItem>> {
   @override
-  List<BazarListItem> build() => _generateSampleShoppingList();
+  List<BazarListItem> build() {
+    // Load from Isar
+    final savedData = IsarService.getSetting<List<dynamic>>(_bazarListKey);
+    if (savedData != null && savedData.isNotEmpty) {
+      try {
+        return savedData
+            .map(
+              (item) => BazarListItem.fromJson(Map<String, dynamic>.from(item)),
+            )
+            .toList();
+      } catch (_) {
+        // Fall back to sample if parsing fails
+      }
+    }
+    // First time setup - use sample data
+    final sample = _generateSampleShoppingList();
+    _saveList(sample);
+    return sample;
+  }
+
+  void _save() {
+    _saveList(state);
+  }
+
+  static void _saveList(List<BazarListItem> items) {
+    IsarService.saveSetting(
+      _bazarListKey,
+      items.map((i) => i.toJson()).toList(),
+    );
+  }
 
   void addItem(BazarListItem item) {
     state = [...state, item];
+    _save();
   }
 
   void removeItem(String id) {
     state = state.where((i) => i.id != id).toList();
+    _save();
   }
 
   void claimItem(String id, String memberId) {
@@ -57,6 +91,7 @@ class BazarListNotifier extends Notifier<List<BazarListItem>> {
         else
           item,
     ];
+    _save();
   }
 
   void unclaimItem(String id) {
@@ -67,6 +102,7 @@ class BazarListNotifier extends Notifier<List<BazarListItem>> {
         else
           item,
     ];
+    _save();
   }
 
   void markPurchased(String id) {
@@ -80,10 +116,20 @@ class BazarListNotifier extends Notifier<List<BazarListItem>> {
         else
           item,
     ];
+    _save();
   }
 
   void clearPurchased() {
     state = state.where((i) => i.status != BazarListStatus.purchased).toList();
+    _save();
+  }
+
+  void updateItem(BazarListItem item) {
+    state = [
+      for (final i in state)
+        if (i.id == item.id) item else i,
+    ];
+    _save();
   }
 }
 

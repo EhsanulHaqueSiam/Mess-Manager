@@ -287,7 +287,8 @@ as List<int>,
 /// @nodoc
 mixin _$Member {
 
- String get id; String get name; MemberRole get role; String? get avatarUrl; String? get phone; List<FoodPreference> get preferences; double get balance;// Positive = will receive, Negative = owes
+ String get id; String get name; MemberRole get role; String? get avatarUrl; String? get phone; String? get email;// For auth user linking
+ List<FoodPreference> get preferences; double get balance;// Positive = will receive, Negative = owes
  DateTime? get joinedAt;// Temporary member fields
  DateTime? get activeFromDate;// For temp members
  DateTime? get activeToDate;// For temp members
@@ -304,16 +305,16 @@ $MemberCopyWith<Member> get copyWith => _$MemberCopyWithImpl<Member>(this as Mem
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Member&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.role, role) || other.role == role)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.phone, phone) || other.phone == phone)&&const DeepCollectionEquality().equals(other.preferences, preferences)&&(identical(other.balance, balance) || other.balance == balance)&&(identical(other.joinedAt, joinedAt) || other.joinedAt == joinedAt)&&(identical(other.activeFromDate, activeFromDate) || other.activeFromDate == activeFromDate)&&(identical(other.activeToDate, activeToDate) || other.activeToDate == activeToDate)&&(identical(other.isActive, isActive) || other.isActive == isActive));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Member&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.role, role) || other.role == role)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.email, email) || other.email == email)&&const DeepCollectionEquality().equals(other.preferences, preferences)&&(identical(other.balance, balance) || other.balance == balance)&&(identical(other.joinedAt, joinedAt) || other.joinedAt == joinedAt)&&(identical(other.activeFromDate, activeFromDate) || other.activeFromDate == activeFromDate)&&(identical(other.activeToDate, activeToDate) || other.activeToDate == activeToDate)&&(identical(other.isActive, isActive) || other.isActive == isActive));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,role,avatarUrl,phone,const DeepCollectionEquality().hash(preferences),balance,joinedAt,activeFromDate,activeToDate,isActive);
+int get hashCode => Object.hash(runtimeType,id,name,role,avatarUrl,phone,email,const DeepCollectionEquality().hash(preferences),balance,joinedAt,activeFromDate,activeToDate,isActive);
 
 @override
 String toString() {
-  return 'Member(id: $id, name: $name, role: $role, avatarUrl: $avatarUrl, phone: $phone, preferences: $preferences, balance: $balance, joinedAt: $joinedAt, activeFromDate: $activeFromDate, activeToDate: $activeToDate, isActive: $isActive)';
+  return 'Member(id: $id, name: $name, role: $role, avatarUrl: $avatarUrl, phone: $phone, email: $email, preferences: $preferences, balance: $balance, joinedAt: $joinedAt, activeFromDate: $activeFromDate, activeToDate: $activeToDate, isActive: $isActive)';
 }
 
 
@@ -324,7 +325,7 @@ abstract mixin class $MemberCopyWith<$Res>  {
   factory $MemberCopyWith(Member value, $Res Function(Member) _then) = _$MemberCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, MemberRole role, String? avatarUrl, String? phone, List<FoodPreference> preferences, double balance, DateTime? joinedAt, DateTime? activeFromDate, DateTime? activeToDate, bool isActive
+ String id, String name, MemberRole role, String? avatarUrl, String? phone, String? email, List<FoodPreference> preferences, double balance, DateTime? joinedAt, DateTime? activeFromDate, DateTime? activeToDate, bool isActive
 });
 
 
@@ -341,13 +342,14 @@ class _$MemberCopyWithImpl<$Res>
 
 /// Create a copy of Member
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? role = null,Object? avatarUrl = freezed,Object? phone = freezed,Object? preferences = null,Object? balance = null,Object? joinedAt = freezed,Object? activeFromDate = freezed,Object? activeToDate = freezed,Object? isActive = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? role = null,Object? avatarUrl = freezed,Object? phone = freezed,Object? email = freezed,Object? preferences = null,Object? balance = null,Object? joinedAt = freezed,Object? activeFromDate = freezed,Object? activeToDate = freezed,Object? isActive = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,role: null == role ? _self.role : role // ignore: cast_nullable_to_non_nullable
 as MemberRole,avatarUrl: freezed == avatarUrl ? _self.avatarUrl : avatarUrl // ignore: cast_nullable_to_non_nullable
 as String?,phone: freezed == phone ? _self.phone : phone // ignore: cast_nullable_to_non_nullable
+as String?,email: freezed == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String?,preferences: null == preferences ? _self.preferences : preferences // ignore: cast_nullable_to_non_nullable
 as List<FoodPreference>,balance: null == balance ? _self.balance : balance // ignore: cast_nullable_to_non_nullable
 as double,joinedAt: freezed == joinedAt ? _self.joinedAt : joinedAt // ignore: cast_nullable_to_non_nullable
@@ -436,10 +438,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  MemberRole role,  String? avatarUrl,  String? phone,  List<FoodPreference> preferences,  double balance,  DateTime? joinedAt,  DateTime? activeFromDate,  DateTime? activeToDate,  bool isActive)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  MemberRole role,  String? avatarUrl,  String? phone,  String? email,  List<FoodPreference> preferences,  double balance,  DateTime? joinedAt,  DateTime? activeFromDate,  DateTime? activeToDate,  bool isActive)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Member() when $default != null:
-return $default(_that.id,_that.name,_that.role,_that.avatarUrl,_that.phone,_that.preferences,_that.balance,_that.joinedAt,_that.activeFromDate,_that.activeToDate,_that.isActive);case _:
+return $default(_that.id,_that.name,_that.role,_that.avatarUrl,_that.phone,_that.email,_that.preferences,_that.balance,_that.joinedAt,_that.activeFromDate,_that.activeToDate,_that.isActive);case _:
   return orElse();
 
 }
@@ -457,10 +459,10 @@ return $default(_that.id,_that.name,_that.role,_that.avatarUrl,_that.phone,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  MemberRole role,  String? avatarUrl,  String? phone,  List<FoodPreference> preferences,  double balance,  DateTime? joinedAt,  DateTime? activeFromDate,  DateTime? activeToDate,  bool isActive)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  MemberRole role,  String? avatarUrl,  String? phone,  String? email,  List<FoodPreference> preferences,  double balance,  DateTime? joinedAt,  DateTime? activeFromDate,  DateTime? activeToDate,  bool isActive)  $default,) {final _that = this;
 switch (_that) {
 case _Member():
-return $default(_that.id,_that.name,_that.role,_that.avatarUrl,_that.phone,_that.preferences,_that.balance,_that.joinedAt,_that.activeFromDate,_that.activeToDate,_that.isActive);}
+return $default(_that.id,_that.name,_that.role,_that.avatarUrl,_that.phone,_that.email,_that.preferences,_that.balance,_that.joinedAt,_that.activeFromDate,_that.activeToDate,_that.isActive);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -474,10 +476,10 @@ return $default(_that.id,_that.name,_that.role,_that.avatarUrl,_that.phone,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  MemberRole role,  String? avatarUrl,  String? phone,  List<FoodPreference> preferences,  double balance,  DateTime? joinedAt,  DateTime? activeFromDate,  DateTime? activeToDate,  bool isActive)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  MemberRole role,  String? avatarUrl,  String? phone,  String? email,  List<FoodPreference> preferences,  double balance,  DateTime? joinedAt,  DateTime? activeFromDate,  DateTime? activeToDate,  bool isActive)?  $default,) {final _that = this;
 switch (_that) {
 case _Member() when $default != null:
-return $default(_that.id,_that.name,_that.role,_that.avatarUrl,_that.phone,_that.preferences,_that.balance,_that.joinedAt,_that.activeFromDate,_that.activeToDate,_that.isActive);case _:
+return $default(_that.id,_that.name,_that.role,_that.avatarUrl,_that.phone,_that.email,_that.preferences,_that.balance,_that.joinedAt,_that.activeFromDate,_that.activeToDate,_that.isActive);case _:
   return null;
 
 }
@@ -489,7 +491,7 @@ return $default(_that.id,_that.name,_that.role,_that.avatarUrl,_that.phone,_that
 @JsonSerializable()
 
 class _Member implements Member {
-  const _Member({required this.id, required this.name, this.role = MemberRole.member, this.avatarUrl, this.phone, final  List<FoodPreference> preferences = const [], this.balance = 0.0, this.joinedAt, this.activeFromDate, this.activeToDate, this.isActive = true}): _preferences = preferences;
+  const _Member({required this.id, required this.name, this.role = MemberRole.member, this.avatarUrl, this.phone, this.email, final  List<FoodPreference> preferences = const [], this.balance = 0.0, this.joinedAt, this.activeFromDate, this.activeToDate, this.isActive = true}): _preferences = preferences;
   factory _Member.fromJson(Map<String, dynamic> json) => _$MemberFromJson(json);
 
 @override final  String id;
@@ -497,7 +499,10 @@ class _Member implements Member {
 @override@JsonKey() final  MemberRole role;
 @override final  String? avatarUrl;
 @override final  String? phone;
+@override final  String? email;
+// For auth user linking
  final  List<FoodPreference> _preferences;
+// For auth user linking
 @override@JsonKey() List<FoodPreference> get preferences {
   if (_preferences is EqualUnmodifiableListView) return _preferences;
   // ignore: implicit_dynamic_type
@@ -527,16 +532,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Member&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.role, role) || other.role == role)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.phone, phone) || other.phone == phone)&&const DeepCollectionEquality().equals(other._preferences, _preferences)&&(identical(other.balance, balance) || other.balance == balance)&&(identical(other.joinedAt, joinedAt) || other.joinedAt == joinedAt)&&(identical(other.activeFromDate, activeFromDate) || other.activeFromDate == activeFromDate)&&(identical(other.activeToDate, activeToDate) || other.activeToDate == activeToDate)&&(identical(other.isActive, isActive) || other.isActive == isActive));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Member&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.role, role) || other.role == role)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.email, email) || other.email == email)&&const DeepCollectionEquality().equals(other._preferences, _preferences)&&(identical(other.balance, balance) || other.balance == balance)&&(identical(other.joinedAt, joinedAt) || other.joinedAt == joinedAt)&&(identical(other.activeFromDate, activeFromDate) || other.activeFromDate == activeFromDate)&&(identical(other.activeToDate, activeToDate) || other.activeToDate == activeToDate)&&(identical(other.isActive, isActive) || other.isActive == isActive));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,role,avatarUrl,phone,const DeepCollectionEquality().hash(_preferences),balance,joinedAt,activeFromDate,activeToDate,isActive);
+int get hashCode => Object.hash(runtimeType,id,name,role,avatarUrl,phone,email,const DeepCollectionEquality().hash(_preferences),balance,joinedAt,activeFromDate,activeToDate,isActive);
 
 @override
 String toString() {
-  return 'Member(id: $id, name: $name, role: $role, avatarUrl: $avatarUrl, phone: $phone, preferences: $preferences, balance: $balance, joinedAt: $joinedAt, activeFromDate: $activeFromDate, activeToDate: $activeToDate, isActive: $isActive)';
+  return 'Member(id: $id, name: $name, role: $role, avatarUrl: $avatarUrl, phone: $phone, email: $email, preferences: $preferences, balance: $balance, joinedAt: $joinedAt, activeFromDate: $activeFromDate, activeToDate: $activeToDate, isActive: $isActive)';
 }
 
 
@@ -547,7 +552,7 @@ abstract mixin class _$MemberCopyWith<$Res> implements $MemberCopyWith<$Res> {
   factory _$MemberCopyWith(_Member value, $Res Function(_Member) _then) = __$MemberCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, MemberRole role, String? avatarUrl, String? phone, List<FoodPreference> preferences, double balance, DateTime? joinedAt, DateTime? activeFromDate, DateTime? activeToDate, bool isActive
+ String id, String name, MemberRole role, String? avatarUrl, String? phone, String? email, List<FoodPreference> preferences, double balance, DateTime? joinedAt, DateTime? activeFromDate, DateTime? activeToDate, bool isActive
 });
 
 
@@ -564,13 +569,14 @@ class __$MemberCopyWithImpl<$Res>
 
 /// Create a copy of Member
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? role = null,Object? avatarUrl = freezed,Object? phone = freezed,Object? preferences = null,Object? balance = null,Object? joinedAt = freezed,Object? activeFromDate = freezed,Object? activeToDate = freezed,Object? isActive = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? role = null,Object? avatarUrl = freezed,Object? phone = freezed,Object? email = freezed,Object? preferences = null,Object? balance = null,Object? joinedAt = freezed,Object? activeFromDate = freezed,Object? activeToDate = freezed,Object? isActive = null,}) {
   return _then(_Member(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,role: null == role ? _self.role : role // ignore: cast_nullable_to_non_nullable
 as MemberRole,avatarUrl: freezed == avatarUrl ? _self.avatarUrl : avatarUrl // ignore: cast_nullable_to_non_nullable
 as String?,phone: freezed == phone ? _self.phone : phone // ignore: cast_nullable_to_non_nullable
+as String?,email: freezed == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String?,preferences: null == preferences ? _self._preferences : preferences // ignore: cast_nullable_to_non_nullable
 as List<FoodPreference>,balance: null == balance ? _self.balance : balance // ignore: cast_nullable_to_non_nullable
 as double,joinedAt: freezed == joinedAt ? _self.joinedAt : joinedAt // ignore: cast_nullable_to_non_nullable

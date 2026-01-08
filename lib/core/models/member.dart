@@ -49,6 +49,7 @@ sealed class Member with _$Member {
     @Default(MemberRole.member) MemberRole role,
     String? avatarUrl,
     String? phone,
+    String? email, // For auth user linking
     @Default([]) List<FoodPreference> preferences,
     @Default(0.0) double balance, // Positive = will receive, Negative = owes
     DateTime? joinedAt,

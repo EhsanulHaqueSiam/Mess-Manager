@@ -207,8 +207,8 @@ return $default(_that.id,_that.messId,_that.year,_that.month,_that.calculatedAt,
 }
 
 /// @nodoc
-@JsonSerializable()
 
+@JsonSerializable(explicitToJson: true)
 class _Settlement implements Settlement {
   const _Settlement({required this.id, required this.messId, required this.year, required this.month, required this.calculatedAt, required final  List<SettlementItem> items, this.status = SettlementStatus.pending, this.settledAt}): _items = items;
   factory _Settlement.fromJson(Map<String, dynamic> json) => _$SettlementFromJson(json);

@@ -6,15 +6,36 @@ import 'package:mess_manager/core/services/firebase_service.dart';
 
 /// Firebase Authentication Service
 /// Handles all authentication operations securely
+/// Note: Disabled on web since Firebase is not configured
 class AuthService {
-  static final FirebaseAuth _auth = FirebaseAuth.instance;
-  static final GoogleSignIn _googleSignIn = GoogleSignIn();
+  static FirebaseAuth? _authInstance;
+  static GoogleSignIn? _googleSignInInstance;
+
+  /// Lazy getter for FirebaseAuth - only initialize when first accessed
+  static FirebaseAuth get _auth {
+    if (kIsWeb) {
+      throw UnsupportedError('AuthService is not available on web');
+    }
+    return _authInstance ??= FirebaseAuth.instance;
+  }
+
+  /// Lazy getter for GoogleSignIn
+  static GoogleSignIn get _googleSignIn {
+    if (kIsWeb) {
+      throw UnsupportedError('AuthService is not available on web');
+    }
+    return _googleSignInInstance ??= GoogleSignIn();
+  }
+
+  /// Check if auth is available (not on web)
+  static bool get isAvailable => !kIsWeb;
 
   /// Current user stream
-  static Stream<User?> get authStateChanges => _auth.authStateChanges();
+  static Stream<User?> get authStateChanges =>
+      isAvailable ? _auth.authStateChanges() : const Stream.empty();
 
   /// Current user
-  static User? get currentUser => _auth.currentUser;
+  static User? get currentUser => isAvailable ? _auth.currentUser : null;
 
   /// Check if user is logged in
   static bool get isAuthenticated => currentUser != null;
@@ -25,6 +46,9 @@ class AuthService {
     required String password,
     String? displayName,
   }) async {
+    if (!isAvailable) {
+      return AuthResult.failure('Authentication not available on web');
+    }
     try {
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email.trim(),
@@ -61,6 +85,9 @@ class AuthService {
     required String email,
     required String password,
   }) async {
+    if (!isAvailable) {
+      return AuthResult.failure('Authentication not available on web');
+    }
     try {
       final credential = await _auth.signInWithEmailAndPassword(
         email: email.trim(),
@@ -88,6 +115,9 @@ class AuthService {
 
   /// Sign in with Google
   static Future<AuthResult> signInWithGoogle() async {
+    if (!isAvailable) {
+      return AuthResult.failure('Google Sign In not available on web');
+    }
     try {
       // Trigger the authentication flow
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
@@ -129,6 +159,7 @@ class AuthService {
 
   /// Sign out
   static Future<void> signOut() async {
+    if (!isAvailable) return; // No-op on web
     try {
       await FirebaseService.logEvent(name: 'logout');
       await _googleSignIn.signOut();
@@ -145,6 +176,9 @@ class AuthService {
 
   /// Send password reset email
   static Future<AuthResult> sendPasswordResetEmail(String email) async {
+    if (!isAvailable) {
+      return AuthResult.failure('Password reset not available on web');
+    }
     try {
       await _auth.sendPasswordResetEmail(email: email.trim());
       await FirebaseService.logEvent(name: 'password_reset_requested');
@@ -169,6 +203,9 @@ class AuthService {
 
   /// Delete user account
   static Future<AuthResult> deleteAccount() async {
+    if (!isAvailable) {
+      return AuthResult.failure('Account deletion not available on web');
+    }
     try {
       await FirebaseService.logEvent(name: 'account_deleted');
       await currentUser?.delete();

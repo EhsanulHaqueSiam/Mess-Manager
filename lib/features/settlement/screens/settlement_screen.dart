@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -5,6 +6,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:gap/gap.dart';
 import 'package:velocity_x/velocity_x.dart';
 import 'package:getwidget/getwidget.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
@@ -12,7 +14,12 @@ import 'package:mess_manager/core/services/export_service.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
 import 'package:mess_manager/core/widgets/gf_components.dart';
 import 'package:mess_manager/features/settlement/providers/settlement_provider.dart';
+import 'package:mess_manager/features/settlement/providers/month_lock_provider.dart';
+import 'package:mess_manager/core/models/settlement.dart';
 import 'package:mess_manager/features/balance/providers/balance_provider.dart';
+import 'package:mess_manager/features/settlement/widgets/audit_sheet.dart';
+import 'package:mess_manager/features/settlement/widgets/penalty_settings_sheet.dart';
+import 'package:mess_manager/core/providers/role_provider.dart';
 
 /// Settlement Screen - Uses GetWidget + VelocityX + flutter_animate
 class SettlementScreen extends ConsumerWidget {
@@ -41,6 +48,37 @@ class SettlementScreen extends ConsumerWidget {
           'Settlement'.text.make(),
         ].hStack(),
         actions: [
+          GFIconButton(
+            icon: const Icon(
+              LucideIcons.clipboardList,
+              color: AppColors.success,
+            ),
+            type: GFButtonType.transparent,
+            onPressed: () {
+              HapticService.buttonPress();
+              context.push('/month-summary');
+            },
+            tooltip: 'View Summary',
+          ),
+          GFIconButton(
+            icon: const Icon(LucideIcons.shieldCheck, color: AppColors.info),
+            type: GFButtonType.transparent,
+            onPressed: () => _showAuditSheet(context),
+            tooltip: 'Audit',
+          ),
+          GFIconButton(
+            icon: const Icon(LucideIcons.percent, color: AppColors.error),
+            type: GFButtonType.transparent,
+            onPressed: () => _showPenaltySettings(context),
+            tooltip: 'Penalty Settings',
+          ),
+          GFIconButton(
+            icon: const Icon(LucideIcons.lock, color: AppColors.warning),
+            type: GFButtonType.transparent,
+            onPressed: () =>
+                _showCloseMonthDialog(context, ref, summary, whoOwesWhom),
+            tooltip: 'Close Month',
+          ),
           GFIconButton(
             icon: const Icon(LucideIcons.fileText, color: AppColors.primary),
             type: GFButtonType.transparent,
@@ -76,6 +114,17 @@ class SettlementScreen extends ConsumerWidget {
               text: 'Finalize',
               color: AppColors.moneyPositive,
               size: GFSize.SMALL,
+            ),
+          // Super Admin: Force Settle All
+          if (currentSettlement != null &&
+              ref.watch(isSuperAdminProvider) &&
+              currentSettlement.items.any((i) => !i.isPaid))
+            GFIconButton(
+              icon: const Icon(LucideIcons.zap, color: AppColors.error),
+              type: GFButtonType.transparent,
+              onPressed: () =>
+                  _showForceSettleDialog(context, ref, currentSettlement.id),
+              tooltip: 'Force Settle All',
             ),
         ],
       ),
@@ -475,5 +524,269 @@ class SettlementScreen extends ConsumerWidget {
     } catch (e) {
       if (context.mounted) showErrorToast(context, 'Export failed: $e');
     }
+  }
+
+  void _showCloseMonthDialog(
+    BuildContext context,
+    WidgetRef ref,
+    BalanceSummary summary,
+    List<SettlementItem> payments,
+  ) {
+    final now = DateTime.now();
+    final isLocked = ref.read(monthLockProvider).isLocked(now.year, now.month);
+    final isSuperAdmin = ref.read(isSuperAdminProvider);
+
+    // If locked, show re-open option for Super Admins
+    if (isLocked) {
+      if (isSuperAdmin) {
+        _showReopenMonthDialog(context, ref, now.year, now.month);
+      } else {
+        showErrorToast(context, 'This month is already closed');
+      }
+      return;
+    }
+
+    HapticService.modalOpen();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surfaceDark,
+        title: HStack([
+          const Icon(LucideIcons.alertTriangle, color: AppColors.warning),
+          8.widthBox,
+          'Close Month?'.text.bold.make(),
+        ]),
+        content: VStack(crossAlignment: CrossAxisAlignment.start, [
+          'This will:'.text.semiBold.make(),
+          8.heightBox,
+          HStack([
+            const Icon(LucideIcons.check, size: 16, color: AppColors.success),
+            8.widthBox,
+            'Generate final PDF report'.text.sm.make().expand(),
+          ]),
+          4.heightBox,
+          HStack([
+            const Icon(LucideIcons.check, size: 16, color: AppColors.success),
+            8.widthBox,
+            'Lock all entries (read-only)'.text.sm.make().expand(),
+          ]),
+          4.heightBox,
+          HStack([
+            const Icon(LucideIcons.check, size: 16, color: AppColors.success),
+            8.widthBox,
+            'Carry forward balances to next month'.text.sm.make().expand(),
+          ]),
+          16.heightBox,
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.sm),
+            decoration: BoxDecoration(
+              color: AppColors.warning.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+            ),
+            child: 'This action cannot be undone!'.text.sm
+                .color(AppColors.warning)
+                .make(),
+          ),
+        ]),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: 'Cancel'.text.make(),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.warning),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await _closeMonth(context, ref, summary, payments);
+            },
+            child: 'Close Month'.text.bold.make(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Super Admin: Re-open a closed month
+  void _showReopenMonthDialog(
+    BuildContext context,
+    WidgetRef ref,
+    int year,
+    int month,
+  ) {
+    HapticService.modalOpen();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surfaceDark,
+        title: HStack([
+          const Icon(LucideIcons.unlock, color: AppColors.error),
+          8.widthBox,
+          'Re-open Month?'.text.bold.color(AppColors.error).make(),
+        ]),
+        content: VStack(crossAlignment: CrossAxisAlignment.start, [
+          '⚠️ SUPER ADMIN ACTION'.text.sm.bold.color(AppColors.error).make(),
+          12.heightBox,
+          'This will unlock ${_getMonthName(month)} $year for editing.'.text
+              .make(),
+          12.heightBox,
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.sm),
+            decoration: BoxDecoration(
+              color: AppColors.error.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+              border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+            ),
+            child: VStack(crossAlignment: CrossAxisAlignment.start, [
+              'Warning:'.text.sm.bold.color(AppColors.error).make(),
+              4.heightBox,
+              '• Entries can be modified again'.text.xs.make(),
+              '• Carry-forward balances may be affected'.text.xs.make(),
+              '• Finalized reports will be invalidated'.text.xs.make(),
+            ]),
+          ),
+        ]),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: 'Cancel'.text.make(),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () {
+              Navigator.pop(ctx);
+              ref.read(monthLockProvider.notifier).unlockMonth(year, month);
+              HapticService.warning();
+              showSuccessToast(context, 'Month unlocked for editing');
+            },
+            child: 'Unlock Month'.text.bold.make(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _closeMonth(
+    BuildContext context,
+    WidgetRef ref,
+    BalanceSummary summary,
+    List<SettlementItem> payments,
+  ) async {
+    HapticService.buttonPress();
+
+    final now = DateTime.now();
+    final balances = ref.read(memberBalancesProvider);
+
+    try {
+      final result = await ref
+          .read(monthLockProvider.notifier)
+          .closeMonth(
+            year: now.year,
+            month: now.month,
+            summary: summary,
+            balances: balances,
+            payments: payments,
+          );
+
+      if (result.success && result.pdfBytes != null) {
+        HapticService.success();
+        if (context.mounted) {
+          showSuccessToast(context, 'Month closed! PDF generated.');
+          // Share the PDF
+          await ExportService.sharePdf(
+            Uint8List.fromList(result.pdfBytes!),
+            'settlement_${now.year}_${now.month}_final.pdf',
+          );
+        }
+      } else {
+        if (context.mounted) {
+          showErrorToast(context, result.error ?? 'Failed to close month');
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        showErrorToast(context, 'Error: $e');
+      }
+    }
+  }
+
+  void _showAuditSheet(BuildContext context) {
+    HapticService.modalOpen();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const AuditSheet(),
+    );
+  }
+
+  void _showPenaltySettings(BuildContext context) {
+    HapticService.modalOpen();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const PenaltySettingsSheet(),
+    );
+  }
+
+  /// Super Admin: Force settle all unpaid items
+  void _showForceSettleDialog(
+    BuildContext context,
+    WidgetRef ref,
+    String settlementId,
+  ) {
+    HapticService.modalOpen();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surfaceDark,
+        title: HStack([
+          const Icon(LucideIcons.zap, color: AppColors.error),
+          8.widthBox,
+          'Force Settle All?'.text.bold.color(AppColors.error).make(),
+        ]),
+        content: VStack(crossAlignment: CrossAxisAlignment.start, [
+          '⚠️ SUPER ADMIN ACTION'.text.sm.bold.color(AppColors.error).make(),
+          12.heightBox,
+          'This will mark ALL remaining payments as PAID.'.text.make(),
+          12.heightBox,
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.sm),
+            decoration: BoxDecoration(
+              color: AppColors.warning.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+              border: Border.all(
+                color: AppColors.warning.withValues(alpha: 0.3),
+              ),
+            ),
+            child: VStack(crossAlignment: CrossAxisAlignment.start, [
+              'This should only be used when:'.text.sm.bold.make(),
+              4.heightBox,
+              '• Payments were made outside the app'.text.xs.make(),
+              '• Members left with unsettled balance'.text.xs.make(),
+              '• Admin manually verified all payments'.text.xs.make(),
+            ]),
+          ),
+        ]),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: 'Cancel'.text.make(),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () {
+              Navigator.pop(ctx);
+              ref
+                  .read(settlementsProvider.notifier)
+                  .forceSettleAll(settlementId);
+              HapticService.success();
+              showSuccessToast(context, 'All payments marked as settled');
+            },
+            child: 'Force Settle'.text.bold.make(),
+          ),
+        ],
+      ),
+    );
   }
 }

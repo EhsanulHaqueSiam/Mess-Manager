@@ -53,7 +53,7 @@ Map<String, dynamic> _$BazarEntryToJson(_BazarEntry instance) =>
       'date': instance.date.toIso8601String(),
       'amount': instance.amount,
       'description': instance.description,
-      'items': instance.items,
+      'items': instance.items.map((e) => e.toJson()).toList(),
       'isItemized': instance.isItemized,
       'photoUrls': instance.photoUrls,
       'receiptUrls': instance.receiptUrls,

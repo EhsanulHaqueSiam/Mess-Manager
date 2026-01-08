@@ -302,7 +302,9 @@ as DateTime?,
 /// @nodoc
 mixin _$RamadanMeal {
 
- String get id; String get seasonId; String get memberId; DateTime get date; RamadanMealType get type; int get count; String? get guestName; DateTime? get createdAt;
+ String get id; String get seasonId; String get memberId; DateTime get date; RamadanMealType get type; int get count; int get guestCount;// Number of guest meals (sponsor pays)
+ String? get guestName;// Optional guest name(s) for reference
+ DateTime? get createdAt;
 /// Create a copy of RamadanMeal
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -315,16 +317,16 @@ $RamadanMealCopyWith<RamadanMeal> get copyWith => _$RamadanMealCopyWithImpl<Rama
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RamadanMeal&&(identical(other.id, id) || other.id == id)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.memberId, memberId) || other.memberId == memberId)&&(identical(other.date, date) || other.date == date)&&(identical(other.type, type) || other.type == type)&&(identical(other.count, count) || other.count == count)&&(identical(other.guestName, guestName) || other.guestName == guestName)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RamadanMeal&&(identical(other.id, id) || other.id == id)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.memberId, memberId) || other.memberId == memberId)&&(identical(other.date, date) || other.date == date)&&(identical(other.type, type) || other.type == type)&&(identical(other.count, count) || other.count == count)&&(identical(other.guestCount, guestCount) || other.guestCount == guestCount)&&(identical(other.guestName, guestName) || other.guestName == guestName)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,seasonId,memberId,date,type,count,guestName,createdAt);
+int get hashCode => Object.hash(runtimeType,id,seasonId,memberId,date,type,count,guestCount,guestName,createdAt);
 
 @override
 String toString() {
-  return 'RamadanMeal(id: $id, seasonId: $seasonId, memberId: $memberId, date: $date, type: $type, count: $count, guestName: $guestName, createdAt: $createdAt)';
+  return 'RamadanMeal(id: $id, seasonId: $seasonId, memberId: $memberId, date: $date, type: $type, count: $count, guestCount: $guestCount, guestName: $guestName, createdAt: $createdAt)';
 }
 
 
@@ -335,7 +337,7 @@ abstract mixin class $RamadanMealCopyWith<$Res>  {
   factory $RamadanMealCopyWith(RamadanMeal value, $Res Function(RamadanMeal) _then) = _$RamadanMealCopyWithImpl;
 @useResult
 $Res call({
- String id, String seasonId, String memberId, DateTime date, RamadanMealType type, int count, String? guestName, DateTime? createdAt
+ String id, String seasonId, String memberId, DateTime date, RamadanMealType type, int count, int guestCount, String? guestName, DateTime? createdAt
 });
 
 
@@ -352,7 +354,7 @@ class _$RamadanMealCopyWithImpl<$Res>
 
 /// Create a copy of RamadanMeal
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? seasonId = null,Object? memberId = null,Object? date = null,Object? type = null,Object? count = null,Object? guestName = freezed,Object? createdAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? seasonId = null,Object? memberId = null,Object? date = null,Object? type = null,Object? count = null,Object? guestCount = null,Object? guestName = freezed,Object? createdAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,seasonId: null == seasonId ? _self.seasonId : seasonId // ignore: cast_nullable_to_non_nullable
@@ -360,6 +362,7 @@ as String,memberId: null == memberId ? _self.memberId : memberId // ignore: cast
 as String,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
 as DateTime,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as RamadanMealType,count: null == count ? _self.count : count // ignore: cast_nullable_to_non_nullable
+as int,guestCount: null == guestCount ? _self.guestCount : guestCount // ignore: cast_nullable_to_non_nullable
 as int,guestName: freezed == guestName ? _self.guestName : guestName // ignore: cast_nullable_to_non_nullable
 as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,
@@ -444,10 +447,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String seasonId,  String memberId,  DateTime date,  RamadanMealType type,  int count,  String? guestName,  DateTime? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String seasonId,  String memberId,  DateTime date,  RamadanMealType type,  int count,  int guestCount,  String? guestName,  DateTime? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _RamadanMeal() when $default != null:
-return $default(_that.id,_that.seasonId,_that.memberId,_that.date,_that.type,_that.count,_that.guestName,_that.createdAt);case _:
+return $default(_that.id,_that.seasonId,_that.memberId,_that.date,_that.type,_that.count,_that.guestCount,_that.guestName,_that.createdAt);case _:
   return orElse();
 
 }
@@ -465,10 +468,10 @@ return $default(_that.id,_that.seasonId,_that.memberId,_that.date,_that.type,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String seasonId,  String memberId,  DateTime date,  RamadanMealType type,  int count,  String? guestName,  DateTime? createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String seasonId,  String memberId,  DateTime date,  RamadanMealType type,  int count,  int guestCount,  String? guestName,  DateTime? createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _RamadanMeal():
-return $default(_that.id,_that.seasonId,_that.memberId,_that.date,_that.type,_that.count,_that.guestName,_that.createdAt);}
+return $default(_that.id,_that.seasonId,_that.memberId,_that.date,_that.type,_that.count,_that.guestCount,_that.guestName,_that.createdAt);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -482,10 +485,10 @@ return $default(_that.id,_that.seasonId,_that.memberId,_that.date,_that.type,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String seasonId,  String memberId,  DateTime date,  RamadanMealType type,  int count,  String? guestName,  DateTime? createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String seasonId,  String memberId,  DateTime date,  RamadanMealType type,  int count,  int guestCount,  String? guestName,  DateTime? createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _RamadanMeal() when $default != null:
-return $default(_that.id,_that.seasonId,_that.memberId,_that.date,_that.type,_that.count,_that.guestName,_that.createdAt);case _:
+return $default(_that.id,_that.seasonId,_that.memberId,_that.date,_that.type,_that.count,_that.guestCount,_that.guestName,_that.createdAt);case _:
   return null;
 
 }
@@ -497,7 +500,7 @@ return $default(_that.id,_that.seasonId,_that.memberId,_that.date,_that.type,_th
 @JsonSerializable()
 
 class _RamadanMeal implements RamadanMeal {
-  const _RamadanMeal({required this.id, required this.seasonId, required this.memberId, required this.date, required this.type, this.count = 1, this.guestName, this.createdAt});
+  const _RamadanMeal({required this.id, required this.seasonId, required this.memberId, required this.date, required this.type, this.count = 1, this.guestCount = 0, this.guestName, this.createdAt});
   factory _RamadanMeal.fromJson(Map<String, dynamic> json) => _$RamadanMealFromJson(json);
 
 @override final  String id;
@@ -506,7 +509,10 @@ class _RamadanMeal implements RamadanMeal {
 @override final  DateTime date;
 @override final  RamadanMealType type;
 @override@JsonKey() final  int count;
+@override@JsonKey() final  int guestCount;
+// Number of guest meals (sponsor pays)
 @override final  String? guestName;
+// Optional guest name(s) for reference
 @override final  DateTime? createdAt;
 
 /// Create a copy of RamadanMeal
@@ -522,16 +528,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RamadanMeal&&(identical(other.id, id) || other.id == id)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.memberId, memberId) || other.memberId == memberId)&&(identical(other.date, date) || other.date == date)&&(identical(other.type, type) || other.type == type)&&(identical(other.count, count) || other.count == count)&&(identical(other.guestName, guestName) || other.guestName == guestName)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RamadanMeal&&(identical(other.id, id) || other.id == id)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.memberId, memberId) || other.memberId == memberId)&&(identical(other.date, date) || other.date == date)&&(identical(other.type, type) || other.type == type)&&(identical(other.count, count) || other.count == count)&&(identical(other.guestCount, guestCount) || other.guestCount == guestCount)&&(identical(other.guestName, guestName) || other.guestName == guestName)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,seasonId,memberId,date,type,count,guestName,createdAt);
+int get hashCode => Object.hash(runtimeType,id,seasonId,memberId,date,type,count,guestCount,guestName,createdAt);
 
 @override
 String toString() {
-  return 'RamadanMeal(id: $id, seasonId: $seasonId, memberId: $memberId, date: $date, type: $type, count: $count, guestName: $guestName, createdAt: $createdAt)';
+  return 'RamadanMeal(id: $id, seasonId: $seasonId, memberId: $memberId, date: $date, type: $type, count: $count, guestCount: $guestCount, guestName: $guestName, createdAt: $createdAt)';
 }
 
 
@@ -542,7 +548,7 @@ abstract mixin class _$RamadanMealCopyWith<$Res> implements $RamadanMealCopyWith
   factory _$RamadanMealCopyWith(_RamadanMeal value, $Res Function(_RamadanMeal) _then) = __$RamadanMealCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String seasonId, String memberId, DateTime date, RamadanMealType type, int count, String? guestName, DateTime? createdAt
+ String id, String seasonId, String memberId, DateTime date, RamadanMealType type, int count, int guestCount, String? guestName, DateTime? createdAt
 });
 
 
@@ -559,7 +565,7 @@ class __$RamadanMealCopyWithImpl<$Res>
 
 /// Create a copy of RamadanMeal
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? seasonId = null,Object? memberId = null,Object? date = null,Object? type = null,Object? count = null,Object? guestName = freezed,Object? createdAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? seasonId = null,Object? memberId = null,Object? date = null,Object? type = null,Object? count = null,Object? guestCount = null,Object? guestName = freezed,Object? createdAt = freezed,}) {
   return _then(_RamadanMeal(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,seasonId: null == seasonId ? _self.seasonId : seasonId // ignore: cast_nullable_to_non_nullable
@@ -567,6 +573,7 @@ as String,memberId: null == memberId ? _self.memberId : memberId // ignore: cast
 as String,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
 as DateTime,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as RamadanMealType,count: null == count ? _self.count : count // ignore: cast_nullable_to_non_nullable
+as int,guestCount: null == guestCount ? _self.guestCount : guestCount // ignore: cast_nullable_to_non_nullable
 as int,guestName: freezed == guestName ? _self.guestName : guestName // ignore: cast_nullable_to_non_nullable
 as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,
@@ -1120,6 +1127,282 @@ as int,totalBazar: null == totalBazar ? _self.totalBazar : totalBazar // ignore:
 as double,mealCost: null == mealCost ? _self.mealCost : mealCost // ignore: cast_nullable_to_non_nullable
 as double,balance: null == balance ? _self.balance : balance // ignore: cast_nullable_to_non_nullable
 as double,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$RamadanPayment {
+
+ String get id; String get seasonId; String get fromMemberId;// Debtor who paid
+ String get toMemberId;// Creditor who received
+ double get amount; DateTime get paidAt;
+/// Create a copy of RamadanPayment
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$RamadanPaymentCopyWith<RamadanPayment> get copyWith => _$RamadanPaymentCopyWithImpl<RamadanPayment>(this as RamadanPayment, _$identity);
+
+  /// Serializes this RamadanPayment to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RamadanPayment&&(identical(other.id, id) || other.id == id)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.fromMemberId, fromMemberId) || other.fromMemberId == fromMemberId)&&(identical(other.toMemberId, toMemberId) || other.toMemberId == toMemberId)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.paidAt, paidAt) || other.paidAt == paidAt));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,id,seasonId,fromMemberId,toMemberId,amount,paidAt);
+
+@override
+String toString() {
+  return 'RamadanPayment(id: $id, seasonId: $seasonId, fromMemberId: $fromMemberId, toMemberId: $toMemberId, amount: $amount, paidAt: $paidAt)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $RamadanPaymentCopyWith<$Res>  {
+  factory $RamadanPaymentCopyWith(RamadanPayment value, $Res Function(RamadanPayment) _then) = _$RamadanPaymentCopyWithImpl;
+@useResult
+$Res call({
+ String id, String seasonId, String fromMemberId, String toMemberId, double amount, DateTime paidAt
+});
+
+
+
+
+}
+/// @nodoc
+class _$RamadanPaymentCopyWithImpl<$Res>
+    implements $RamadanPaymentCopyWith<$Res> {
+  _$RamadanPaymentCopyWithImpl(this._self, this._then);
+
+  final RamadanPayment _self;
+  final $Res Function(RamadanPayment) _then;
+
+/// Create a copy of RamadanPayment
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? seasonId = null,Object? fromMemberId = null,Object? toMemberId = null,Object? amount = null,Object? paidAt = null,}) {
+  return _then(_self.copyWith(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,seasonId: null == seasonId ? _self.seasonId : seasonId // ignore: cast_nullable_to_non_nullable
+as String,fromMemberId: null == fromMemberId ? _self.fromMemberId : fromMemberId // ignore: cast_nullable_to_non_nullable
+as String,toMemberId: null == toMemberId ? _self.toMemberId : toMemberId // ignore: cast_nullable_to_non_nullable
+as String,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
+as double,paidAt: null == paidAt ? _self.paidAt : paidAt // ignore: cast_nullable_to_non_nullable
+as DateTime,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [RamadanPayment].
+extension RamadanPaymentPatterns on RamadanPayment {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _RamadanPayment value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _RamadanPayment() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _RamadanPayment value)  $default,){
+final _that = this;
+switch (_that) {
+case _RamadanPayment():
+return $default(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _RamadanPayment value)?  $default,){
+final _that = this;
+switch (_that) {
+case _RamadanPayment() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String seasonId,  String fromMemberId,  String toMemberId,  double amount,  DateTime paidAt)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _RamadanPayment() when $default != null:
+return $default(_that.id,_that.seasonId,_that.fromMemberId,_that.toMemberId,_that.amount,_that.paidAt);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String seasonId,  String fromMemberId,  String toMemberId,  double amount,  DateTime paidAt)  $default,) {final _that = this;
+switch (_that) {
+case _RamadanPayment():
+return $default(_that.id,_that.seasonId,_that.fromMemberId,_that.toMemberId,_that.amount,_that.paidAt);}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String seasonId,  String fromMemberId,  String toMemberId,  double amount,  DateTime paidAt)?  $default,) {final _that = this;
+switch (_that) {
+case _RamadanPayment() when $default != null:
+return $default(_that.id,_that.seasonId,_that.fromMemberId,_that.toMemberId,_that.amount,_that.paidAt);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _RamadanPayment implements RamadanPayment {
+  const _RamadanPayment({required this.id, required this.seasonId, required this.fromMemberId, required this.toMemberId, required this.amount, required this.paidAt});
+  factory _RamadanPayment.fromJson(Map<String, dynamic> json) => _$RamadanPaymentFromJson(json);
+
+@override final  String id;
+@override final  String seasonId;
+@override final  String fromMemberId;
+// Debtor who paid
+@override final  String toMemberId;
+// Creditor who received
+@override final  double amount;
+@override final  DateTime paidAt;
+
+/// Create a copy of RamadanPayment
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$RamadanPaymentCopyWith<_RamadanPayment> get copyWith => __$RamadanPaymentCopyWithImpl<_RamadanPayment>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$RamadanPaymentToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RamadanPayment&&(identical(other.id, id) || other.id == id)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.fromMemberId, fromMemberId) || other.fromMemberId == fromMemberId)&&(identical(other.toMemberId, toMemberId) || other.toMemberId == toMemberId)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.paidAt, paidAt) || other.paidAt == paidAt));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,id,seasonId,fromMemberId,toMemberId,amount,paidAt);
+
+@override
+String toString() {
+  return 'RamadanPayment(id: $id, seasonId: $seasonId, fromMemberId: $fromMemberId, toMemberId: $toMemberId, amount: $amount, paidAt: $paidAt)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$RamadanPaymentCopyWith<$Res> implements $RamadanPaymentCopyWith<$Res> {
+  factory _$RamadanPaymentCopyWith(_RamadanPayment value, $Res Function(_RamadanPayment) _then) = __$RamadanPaymentCopyWithImpl;
+@override @useResult
+$Res call({
+ String id, String seasonId, String fromMemberId, String toMemberId, double amount, DateTime paidAt
+});
+
+
+
+
+}
+/// @nodoc
+class __$RamadanPaymentCopyWithImpl<$Res>
+    implements _$RamadanPaymentCopyWith<$Res> {
+  __$RamadanPaymentCopyWithImpl(this._self, this._then);
+
+  final _RamadanPayment _self;
+  final $Res Function(_RamadanPayment) _then;
+
+/// Create a copy of RamadanPayment
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? seasonId = null,Object? fromMemberId = null,Object? toMemberId = null,Object? amount = null,Object? paidAt = null,}) {
+  return _then(_RamadanPayment(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,seasonId: null == seasonId ? _self.seasonId : seasonId // ignore: cast_nullable_to_non_nullable
+as String,fromMemberId: null == fromMemberId ? _self.fromMemberId : fromMemberId // ignore: cast_nullable_to_non_nullable
+as String,toMemberId: null == toMemberId ? _self.toMemberId : toMemberId // ignore: cast_nullable_to_non_nullable
+as String,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
+as double,paidAt: null == paidAt ? _self.paidAt : paidAt // ignore: cast_nullable_to_non_nullable
+as DateTime,
   ));
 }
 

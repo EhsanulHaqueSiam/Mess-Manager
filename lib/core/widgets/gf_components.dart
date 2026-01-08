@@ -3,6 +3,7 @@ import 'package:getwidget/getwidget.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
+import 'package:mess_manager/core/services/toast_service.dart';
 
 /// Pre-styled GetWidget components matching app theme
 /// These provide consistent, ready-to-use components with proper theming
@@ -412,56 +413,38 @@ class GFStatusBadge extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// TOASTS
+// TOASTS (Using toastification package)
 // ═══════════════════════════════════════════════════════════════════════════
 
-/// Show toast notification
+/// Show toast notification (deprecated - use ToastService directly)
 void showGFToast(BuildContext context, String message, {bool isError = false}) {
-  GFToast.showToast(
-    message,
-    context,
-    toastPosition: GFToastPosition.BOTTOM,
-    textStyle: AppTypography.bodyMedium.copyWith(color: Colors.white),
-    backgroundColor: isError ? AppColors.error : AppColors.surfaceDark,
-    toastBorderRadius: AppSpacing.radiusMd,
-  );
+  if (isError) {
+    ToastService.error(context, message: message);
+  } else {
+    ToastService.info(context, message: message);
+  }
 }
 
 /// Show success toast
 void showSuccessToast(BuildContext context, String message) {
   HapticService.success();
-  GFToast.showToast(
-    message,
-    context,
-    toastPosition: GFToastPosition.BOTTOM,
-    textStyle: AppTypography.bodyMedium.copyWith(color: Colors.white),
-    backgroundColor: AppColors.moneyPositive,
-    toastBorderRadius: AppSpacing.radiusMd,
-  );
+  ToastService.success(context, message: message);
 }
 
 /// Show error toast
 void showErrorToast(BuildContext context, String message) {
   HapticService.error();
-  GFToast.showToast(
-    message,
-    context,
-    toastPosition: GFToastPosition.BOTTOM,
-    textStyle: AppTypography.bodyMedium.copyWith(color: Colors.white),
-    backgroundColor: AppColors.error,
-    toastBorderRadius: AppSpacing.radiusMd,
-  );
+  ToastService.error(context, message: message);
 }
 
 /// Show info toast
 void showInfoToast(BuildContext context, String message) {
   HapticService.lightTap();
-  GFToast.showToast(
-    message,
-    context,
-    toastPosition: GFToastPosition.BOTTOM,
-    textStyle: AppTypography.bodyMedium.copyWith(color: Colors.white),
-    backgroundColor: AppColors.info,
-    toastBorderRadius: AppSpacing.radiusMd,
-  );
+  ToastService.info(context, message: message);
+}
+
+/// Show warning toast
+void showWarningToast(BuildContext context, String message) {
+  HapticService.warning();
+  ToastService.warning(context, message: message);
 }

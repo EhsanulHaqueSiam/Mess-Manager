@@ -5,8 +5,10 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:gap/gap.dart';
 
 import 'package:mess_manager/core/theme/app_theme.dart';
+import 'package:mess_manager/core/models/bazar_entry.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
+import 'package:mess_manager/features/bazar/providers/bazar_provider.dart';
 
 /// Party/Occasion Splitter Bottom Sheet
 /// Splits special occasion costs among members + guests
@@ -176,19 +178,21 @@ class _PartySplitterSheetState extends ConsumerState<PartySplitterSheet> {
             if (_totalPeople > 0 && _totalAmount > 0) _buildBreakdown(members),
             const Gap(AppSpacing.lg),
 
-            // Done Button
+            // Done Button - Save to bazar and balances
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () {
-                  HapticService.success();
-                  Navigator.pop(context);
-                },
+                onPressed: _totalAmount > 0
+                    ? () => _saveAndClose(context)
+                    : null,
                 icon: const Icon(LucideIcons.check, size: 20),
-                label: const Text('Done'),
+                label: Text(
+                  _totalAmount > 0 ? 'Save Party Expense' : 'Add Items First',
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.accentWarm,
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                  disabledBackgroundColor: AppColors.cardDark,
                 ),
               ),
             ).animate().fadeIn(delay: 500.ms),
@@ -678,6 +682,67 @@ class _PartySplitterSheetState extends ConsumerState<PartySplitterSheet> {
       _itemNameController.clear();
       _itemAmountController.clear();
     });
+  }
+
+  /// Save party expense as a BazarEntry and close sheet
+  void _saveAndClose(BuildContext context) {
+    if (_totalAmount <= 0) return;
+
+    final currentMemberId = ref.read(currentMemberIdProvider);
+
+    // Create itemized list from party bazar items
+    final items = _bazarItems
+        .map(
+          (item) =>
+              BazarItem(name: item.name, price: item.amount, quantity: '1'),
+        )
+        .toList();
+
+    // Add additional costs as an item if present
+    final additionalCost = double.tryParse(_totalAmountController.text) ?? 0;
+    if (additionalCost > 0) {
+      items.add(
+        BazarItem(
+          name: 'Additional party costs',
+          price: additionalCost,
+          quantity: '1',
+        ),
+      );
+    }
+
+    // Create description
+    final description = _descriptionController.text.trim().isNotEmpty
+        ? 'Party: ${_descriptionController.text.trim()}'
+        : 'Party expense (${_selectedMembers.length} members + $_guestCount guests)';
+
+    // Create BazarEntry
+    final entry = BazarEntry(
+      id: 'bazar_party_${DateTime.now().millisecondsSinceEpoch}',
+      memberId: currentMemberId,
+      date: DateTime.now(),
+      amount: _totalAmount,
+      description: description,
+      isItemized: items.isNotEmpty,
+      items: items,
+      photoUrls: [],
+      receiptUrls: [],
+      createdAt: DateTime.now(),
+    );
+
+    // Save to bazar provider
+    ref.read(bazarEntriesProvider.notifier).addEntry(entry);
+
+    HapticService.success();
+    Navigator.pop(context);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Saved ৳${_totalAmount.toStringAsFixed(0)} party expense',
+        ),
+        backgroundColor: AppColors.success,
+      ),
+    );
   }
 }
 

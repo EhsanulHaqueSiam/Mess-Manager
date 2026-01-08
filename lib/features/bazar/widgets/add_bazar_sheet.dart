@@ -22,15 +22,19 @@ import 'package:mess_manager/features/bazar/providers/bazar_provider.dart';
 /// - Receipts optional (multiple allowed)
 /// - Admin/SuperAdmin can select payer
 /// - Supports Simple or Itemized for bazar
+/// - Edit mode: pass existingEntry to pre-fill form
 class AddBazarSheet extends ConsumerStatefulWidget {
-  const AddBazarSheet({super.key});
+  /// Existing entry for edit mode (null for add mode)
+  final BazarEntry? existingEntry;
+
+  const AddBazarSheet({super.key, this.existingEntry});
 
   @override
   ConsumerState<AddBazarSheet> createState() => _AddBazarSheetState();
 }
 
 class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
-  final DateTime _selectedDate = DateTime.now();
+  late DateTime _selectedDate;
   final _amountController = TextEditingController();
   final _descriptionController = TextEditingController();
   bool _isItemized = false;
@@ -41,7 +45,6 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
 
   // NLP Entry Type Detection
   EntryType _selectedType = EntryType.mealBazar;
-  MonthlyCategory? _selectedCategory;
   bool _isAutoDetected = true;
   double _confidence = 0.5;
 
@@ -54,10 +57,30 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
   final _itemNameController = TextEditingController();
   final _itemPriceController = TextEditingController();
 
+  // Edit mode helper
+  bool get _isEditMode => widget.existingEntry != null;
+
   @override
   void initState() {
     super.initState();
     _descriptionController.addListener(_onDescriptionChanged);
+
+    // Pre-fill form for edit mode
+    if (widget.existingEntry != null) {
+      final entry = widget.existingEntry!;
+      _selectedDate = entry.date;
+      _amountController.text = entry.amount.toStringAsFixed(0);
+      _descriptionController.text = entry.description ?? '';
+      _selectedPayerId = entry.memberId;
+      _isItemized = entry.isItemized;
+      _items.addAll(entry.items);
+      _photoUrls.addAll(entry.photoUrls);
+      _receiptUrls.addAll(entry.receiptUrls);
+      _selectedType = EntryType.mealBazar; // Bazar entries are always mealBazar
+      _isAutoDetected = false;
+    } else {
+      _selectedDate = DateTime.now();
+    }
   }
 
   void _onDescriptionChanged() {
@@ -67,7 +90,6 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
     final result = NLPCategorizer.categorize(text);
     setState(() {
       _selectedType = result.type;
-      _selectedCategory = result.category;
       _isAutoDetected = true;
       _confidence = result.confidence;
     });
@@ -140,7 +162,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
                 ),
                 const Gap(AppSpacing.sm),
                 Text(
-                  'Add Entry',
+                  _isEditMode ? 'Edit Entry' : 'Add Entry',
                   style: AppTypography.headlineMedium.copyWith(
                     color: AppColors.textPrimaryDark,
                   ),
@@ -512,7 +534,9 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
 
   String _getSubmitLabel() {
     if (_isBazarEntry && !_hasRequiredPhoto) return 'Photo Required';
-    return 'Add ${_getTypeLabel(_selectedType)}';
+    return _isEditMode
+        ? 'Update ${_getTypeLabel(_selectedType)}'
+        : 'Add ${_getTypeLabel(_selectedType)}';
   }
 
   Color _getTypeColor(EntryType type) {
@@ -946,7 +970,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
     });
   }
 
-  void _submit() {
+  void _submit() async {
     double amount;
     if (_isItemized) {
       amount = _items.fold(0.0, (sum, i) => sum + i.price);
@@ -966,31 +990,167 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
       return;
     }
 
+    // Low-confidence NLP: Ask "Did you mean X?" for uncertain categorization
+    if (_isAutoDetected && _confidence >= 0.5 && _confidence < 0.7) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: AppColors.surfaceDark,
+          title: Row(
+            children: [
+              const Icon(LucideIcons.helpCircle, color: AppColors.warning),
+              const Gap(8),
+              const Text('Confirm Category'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Did you mean "${_getTypeLabel(_selectedType)}"?',
+                style: AppTypography.titleMedium.copyWith(
+                  color: AppColors.textPrimaryDark,
+                ),
+              ),
+              const Gap(8),
+              Text(
+                'The auto-detection is ${(_confidence * 100).toStringAsFixed(0)}% confident. Please confirm this is the correct category.',
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.textSecondaryDark,
+                ),
+              ),
+              const Gap(16),
+              Wrap(
+                spacing: 8,
+                children: EntryType.values.map((type) {
+                  final isSelected = _selectedType == type;
+                  return ChoiceChip(
+                    label: Text(_getTypeLabel(type)),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      if (selected) {
+                        setState(() {
+                          _selectedType = type;
+                          _isAutoDetected = false;
+                        });
+                        Navigator.pop(ctx, true);
+                      }
+                    },
+                    selectedColor: _getTypeColor(type).withValues(alpha: 0.3),
+                    labelStyle: TextStyle(
+                      color: isSelected
+                          ? _getTypeColor(type)
+                          : AppColors.textSecondaryDark,
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _getTypeColor(_selectedType),
+              ),
+              child: Text('Use ${_getTypeLabel(_selectedType)}'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+    }
+
+    // Confirm unusually large amounts (>10,000 BDT)
+    if (amount > 10000) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: AppColors.surfaceDark,
+          title: Row(
+            children: [
+              const Icon(LucideIcons.alertTriangle, color: AppColors.warning),
+              const Gap(8),
+              const Text('Large Amount'),
+            ],
+          ),
+          content: Text(
+            'You are about to add ৳${amount.toStringAsFixed(0)}.\n\nThis is an unusually large amount. Are you sure this is correct?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Review'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.warning,
+              ),
+              child: const Text('Confirm'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+    }
+
     HapticService.success();
 
-    final entry = BazarEntry(
-      id: 'bazar_${DateTime.now().millisecondsSinceEpoch}',
-      memberId: _selectedPayerId ?? 'current_user',
-      date: _selectedDate,
-      amount: amount,
-      description: _descriptionController.text.trim().isNotEmpty
-          ? _descriptionController.text.trim()
-          : null,
-      isItemized: _isItemized,
-      items: _isItemized ? _items : [],
-      photoUrls: _photoUrls,
-      receiptUrls: _receiptUrls,
-      createdAt: DateTime.now(),
-    );
+    if (_isEditMode) {
+      // Update existing entry
+      final updatedEntry = widget.existingEntry!.copyWith(
+        memberId: _selectedPayerId ?? widget.existingEntry!.memberId,
+        date: _selectedDate,
+        amount: amount,
+        description: _descriptionController.text.trim().isNotEmpty
+            ? _descriptionController.text.trim()
+            : null,
+        isItemized: _isItemized,
+        items: _isItemized ? _items : [],
+        photoUrls: _photoUrls,
+        receiptUrls: _receiptUrls,
+      );
+      ref.read(bazarEntriesProvider.notifier).updateEntry(updatedEntry);
+      Navigator.of(context).pop();
 
-    ref.read(bazarEntriesProvider.notifier).addEntry(entry);
-    Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Updated ৳${amount.toStringAsFixed(0)} bazar entry'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    } else {
+      // Add new entry
+      final entry = BazarEntry(
+        id: 'bazar_${DateTime.now().millisecondsSinceEpoch}',
+        memberId: _selectedPayerId ?? 'current_user',
+        date: _selectedDate,
+        amount: amount,
+        description: _descriptionController.text.trim().isNotEmpty
+            ? _descriptionController.text.trim()
+            : null,
+        isItemized: _isItemized,
+        items: _isItemized ? _items : [],
+        photoUrls: _photoUrls,
+        receiptUrls: _receiptUrls,
+        createdAt: DateTime.now(),
+      );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Added ৳${amount.toStringAsFixed(0)} bazar entry'),
-        backgroundColor: AppColors.success,
-      ),
-    );
+      ref.read(bazarEntriesProvider.notifier).addEntry(entry);
+      Navigator.of(context).pop();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Added ৳${amount.toStringAsFixed(0)} bazar entry'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    }
   }
 }

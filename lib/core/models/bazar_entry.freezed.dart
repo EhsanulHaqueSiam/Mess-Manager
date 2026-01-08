@@ -478,8 +478,8 @@ return $default(_that.id,_that.memberId,_that.date,_that.amount,_that.descriptio
 }
 
 /// @nodoc
-@JsonSerializable()
 
+@JsonSerializable(explicitToJson: true)
 class _BazarEntry implements BazarEntry {
   const _BazarEntry({required this.id, required this.memberId, required this.date, required this.amount, this.description, final  List<BazarItem> items = const [], this.isItemized = false, final  List<String> photoUrls = const [], final  List<String> receiptUrls = const [], this.createdAt}): _items = items,_photoUrls = photoUrls,_receiptUrls = receiptUrls;
   factory _BazarEntry.fromJson(Map<String, dynamic> json) => _$BazarEntryFromJson(json);

@@ -315,6 +315,16 @@ class _BazarListTabState extends ConsumerState<BazarListTab> {
                     ),
                   ),
                 ),
+              // Edit button
+              IconButton(
+                onPressed: () => _showEditSheet(context, item),
+                icon: const Icon(LucideIcons.edit2, size: 16),
+                color: AppColors.textMutedDark,
+                iconSize: 16,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              ),
+              // Delete button
               IconButton(
                 onPressed: () =>
                     ref.read(bazarListProvider.notifier).removeItem(item.id),
@@ -373,5 +383,207 @@ class _BazarListTabState extends ConsumerState<BazarListTab> {
 
     ref.read(bazarListProvider.notifier).addItem(item);
     _addItemController.clear();
+  }
+
+  void _showEditSheet(BuildContext context, BazarListItem item) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => _EditShoppingItemSheet(
+        item: item,
+        onSave: (updatedItem) {
+          ref.read(bazarListProvider.notifier).updateItem(updatedItem);
+        },
+      ),
+    );
+  }
+}
+
+/// Edit Shopping Item Sheet
+class _EditShoppingItemSheet extends StatefulWidget {
+  final BazarListItem item;
+  final Function(BazarListItem) onSave;
+
+  const _EditShoppingItemSheet({required this.item, required this.onSave});
+
+  @override
+  State<_EditShoppingItemSheet> createState() => _EditShoppingItemSheetState();
+}
+
+class _EditShoppingItemSheetState extends State<_EditShoppingItemSheet> {
+  late TextEditingController _nameController;
+  late TextEditingController _quantityController;
+  late TextEditingController _noteController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.item.name);
+    _quantityController = TextEditingController(
+      text: widget.item.quantity ?? '',
+    );
+    _noteController = TextEditingController(text: widget.item.note ?? '');
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _quantityController.dispose();
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(
+        left: AppSpacing.lg,
+        right: AppSpacing.lg,
+        top: AppSpacing.lg,
+        bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
+      ),
+      decoration: const BoxDecoration(
+        color: AppColors.surfaceDark,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppSpacing.radiusLg),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Handle
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.borderDark,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const Gap(AppSpacing.lg),
+
+          // Title
+          Text(
+            'Edit Item',
+            style: AppTypography.headlineSmall.copyWith(
+              color: AppColors.textPrimaryDark,
+            ),
+          ),
+          const Gap(AppSpacing.lg),
+
+          // Name field
+          Text(
+            'Item Name',
+            style: AppTypography.labelMedium.copyWith(
+              color: AppColors.textSecondaryDark,
+            ),
+          ),
+          const Gap(AppSpacing.xs),
+          TextField(
+            controller: _nameController,
+            style: AppTypography.bodyMedium.copyWith(
+              color: AppColors.textPrimaryDark,
+            ),
+            decoration: const InputDecoration(
+              hintText: 'What needs to be bought?',
+              prefixIcon: Icon(LucideIcons.shoppingBag, size: 18),
+            ),
+          ),
+          const Gap(AppSpacing.md),
+
+          // Quantity field
+          Text(
+            'Quantity (optional)',
+            style: AppTypography.labelMedium.copyWith(
+              color: AppColors.textSecondaryDark,
+            ),
+          ),
+          const Gap(AppSpacing.xs),
+          TextField(
+            controller: _quantityController,
+            style: AppTypography.bodyMedium.copyWith(
+              color: AppColors.textPrimaryDark,
+            ),
+            decoration: const InputDecoration(
+              hintText: 'e.g., 2 kg, 5 liters',
+              prefixIcon: Icon(LucideIcons.hash, size: 18),
+            ),
+          ),
+          const Gap(AppSpacing.md),
+
+          // Note field
+          Text(
+            'Note (optional)',
+            style: AppTypography.labelMedium.copyWith(
+              color: AppColors.textSecondaryDark,
+            ),
+          ),
+          const Gap(AppSpacing.xs),
+          TextField(
+            controller: _noteController,
+            style: AppTypography.bodyMedium.copyWith(
+              color: AppColors.textPrimaryDark,
+            ),
+            decoration: const InputDecoration(
+              hintText: 'Any special instructions?',
+              prefixIcon: Icon(LucideIcons.messageSquare, size: 18),
+            ),
+          ),
+          const Gap(AppSpacing.xl),
+
+          // Save button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _save,
+              icon: const Icon(LucideIcons.check, size: 18),
+              label: const Text('Save Changes'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.bazarColor,
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+              ),
+            ),
+          ),
+          const Gap(AppSpacing.md),
+        ],
+      ),
+    );
+  }
+
+  void _save() {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Item name cannot be empty'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    final updatedItem = widget.item.copyWith(
+      name: name,
+      quantity: _quantityController.text.trim().isNotEmpty
+          ? _quantityController.text.trim()
+          : null,
+      note: _noteController.text.trim().isNotEmpty
+          ? _noteController.text.trim()
+          : null,
+    );
+
+    widget.onSave(updatedItem);
+    Navigator.pop(context);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Item updated'),
+        backgroundColor: AppColors.success,
+      ),
+    );
   }
 }

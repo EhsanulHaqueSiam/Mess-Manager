@@ -45,6 +45,7 @@ _RamadanMeal _$RamadanMealFromJson(Map<String, dynamic> json) => _RamadanMeal(
   date: DateTime.parse(json['date'] as String),
   type: $enumDecode(_$RamadanMealTypeEnumMap, json['type']),
   count: (json['count'] as num?)?.toInt() ?? 1,
+  guestCount: (json['guestCount'] as num?)?.toInt() ?? 0,
   guestName: json['guestName'] as String?,
   createdAt: json['createdAt'] == null
       ? null
@@ -59,6 +60,7 @@ Map<String, dynamic> _$RamadanMealToJson(_RamadanMeal instance) =>
       'date': instance.date.toIso8601String(),
       'type': _$RamadanMealTypeEnumMap[instance.type]!,
       'count': instance.count,
+      'guestCount': instance.guestCount,
       'guestName': instance.guestName,
       'createdAt': instance.createdAt?.toIso8601String(),
     };
@@ -112,4 +114,24 @@ Map<String, dynamic> _$RamadanBalanceToJson(_RamadanBalance instance) =>
       'totalBazar': instance.totalBazar,
       'mealCost': instance.mealCost,
       'balance': instance.balance,
+    };
+
+_RamadanPayment _$RamadanPaymentFromJson(Map<String, dynamic> json) =>
+    _RamadanPayment(
+      id: json['id'] as String,
+      seasonId: json['seasonId'] as String,
+      fromMemberId: json['fromMemberId'] as String,
+      toMemberId: json['toMemberId'] as String,
+      amount: (json['amount'] as num).toDouble(),
+      paidAt: DateTime.parse(json['paidAt'] as String),
+    );
+
+Map<String, dynamic> _$RamadanPaymentToJson(_RamadanPayment instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'seasonId': instance.seasonId,
+      'fromMemberId': instance.fromMemberId,
+      'toMemberId': instance.toMemberId,
+      'amount': instance.amount,
+      'paidAt': instance.paidAt.toIso8601String(),
     };
