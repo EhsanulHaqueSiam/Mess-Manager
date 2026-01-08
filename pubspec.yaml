@@ -44,7 +44,7 @@ dependencies:
   geolocator: ^14.0.2         # Location services
   geocoding: ^3.0.0           # Reverse geocoding (address from coordinates)
   local_auth: ^3.0.0          # Biometric authentication
-  workmanager: ^0.5.2         # Background task scheduling
+  workmanager: ^0.7.0         # Background task scheduling
   quick_actions: ^1.0.0       # 3D Touch / Quick Actions
 
   # Backend/Network
