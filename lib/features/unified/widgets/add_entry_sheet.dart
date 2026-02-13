@@ -65,7 +65,7 @@ class _AddEntrySheetState extends ConsumerState<AddEntrySheet> {
         maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
+        color: context.surfaceColor,
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(AppSpacing.radiusLg),
         ),
@@ -81,7 +81,7 @@ class _AddEntrySheetState extends ConsumerState<AddEntrySheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.borderDark,
+                  color: context.borderColor,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -96,7 +96,7 @@ class _AddEntrySheetState extends ConsumerState<AddEntrySheet> {
                 Text(
                   'Add Entry',
                   style: AppTypography.headlineMedium.copyWith(
-                    color: AppColors.textPrimaryDark,
+                    color: context.textPrimary,
                   ),
                 ),
               ],
@@ -107,7 +107,7 @@ class _AddEntrySheetState extends ConsumerState<AddEntrySheet> {
             Text(
               'Amount (৳)',
               style: AppTypography.labelMedium.copyWith(
-                color: AppColors.textSecondaryDark,
+                color: context.textSecondary,
               ),
             ),
             const Gap(AppSpacing.sm),
@@ -116,7 +116,7 @@ class _AddEntrySheetState extends ConsumerState<AddEntrySheet> {
               keyboardType: TextInputType.number,
               autofocus: true,
               style: AppTypography.displaySmall.copyWith(
-                color: AppColors.textPrimaryDark,
+                color: context.textPrimary,
               ),
               decoration: InputDecoration(
                 hintText: '0',
@@ -132,14 +132,14 @@ class _AddEntrySheetState extends ConsumerState<AddEntrySheet> {
             Text(
               'What is it for? (auto-detects type)',
               style: AppTypography.labelMedium.copyWith(
-                color: AppColors.textSecondaryDark,
+                color: context.textSecondary,
               ),
             ),
             const Gap(AppSpacing.sm),
             TextField(
               controller: _descriptionController,
               style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.textPrimaryDark,
+                color: context.textPrimary,
               ),
               decoration: InputDecoration(
                 hintText: 'চাল, মাছ, সাবান, ভাড়া...',
@@ -163,7 +163,7 @@ class _AddEntrySheetState extends ConsumerState<AddEntrySheet> {
                 Text(
                   'Type',
                   style: AppTypography.labelMedium.copyWith(
-                    color: AppColors.textSecondaryDark,
+                    color: context.textSecondary,
                   ),
                 ),
                 if (_isAutoDetected) ...[
@@ -205,7 +205,7 @@ class _AddEntrySheetState extends ConsumerState<AddEntrySheet> {
                       decoration: BoxDecoration(
                         color: isSelected
                             ? _getTypeColor(type)
-                            : AppColors.cardDark,
+                            : context.cardColor,
                         borderRadius: BorderRadius.circular(
                           AppSpacing.radiusSm,
                         ),
@@ -216,7 +216,7 @@ class _AddEntrySheetState extends ConsumerState<AddEntrySheet> {
                             _getTypeIcon(type),
                             color: isSelected
                                 ? Colors.white
-                                : AppColors.textSecondaryDark,
+                                : context.textSecondary,
                             size: 20,
                           ),
                           const Gap(4),
@@ -225,7 +225,7 @@ class _AddEntrySheetState extends ConsumerState<AddEntrySheet> {
                             style: AppTypography.labelSmall.copyWith(
                               color: isSelected
                                   ? Colors.white
-                                  : AppColors.textSecondaryDark,
+                                  : context.textSecondary,
                             ),
                           ),
                         ],
@@ -245,7 +245,7 @@ class _AddEntrySheetState extends ConsumerState<AddEntrySheet> {
             Container(
               padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
-                color: AppColors.cardDark,
+                color: context.cardColor,
                 borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
               ),
               child: Row(
@@ -262,7 +262,7 @@ class _AddEntrySheetState extends ConsumerState<AddEntrySheet> {
                     child: Text(
                       _getSplitInfo(_selectedType),
                       style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textSecondaryDark,
+                        color: context.textSecondary,
                       ),
                     ),
                   ),
@@ -339,10 +339,12 @@ class _AddEntrySheetState extends ConsumerState<AddEntrySheet> {
   /// Only SuperAdmin can select other members
   Widget _buildMemberSelector(List members) {
     final currentMemberId = ref.watch(currentMemberIdProvider);
-    final currentMember = members.firstWhere(
+    if (members.isEmpty) return const SizedBox.shrink();
+    final currentMember = members.cast<dynamic>().firstWhere(
       (m) => m.id == currentMemberId,
-      orElse: () => members.first,
+      orElse: () => null,
     );
+    if (currentMember == null) return const SizedBox.shrink();
     final isSuperAdmin = currentMember.role == MemberRole.superAdmin;
 
     return Column(
@@ -353,7 +355,7 @@ class _AddEntrySheetState extends ConsumerState<AddEntrySheet> {
             Text(
               'Who paid?',
               style: AppTypography.labelMedium.copyWith(
-                color: AppColors.textSecondaryDark,
+                color: context.textSecondary,
               ),
             ),
             if (!isSuperAdmin) ...[
@@ -397,7 +399,7 @@ class _AddEntrySheetState extends ConsumerState<AddEntrySheet> {
           Container(
             padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
-              color: AppColors.cardDark,
+              color: context.cardColor,
               borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
               border: Border.all(
                 color: AppColors.primary.withValues(alpha: 0.5),
@@ -419,14 +421,14 @@ class _AddEntrySheetState extends ConsumerState<AddEntrySheet> {
                 Text(
                   currentMember.name,
                   style: AppTypography.titleSmall.copyWith(
-                    color: AppColors.textPrimaryDark,
+                    color: context.textPrimary,
                   ),
                 ),
                 const Spacer(),
                 Icon(
                   LucideIcons.lock,
                   size: 14,
-                  color: AppColors.textMutedDark,
+                  color: context.textMuted,
                 ),
               ],
             ),

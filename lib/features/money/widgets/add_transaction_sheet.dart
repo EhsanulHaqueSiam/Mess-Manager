@@ -59,7 +59,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
+        color: context.surfaceColor,
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(AppSpacing.radiusLg),
         ),
@@ -76,7 +76,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.borderDark,
+                  color: context.borderColor,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -94,7 +94,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                 Text(
                   _isEditing ? 'Edit Transaction' : 'Add Transaction',
                   style: AppTypography.headlineMedium.copyWith(
-                    color: AppColors.textPrimaryDark,
+                    color: context.textPrimary,
                   ),
                 ),
               ],
@@ -105,21 +105,21 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
             Text(
               'From',
               style: AppTypography.labelMedium.copyWith(
-                color: AppColors.textSecondaryDark,
+                color: context.textSecondary,
               ),
             ),
             const Gap(AppSpacing.xs),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
               decoration: BoxDecoration(
-                color: AppColors.cardDark,
+                color: context.cardColor,
                 borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   value: _fromMemberId,
                   isExpanded: true,
-                  dropdownColor: AppColors.cardDark,
+                  dropdownColor: context.cardColor,
                   items: members
                       .map(
                         (m) => DropdownMenuItem(
@@ -127,7 +127,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                           child: Text(
                             m.name,
                             style: AppTypography.bodyMedium.copyWith(
-                              color: AppColors.textPrimaryDark,
+                              color: context.textPrimary,
                             ),
                           ),
                         ),
@@ -146,14 +146,14 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
             Text(
               'To',
               style: AppTypography.labelMedium.copyWith(
-                color: AppColors.textSecondaryDark,
+                color: context.textSecondary,
               ),
             ),
             const Gap(AppSpacing.xs),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
               decoration: BoxDecoration(
-                color: AppColors.cardDark,
+                color: context.cardColor,
                 borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
               ),
               child: DropdownButtonHideUnderline(
@@ -162,11 +162,11 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                   hint: Text(
                     'Select member',
                     style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.textMutedDark,
+                      color: context.textMuted,
                     ),
                   ),
                   isExpanded: true,
-                  dropdownColor: AppColors.cardDark,
+                  dropdownColor: context.cardColor,
                   items: members
                       .where((m) => m.id != _fromMemberId)
                       .map(
@@ -175,7 +175,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                           child: Text(
                             m.name,
                             style: AppTypography.bodyMedium.copyWith(
-                              color: AppColors.textPrimaryDark,
+                              color: context.textPrimary,
                             ),
                           ),
                         ),
@@ -194,7 +194,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
             Text(
               'Amount',
               style: AppTypography.labelMedium.copyWith(
-                color: AppColors.textSecondaryDark,
+                color: context.textSecondary,
               ),
             ),
             const Gap(AppSpacing.xs),
@@ -211,7 +211,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                 ),
                 hintText: '0',
                 filled: true,
-                fillColor: AppColors.cardDark,
+                fillColor: context.cardColor,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                   borderSide: BorderSide.none,
@@ -224,19 +224,19 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
             Text(
               'Description (optional)',
               style: AppTypography.labelMedium.copyWith(
-                color: AppColors.textSecondaryDark,
+                color: context.textSecondary,
               ),
             ),
             const Gap(AppSpacing.xs),
             TextField(
               controller: _descController,
               style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.textPrimaryDark,
+                color: context.textPrimary,
               ),
               decoration: InputDecoration(
                 hintText: 'What is this for?',
                 filled: true,
-                fillColor: AppColors.cardDark,
+                fillColor: context.cardColor,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                   borderSide: BorderSide.none,
@@ -300,7 +300,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          backgroundColor: AppColors.surfaceDark,
+          backgroundColor: context.surfaceColor,
           title: const Row(
             children: [
               Icon(LucideIcons.alertTriangle, color: AppColors.warning),

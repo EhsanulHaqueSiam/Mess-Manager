@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:skeletonizer/src/effects/shimmer_effect.dart' as skeleton;
-import 'package:velocity_x/velocity_x.dart';
 import 'package:gap/gap.dart';
 
 import 'package:mess_manager/core/theme/app_theme.dart';
@@ -34,20 +33,22 @@ class SkeletonCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.cardDark,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: AppColors.borderDark),
+        border: Border.all(color: context.borderColor),
       ),
-      child: HStack([
+      child: Row(children: [
         // Avatar placeholder
         const Bone.circle(size: 48),
-        12.widthBox,
+        const Gap(12),
         // Content placeholders
-        VStack(crossAlignment: CrossAxisAlignment.start, [
-          const Bone.text(words: 2),
-          8.heightBox,
-          const Bone.text(words: 4, fontSize: 12),
-        ]).expand(),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Bone.text(words: 2),
+            const Gap(8),
+            const Bone.text(words: 4, fontSize: 12),
+          ]),
+        ),
         // Value placeholder
         const Bone.text(words: 1, fontSize: 18),
       ]),
@@ -65,25 +66,27 @@ class SkeletonMemberCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.cardDark,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: AppColors.borderDark),
+        border: Border.all(color: context.borderColor),
       ),
-      child: HStack([
+      child: Row(children: [
         const Bone.circle(size: 48),
-        12.widthBox,
-        VStack(crossAlignment: CrossAxisAlignment.start, [
-          const Bone.text(words: 2),
-          8.heightBox,
-          HStack([
-            Bone.square(size: 20, borderRadius: BorderRadius.circular(4)),
-            8.widthBox,
-            const Bone.text(words: 1, fontSize: 12),
+        const Gap(12),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Bone.text(words: 2),
+            const Gap(8),
+            Row(children: [
+              Bone.square(size: 20, borderRadius: BorderRadius.circular(4)),
+              const Gap(8),
+              const Bone.text(words: 1, fontSize: 12),
+            ]),
           ]),
-        ]).expand(),
-        VStack(crossAlignment: CrossAxisAlignment.end, [
+        ),
+        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
           const Bone.text(words: 1, fontSize: 16),
-          4.heightBox,
+          const Gap(4),
           const Bone.text(words: 1, fontSize: 10),
         ]),
       ]),
@@ -100,19 +103,19 @@ class SkeletonStatsCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.cardDark,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: AppColors.borderDark),
+        border: Border.all(color: context.borderColor),
       ),
-      child: VStack(crossAlignment: CrossAxisAlignment.start, [
-        HStack([
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
           Bone.square(size: 24, borderRadius: BorderRadius.circular(4)),
-          8.widthBox,
+          const Gap(8),
           const Bone.text(words: 2, fontSize: 12),
         ]),
-        12.heightBox,
+        const Gap(12),
         const Bone.text(words: 1, fontSize: 24),
-        4.heightBox,
+        const Gap(4),
         const Bone.text(words: 2, fontSize: 10),
       ]),
     );
@@ -130,8 +133,8 @@ class SkeletonList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Skeletonizer(
       effect: skeleton.ShimmerEffect(
-        baseColor: AppColors.cardDark,
-        highlightColor: AppColors.surfaceDark.withValues(alpha: 0.8),
+        baseColor: context.cardColor,
+        highlightColor: context.surfaceColor.withValues(alpha: 0.8),
       ),
       child: ListView.builder(
         padding: const EdgeInsets.all(AppSpacing.md),
@@ -151,24 +154,24 @@ class SkeletonDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Skeletonizer(
       effect: skeleton.ShimmerEffect(
-        baseColor: AppColors.cardDark,
-        highlightColor: AppColors.surfaceDark.withValues(alpha: 0.8),
+        baseColor: context.cardColor,
+        highlightColor: context.surfaceColor.withValues(alpha: 0.8),
       ),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           children: [
             // Stats row
-            HStack([
-              const SkeletonStatsCard().expand(),
+            Row(children: [
+              const Expanded(child: SkeletonStatsCard()),
               const Gap(AppSpacing.md),
-              const SkeletonStatsCard().expand(),
+              const Expanded(child: SkeletonStatsCard()),
             ]),
             const Gap(AppSpacing.md),
-            HStack([
-              const SkeletonStatsCard().expand(),
+            Row(children: [
+              const Expanded(child: SkeletonStatsCard()),
               const Gap(AppSpacing.md),
-              const SkeletonStatsCard().expand(),
+              const Expanded(child: SkeletonStatsCard()),
             ]),
             const Gap(AppSpacing.lg),
             // Recent items

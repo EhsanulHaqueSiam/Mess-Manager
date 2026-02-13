@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:getwidget/getwidget.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:velocity_x/velocity_x.dart';
 import 'package:gap/gap.dart';
 
 import 'package:mess_manager/core/theme/app_theme.dart';
@@ -22,124 +20,218 @@ class BudgetCard extends ConsumerWidget {
       return _buildSetupCard(context, ref);
     }
 
-    return GFCard(
+    return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      gradient: LinearGradient(
-        colors: summary.isOverBudget
-            ? [
-                AppColors.error.withValues(alpha: 0.15),
-                AppColors.error.withValues(alpha: 0.05),
-              ]
-            : [
-                AppColors.primary.withValues(alpha: 0.15),
-                AppColors.primary.withValues(alpha: 0.05),
-              ],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: summary.isOverBudget
+              ? [
+                  AppColors.error.withValues(alpha: 0.15),
+                  AppColors.error.withValues(alpha: 0.05),
+                ]
+              : [
+                  AppColors.primary.withValues(alpha: 0.15),
+                  AppColors.primary.withValues(alpha: 0.05),
+                ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(
+          color: summary.isOverBudget
+              ? AppColors.error.withValues(alpha: 0.3)
+              : AppColors.primary.withValues(alpha: 0.3),
+        ),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
       ),
-      border: Border.all(
-        color: summary.isOverBudget
-            ? AppColors.error.withValues(alpha: 0.3)
-            : AppColors.primary.withValues(alpha: 0.3),
-      ),
-      borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-      content: VStack(crossAlignment: CrossAxisAlignment.start, [
-        // Header with budget status
-        HStack([
-          Icon(
-            summary.isOverBudget
-                ? LucideIcons.alertTriangle
-                : LucideIcons.wallet,
-            color: summary.isOverBudget ? AppColors.error : AppColors.primary,
-            size: 24,
-          ),
-          8.widthBox,
-          'Monthly Budget'.text.lg.semiBold.make().expand(),
-          GFIconButton(
-            icon: const Icon(LucideIcons.settings, size: 18),
-            type: GFButtonType.transparent,
-            size: GFSize.SMALL,
-            onPressed: () => _showBudgetSettings(context, ref),
-          ),
-        ]),
-        const Gap(AppSpacing.md),
-
-        // Progress bar
-        _buildProgressBar(summary),
-        const Gap(AppSpacing.sm),
-
-        // Stats row
-        HStack([
-          VStack([
-            '৳${summary.totalSpent.toStringAsFixed(0)}'.text.lg.bold.make(),
-            'Spent'.text.xs.gray500.make(),
-          ]).expand(),
-          VStack([
-            '৳${summary.remaining.toStringAsFixed(0)}'.text.lg.bold
-                .color(
-                  summary.remaining < 0 ? AppColors.error : AppColors.success,
-                )
-                .make(),
-            'Remaining'.text.xs.gray500.make(),
-          ]).expand(),
-          VStack([
-            '৳${summary.dailyBurnRate.toStringAsFixed(0)}'.text.lg.bold.make(),
-            'Daily Avg'.text.xs.gray500.make(),
-          ]).expand(),
-        ]),
-
-        // Warning if over budget
-        if (summary.isOverBudget) ...[
-          const Gap(AppSpacing.md),
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            decoration: BoxDecoration(
-              color: AppColors.error.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-            ),
-            child: HStack([
-              const Icon(
-                LucideIcons.alertCircle,
-                size: 16,
-                color: AppColors.error,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with budget status
+          Row(
+            children: [
+              Icon(
+                summary.isOverBudget
+                    ? LucideIcons.alertTriangle
+                    : LucideIcons.wallet,
+                color: summary.isOverBudget ? AppColors.error : AppColors.primary,
+                size: 24,
               ),
-              8.widthBox,
-              'Projected: ৳${summary.projectedTotal.toStringAsFixed(0)} - Consider reducing expenses!'
-                  .text
-                  .sm
-                  .color(AppColors.error)
-                  .make()
-                  .expand(),
-            ]),
-          ).animate().shake(duration: 500.ms),
+              const Gap(8),
+              Expanded(
+                child: Text(
+                  'Monthly Budget',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: context.textPrimary,
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(LucideIcons.settings, size: 18),
+                onPressed: () => _showBudgetSettings(context, ref),
+              ),
+            ],
+          ),
+          const Gap(AppSpacing.md),
+
+          // Progress bar
+          _buildProgressBar(context, summary),
+          const Gap(AppSpacing.sm),
+
+          // Stats row
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  children: [
+                    Text(
+                      '৳${summary.totalSpent.toStringAsFixed(0)}',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: context.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      'Spent',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: context.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  children: [
+                    Text(
+                      '৳${summary.remaining.toStringAsFixed(0)}',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: summary.remaining < 0
+                            ? AppColors.error
+                            : AppColors.success,
+                      ),
+                    ),
+                    Text(
+                      'Remaining',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: context.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  children: [
+                    Text(
+                      '৳${summary.dailyBurnRate.toStringAsFixed(0)}',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: context.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      'Daily Avg',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: context.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          // Warning if over budget
+          if (summary.isOverBudget) ...[
+            const Gap(AppSpacing.md),
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              decoration: BoxDecoration(
+                color: AppColors.error.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    LucideIcons.alertCircle,
+                    size: 16,
+                    color: AppColors.error,
+                  ),
+                  const Gap(8),
+                  Expanded(
+                    child: Text(
+                      'Projected: ৳${summary.projectedTotal.toStringAsFixed(0)} - Consider reducing expenses!',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.error,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ).animate().shake(duration: 500.ms),
+          ],
         ],
-      ]),
+      ),
     ).animate().fadeIn().slideY(begin: -0.05);
   }
 
   Widget _buildSetupCard(BuildContext context, WidgetRef ref) {
-    return GFCard(
+    return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      content: HStack([
-        const Icon(LucideIcons.wallet, color: AppColors.textSecondaryDark),
-        12.widthBox,
-        VStack(crossAlignment: CrossAxisAlignment.start, [
-          'Set Monthly Budget'.text.semiBold.make(),
-          'Track spending and get alerts'.text.xs.gray500.make(),
-        ]).expand(),
-        GFButton(
-          onPressed: () => _showBudgetSettings(context, ref),
-          text: 'Setup',
-          type: GFButtonType.outline,
-          size: GFSize.SMALL,
+      decoration: BoxDecoration(
+        color: context.cardColor,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        border: Border.all(
+          color: context.borderColor.withValues(alpha: 0.5),
         ),
-      ]),
+      ),
+      child: Row(
+        children: [
+          Icon(LucideIcons.wallet, color: context.textSecondary),
+          const Gap(12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Set Monthly Budget',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: context.textPrimary,
+                  ),
+                ),
+                Text(
+                  'Track spending and get alerts',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: context.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          OutlinedButton(
+            onPressed: () => _showBudgetSettings(context, ref),
+            child: const Text('Setup'),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildProgressBar(BudgetSummary summary) {
+  Widget _buildProgressBar(BuildContext context, BudgetSummary summary) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -147,7 +239,7 @@ class BudgetCard extends ConsumerWidget {
           borderRadius: BorderRadius.circular(4),
           child: LinearProgressIndicator(
             value: (summary.percentUsed / 100).clamp(0, 1),
-            backgroundColor: AppColors.borderDark,
+            backgroundColor: context.borderColor,
             valueColor: AlwaysStoppedAnimation(
               summary.percentUsed > 80 ? AppColors.error : AppColors.primary,
             ),
@@ -155,11 +247,25 @@ class BudgetCard extends ConsumerWidget {
           ),
         ),
         const Gap(4),
-        HStack([
-          '${summary.percentUsed.toStringAsFixed(0)}% used'.text.xs.gray500
-              .make(),
-          '${summary.daysRemaining} days left'.text.xs.gray500.make(),
-        ], alignment: MainAxisAlignment.spaceBetween),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '${summary.percentUsed.toStringAsFixed(0)}% used',
+              style: TextStyle(
+                fontSize: 10,
+                color: context.textMuted,
+              ),
+            ),
+            Text(
+              '${summary.daysRemaining} days left',
+              style: TextStyle(
+                fontSize: 10,
+                color: context.textMuted,
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -186,7 +292,7 @@ class BudgetCard extends ConsumerWidget {
             bottom: MediaQuery.of(ctx).viewInsets.bottom + AppSpacing.lg,
           ),
           decoration: BoxDecoration(
-            color: AppColors.surfaceDark,
+            color: context.surfaceColor,
             borderRadius: const BorderRadius.vertical(
               top: Radius.circular(AppSpacing.radiusLg),
             ),
@@ -200,13 +306,20 @@ class BudgetCard extends ConsumerWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.borderDark,
+                    color: context.borderColor,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
               const Gap(AppSpacing.lg),
-              'Budget Settings'.text.xl.semiBold.make(),
+              Text(
+                'Budget Settings',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: context.textPrimary,
+                ),
+              ),
               const Gap(AppSpacing.lg),
 
               // Enable toggle
@@ -231,17 +344,21 @@ class BudgetCard extends ConsumerWidget {
               const Gap(AppSpacing.lg),
 
               // Save button
-              GFButton(
-                onPressed: () {
-                  HapticService.buttonPress();
-                  final amount = double.tryParse(controller.text) ?? 0;
-                  ref.read(budgetProvider.notifier).setMonthlyLimit(amount);
-                  ref.read(budgetProvider.notifier).toggleEnabled(isEnabled);
-                  Navigator.pop(ctx);
-                },
-                text: 'Save Budget',
-                fullWidthButton: true,
-                color: AppColors.primary,
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () {
+                    HapticService.buttonPress();
+                    final amount = double.tryParse(controller.text) ?? 0;
+                    ref.read(budgetProvider.notifier).setMonthlyLimit(amount);
+                    ref.read(budgetProvider.notifier).toggleEnabled(isEnabled);
+                    Navigator.pop(ctx);
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                  ),
+                  child: const Text('Save Budget'),
+                ),
               ),
             ],
           ),

@@ -65,7 +65,7 @@ class _AddEditMemberSheetState extends ConsumerState<AddEditMemberSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
+        color: context.surfaceColor,
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(AppSpacing.radiusLg),
         ),
@@ -82,7 +82,7 @@ class _AddEditMemberSheetState extends ConsumerState<AddEditMemberSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.borderDark,
+                  color: context.borderColor,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -93,7 +93,7 @@ class _AddEditMemberSheetState extends ConsumerState<AddEditMemberSheet> {
             Text(
               isEditing ? 'Edit Member' : 'Add New Member',
               style: AppTypography.headlineMedium.copyWith(
-                color: AppColors.textPrimaryDark,
+                color: context.textPrimary,
               ),
             ),
             const Gap(AppSpacing.lg),
@@ -102,7 +102,7 @@ class _AddEditMemberSheetState extends ConsumerState<AddEditMemberSheet> {
             TextFormField(
               controller: _nameController,
               style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.textPrimaryDark,
+                color: context.textPrimary,
               ),
               decoration: const InputDecoration(
                 labelText: 'Name',
@@ -118,7 +118,7 @@ class _AddEditMemberSheetState extends ConsumerState<AddEditMemberSheet> {
               controller: _phoneController,
               keyboardType: TextInputType.phone,
               style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.textPrimaryDark,
+                color: context.textPrimary,
               ),
               decoration: const InputDecoration(
                 labelText: 'Phone (Optional)',
@@ -130,9 +130,9 @@ class _AddEditMemberSheetState extends ConsumerState<AddEditMemberSheet> {
             // Role Dropdown
             DropdownButtonFormField<MemberRole>(
               value: _selectedRole,
-              dropdownColor: AppColors.cardDark,
+              dropdownColor: context.cardColor,
               style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.textPrimaryDark,
+                color: context.textPrimary,
               ),
               decoration: const InputDecoration(
                 labelText: 'Role',
@@ -144,7 +144,7 @@ class _AddEditMemberSheetState extends ConsumerState<AddEditMemberSheet> {
                   child: Text(
                     role.name.toUpperCase(),
                     style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.textPrimaryDark,
+                      color: context.textPrimary,
                     ),
                   ),
                 );
@@ -159,7 +159,7 @@ class _AddEditMemberSheetState extends ConsumerState<AddEditMemberSheet> {
             Text(
               'Dietary Preferences',
               style: AppTypography.labelMedium.copyWith(
-                color: AppColors.textSecondaryDark,
+                color: context.textSecondary,
               ),
             ),
             const Gap(AppSpacing.sm),
@@ -201,7 +201,7 @@ class _AddEditMemberSheetState extends ConsumerState<AddEditMemberSheet> {
               TextFormField(
                 controller: _allergenController,
                 style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.textPrimaryDark,
+                  color: context.textPrimary,
                 ),
                 decoration: const InputDecoration(
                   labelText: 'Allergens (e.g., Peanuts, Shellfish)',
@@ -245,7 +245,7 @@ class _AddEditMemberSheetState extends ConsumerState<AddEditMemberSheet> {
           Icon(
             icon,
             size: 14,
-            color: isSelected ? Colors.white : AppColors.textSecondaryDark,
+            color: isSelected ? Colors.white : context.textSecondary,
           ),
           const Gap(4),
           Text(label),
@@ -264,7 +264,7 @@ class _AddEditMemberSheetState extends ConsumerState<AddEditMemberSheet> {
       selectedColor: AppColors.warning,
       checkmarkColor: Colors.white,
       labelStyle: TextStyle(
-        color: isSelected ? Colors.white : AppColors.textPrimaryDark,
+        color: isSelected ? Colors.white : context.textPrimary,
         fontSize: 12,
       ),
     );

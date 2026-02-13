@@ -35,7 +35,7 @@ class _VoiceEntrySheetState extends State<VoiceEntrySheet> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
+        color: context.surfaceColor,
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(AppSpacing.radiusLg),
         ),
@@ -49,7 +49,7 @@ class _VoiceEntrySheetState extends State<VoiceEntrySheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.borderDark,
+                color: context.borderColor,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -60,14 +60,14 @@ class _VoiceEntrySheetState extends State<VoiceEntrySheet> {
           Text(
             'Voice Entry',
             style: AppTypography.headlineMedium.copyWith(
-              color: AppColors.textPrimaryDark,
+              color: context.textPrimary,
             ),
           ),
           const Gap(AppSpacing.xs),
           Text(
             'Tap the mic and speak',
             style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textMutedDark,
+              color: context.textMuted,
             ),
           ),
           const Gap(AppSpacing.xl),
@@ -115,7 +115,7 @@ class _VoiceEntrySheetState extends State<VoiceEntrySheet> {
             style: AppTypography.labelMedium.copyWith(
               color: _isListening
                   ? AppColors.moneyNegative
-                  : AppColors.textMutedDark,
+                  : context.textMuted,
             ),
           ),
           const Gap(AppSpacing.xl),
@@ -137,7 +137,7 @@ class _VoiceEntrySheetState extends State<VoiceEntrySheet> {
                   Text(
                     '"$_spokenText"',
                     style: AppTypography.titleMedium.copyWith(
-                      color: AppColors.textPrimaryDark,
+                      color: context.textPrimary,
                       fontStyle: FontStyle.italic,
                     ),
                     textAlign: TextAlign.center,
@@ -187,7 +187,7 @@ class _VoiceEntrySheetState extends State<VoiceEntrySheet> {
             Text(
               'Try saying...',
               style: AppTypography.labelSmall.copyWith(
-                color: AppColors.textMutedDark,
+                color: context.textMuted,
               ),
             ),
             const Gap(AppSpacing.sm),
@@ -199,9 +199,9 @@ class _VoiceEntrySheetState extends State<VoiceEntrySheet> {
                 return ActionChip(
                   label: Text(phrase),
                   onPressed: () => _simulateVoiceInput(phrase),
-                  backgroundColor: AppColors.cardDark,
+                  backgroundColor: context.cardColor,
                   labelStyle: AppTypography.labelSmall.copyWith(
-                    color: AppColors.textSecondaryDark,
+                    color: context.textSecondary,
                   ),
                 );
               }).toList(),

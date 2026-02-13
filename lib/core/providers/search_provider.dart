@@ -61,10 +61,12 @@ final searchResultsProvider = Provider<List<SearchResult>>((ref) {
 
   // Search bazar entries
   for (final entry in bazarEntries) {
-    final member = members.firstWhere(
+    if (members.isEmpty) continue;
+    final member = members.cast<dynamic>().firstWhere(
       (m) => m.id == entry.memberId,
-      orElse: () => members.first,
+      orElse: () => null,
     );
+    if (member == null) continue;
 
     // Search by description
     if (entry.description?.toLowerCase().contains(query) ?? false) {

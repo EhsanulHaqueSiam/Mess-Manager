@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:velocity_x/velocity_x.dart';
 import 'package:gap/gap.dart';
-import 'package:getwidget/getwidget.dart';
 
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/models/member.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
 import 'package:mess_manager/core/providers/role_provider.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
-import 'package:mess_manager/core/widgets/gf_components.dart';
+import 'package:mess_manager/core/widgets/app_components.dart';
 
 /// Sheet with member management actions (for Admins)
 class MemberActionsSheet extends ConsumerWidget {
@@ -27,7 +25,7 @@ class MemberActionsSheet extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
+        color: context.surfaceColor,
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(AppSpacing.radiusLg),
         ),
@@ -40,25 +38,42 @@ class MemberActionsSheet extends ConsumerWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.borderDark,
+              color: context.borderColor,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
           const Gap(AppSpacing.lg),
 
           // Member Header
-          HStack([
-            GFMemberAvatar(
-              name: member.name,
-              size: 48,
-              backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-            ),
-            12.widthBox,
-            VStack(crossAlignment: CrossAxisAlignment.start, [
-              member.name.text.lg.bold.make(),
-              member.role.name.toUpperCase().text.xs.gray500.make(),
-            ]).expand(),
-          ]),
+          Row(
+            children: [
+              AppMemberAvatar(
+                name: member.name,
+                size: 48,
+                backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+              ),
+              const Gap(12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      member.name,
+                      style: AppTypography.titleMedium.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      member.role.name.toUpperCase(),
+                      style: AppTypography.bodySmall.copyWith(
+                        color: Colors.grey[500],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
           const Gap(AppSpacing.lg),
           const Divider(),
           const Gap(AppSpacing.md),
@@ -119,21 +134,30 @@ class MemberActionsSheet extends ConsumerWidget {
           // === SUPER ADMIN EXCLUSIVE ===
           if (ref.watch(isSuperAdminProvider) && !isSelf) ...[
             const Gap(AppSpacing.lg),
-            HStack([
-              Container(
-                width: 40,
-                height: 1,
-                color: AppColors.error.withValues(alpha: 0.3),
-              ),
-              8.widthBox,
-              '⚠️ SUPER ADMIN'.text.xs.bold.color(AppColors.error).make(),
-              8.widthBox,
-              Container(
-                width: 40,
-                height: 1,
-                color: AppColors.error.withValues(alpha: 0.3),
-              ).expand(),
-            ]),
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 1,
+                  color: AppColors.error.withValues(alpha: 0.3),
+                ),
+                const Gap(8),
+                Text(
+                  'SUPER ADMIN',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.error,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Gap(8),
+                Expanded(
+                  child: Container(
+                    height: 1,
+                    color: AppColors.error.withValues(alpha: 0.3),
+                  ),
+                ),
+              ],
+            ),
             const Gap(AppSpacing.sm),
 
             // Force Remove (bypass balance/restrictions)
@@ -184,14 +208,20 @@ class MemberActionsSheet extends ConsumerWidget {
                 color: AppColors.info.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
               ),
-              child: HStack([
-                const Icon(LucideIcons.info, size: 20, color: AppColors.info),
-                12.widthBox,
-                'You cannot modify your own account here.'.text.sm
-                    .color(AppColors.info)
-                    .make()
-                    .expand(),
-              ]),
+              child: Row(
+                children: [
+                  const Icon(LucideIcons.info, size: 20, color: AppColors.info),
+                  const Gap(12),
+                  Expanded(
+                    child: Text(
+                      'You cannot modify your own account here.',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.info,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
 
@@ -202,29 +232,36 @@ class MemberActionsSheet extends ConsumerWidget {
                 color: AppColors.warning.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
               ),
-              child: HStack([
-                const Icon(
-                  LucideIcons.lock,
-                  size: 20,
-                  color: AppColors.warning,
-                ),
-                12.widthBox,
-                'Admin access required for member management.'.text.sm
-                    .color(AppColors.warning)
-                    .make()
-                    .expand(),
-              ]),
+              child: Row(
+                children: [
+                  const Icon(
+                    LucideIcons.lock,
+                    size: 20,
+                    color: AppColors.warning,
+                  ),
+                  const Gap(12),
+                  Expanded(
+                    child: Text(
+                      'Admin access required for member management.',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.warning,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
 
           const Gap(AppSpacing.lg),
 
           // Close Button
-          GFButton(
-            onPressed: () => Navigator.pop(context),
-            text: 'Close',
-            fullWidthButton: true,
-            type: GFButtonType.outline,
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
           ),
           const Gap(AppSpacing.md),
         ],
@@ -252,22 +289,40 @@ class MemberActionsSheet extends ConsumerWidget {
           borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
           border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
-        child: HStack([
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+              ),
+              child: Icon(icon, color: color, size: 20),
             ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          12.widthBox,
-          VStack(crossAlignment: CrossAxisAlignment.start, [
-            title.text.semiBold.color(color).make(),
-            subtitle.text.xs.gray500.make(),
-          ]).expand(),
-          Icon(LucideIcons.chevronRight, color: color, size: 20),
-        ]),
+            const Gap(12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: color,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: AppTypography.bodySmall.copyWith(
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(LucideIcons.chevronRight, color: color, size: 20),
+          ],
+        ),
       ),
     );
   }
@@ -285,23 +340,35 @@ class MemberActionsSheet extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surfaceDark,
-        title: 'Archive Member?'.text.bold.make(),
-        content: VStack(crossAlignment: CrossAxisAlignment.start, [
-          'This will deactivate ${member.name} but keep their records.'.text
-              .make(),
-          8.heightBox,
-          'They can be reactivated later by an Admin.'.text.sm.gray500.make(),
-        ]),
+        backgroundColor: context.surfaceColor,
+        title: const Text(
+          'Archive Member?',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('This will deactivate ${member.name} but keep their records.'),
+            const Gap(8),
+            Text(
+              'They can be reactivated later by an Admin.',
+              style: AppTypography.bodySmall.copyWith(color: Colors.grey[500]),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: 'Cancel'.text.make(),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.warning),
             onPressed: () => Navigator.pop(ctx, true),
-            child: 'Archive'.text.bold.make(),
+            child: const Text(
+              'Archive',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -322,23 +389,35 @@ class MemberActionsSheet extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surfaceDark,
-        title: 'Restore Member?'.text.bold.make(),
-        content: VStack(crossAlignment: CrossAxisAlignment.start, [
-          'This will reactivate ${member.name}.'.text.make(),
-          8.heightBox,
-          'They will be able to participate in the mess again.'.text.sm.gray500
-              .make(),
-        ]),
+        backgroundColor: context.surfaceColor,
+        title: const Text(
+          'Restore Member?',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('This will reactivate ${member.name}.'),
+            const Gap(8),
+            Text(
+              'They will be able to participate in the mess again.',
+              style: AppTypography.bodySmall.copyWith(color: Colors.grey[500]),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: 'Cancel'.text.make(),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
             onPressed: () => Navigator.pop(ctx, true),
-            child: 'Restore'.text.bold.make(),
+            child: const Text(
+              'Restore',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -359,36 +438,52 @@ class MemberActionsSheet extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surfaceDark,
-        title: HStack([
-          const Icon(LucideIcons.alertTriangle, color: AppColors.error),
-          8.widthBox,
-          'Remove Member?'.text.bold.make(),
-        ]),
-        content: VStack(crossAlignment: CrossAxisAlignment.start, [
-          'This will permanently remove ${member.name} from the mess.'.text
-              .make(),
-          12.heightBox,
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            decoration: BoxDecoration(
-              color: AppColors.error.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+        backgroundColor: context.surfaceColor,
+        title: Row(
+          children: [
+            const Icon(LucideIcons.alertTriangle, color: AppColors.error),
+            const Gap(8),
+            const Text(
+              'Remove Member?',
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            child: 'This action cannot be undone!'.text.sm
-                .color(AppColors.error)
-                .make(),
-          ),
-        ]),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'This will permanently remove ${member.name} from the mess.',
+            ),
+            const Gap(12),
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              decoration: BoxDecoration(
+                color: AppColors.error.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+              ),
+              child: Text(
+                'This action cannot be undone!',
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.error,
+                ),
+              ),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: 'Cancel'.text.make(),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
             onPressed: () => Navigator.pop(ctx, true),
-            child: 'Remove'.text.bold.make(),
+            child: const Text(
+              'Remove',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -409,70 +504,108 @@ class MemberActionsSheet extends ConsumerWidget {
     final firstConfirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surfaceDark,
-        title: HStack([
-          const Icon(LucideIcons.alertOctagon, color: AppColors.error),
-          8.widthBox,
-          'FORCE REMOVE'.text.bold.color(AppColors.error).make(),
-        ]),
-        content: VStack(crossAlignment: CrossAxisAlignment.start, [
-          'You are about to PERMANENTLY delete ${member.name}.'.text.make(),
-          12.heightBox,
-          if (member.balance != 0) ...[
+        backgroundColor: context.surfaceColor,
+        title: Row(
+          children: [
+            const Icon(LucideIcons.alertOctagon, color: AppColors.error),
+            const Gap(8),
+            Text(
+              'FORCE REMOVE',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: AppColors.error,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('You are about to PERMANENTLY delete ${member.name}.'),
+            const Gap(12),
+            if (member.balance != 0) ...[
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      'Outstanding Balance:',
+                      style: AppTypography.bodySmall.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Gap(4),
+                    Text(
+                      '${member.balance.abs().toStringAsFixed(0)} ${member.balance > 0 ? "(to receive)" : "(owes)"}',
+                      style: AppTypography.titleMedium.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: member.balance > 0
+                            ? AppColors.success
+                            : AppColors.error,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Gap(8),
+            ],
             Container(
               padding: const EdgeInsets.all(AppSpacing.sm),
               decoration: BoxDecoration(
-                color: AppColors.warning.withValues(alpha: 0.1),
+                color: AppColors.error.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                border: Border.all(color: AppColors.error),
               ),
-              child: VStack([
-                'Outstanding Balance:'.text.sm.bold.make(),
-                4.heightBox,
-                '৳${member.balance.abs().toStringAsFixed(0)} ${member.balance > 0 ? "(to receive)" : "(owes)"}'
-                    .text
-                    .lg
-                    .bold
-                    .color(
-                      member.balance > 0 ? AppColors.success : AppColors.error,
-                    )
-                    .make(),
-              ]),
+              child: Column(
+                children: [
+                  Text(
+                    'This bypasses all safety checks!',
+                    style: AppTypography.bodySmall.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.error,
+                    ),
+                  ),
+                  const Gap(4),
+                  Text(
+                    'Balance will NOT be settled',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.error,
+                    ),
+                  ),
+                  Text(
+                    'All member data will be deleted',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.error,
+                    ),
+                  ),
+                  Text(
+                    'This action CANNOT be undone',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.error,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            8.heightBox,
           ],
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            decoration: BoxDecoration(
-              color: AppColors.error.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-              border: Border.all(color: AppColors.error),
-            ),
-            child: VStack([
-              '⚠️ This bypasses all safety checks!'.text.sm.bold
-                  .color(AppColors.error)
-                  .make(),
-              4.heightBox,
-              '• Balance will NOT be settled'.text.xs
-                  .color(AppColors.error)
-                  .make(),
-              '• All member data will be deleted'.text.xs
-                  .color(AppColors.error)
-                  .make(),
-              '• This action CANNOT be undone'.text.xs
-                  .color(AppColors.error)
-                  .make(),
-            ]),
-          ),
-        ]),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: 'Cancel'.text.make(),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
             onPressed: () => Navigator.pop(ctx, true),
-            child: 'I Understand'.text.bold.make(),
+            child: const Text(
+              'I Understand',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -485,24 +618,33 @@ class MemberActionsSheet extends ConsumerWidget {
     final secondConfirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surfaceDark,
-        title: 'Type "DELETE" to confirm'.text.bold.make(),
-        content: VStack([
-          'Type DELETE to permanently remove ${member.name}:'.text.sm.make(),
-          12.heightBox,
-          TextField(
-            controller: typeController,
-            autofocus: true,
-            decoration: const InputDecoration(
-              hintText: 'Type DELETE',
-              border: OutlineInputBorder(),
+        backgroundColor: context.surfaceColor,
+        title: const Text(
+          'Type "DELETE" to confirm',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Type DELETE to permanently remove ${member.name}:',
+              style: AppTypography.bodySmall,
             ),
-          ),
-        ]),
+            const Gap(12),
+            TextField(
+              controller: typeController,
+              autofocus: true,
+              decoration: const InputDecoration(
+                hintText: 'Type DELETE',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: 'Cancel'.text.make(),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
@@ -511,7 +653,10 @@ class MemberActionsSheet extends ConsumerWidget {
                 Navigator.pop(ctx, true);
               }
             },
-            child: 'Force Delete'.text.bold.make(),
+            child: const Text(
+              'Force Delete',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -578,7 +723,7 @@ class _ChangeRoleSheetState extends ConsumerState<_ChangeRoleSheet> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
+        color: context.surfaceColor,
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(AppSpacing.radiusLg),
         ),
@@ -593,14 +738,19 @@ class _ChangeRoleSheetState extends ConsumerState<_ChangeRoleSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.borderDark,
+                color: context.borderColor,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
           const Gap(AppSpacing.lg),
 
-          'Change Role for ${widget.member.name}'.text.lg.bold.make(),
+          Text(
+            'Change Role for ${widget.member.name}',
+            style: AppTypography.titleMedium.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const Gap(AppSpacing.md),
 
           // Role List
@@ -609,12 +759,10 @@ class _ChangeRoleSheetState extends ConsumerState<_ChangeRoleSheet> {
           const Gap(AppSpacing.lg),
 
           // Save Button
-          GFButton(
-            onPressed: _saveRole,
+          AppPrimaryButton(
             text: 'Save Role',
-            icon: const Icon(LucideIcons.check, color: Colors.white),
-            fullWidthButton: true,
-            color: AppColors.primary,
+            icon: LucideIcons.check,
+            onPressed: _saveRole,
           ),
           const Gap(AppSpacing.md),
         ],
@@ -637,30 +785,43 @@ class _ChangeRoleSheetState extends ConsumerState<_ChangeRoleSheet> {
         decoration: BoxDecoration(
           color: isSelected
               ? color.withValues(alpha: 0.15)
-              : AppColors.cardDark,
+              : context.cardColor,
           borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
           border: Border.all(
-            color: isSelected ? color : AppColors.borderDark,
+            color: isSelected ? color : context.borderColor,
             width: isSelected ? 2 : 1,
           ),
         ),
-        child: HStack([
-          Icon(
-            isSelected ? LucideIcons.checkCircle2 : LucideIcons.circle,
-            color: isSelected ? color : AppColors.textMutedDark,
-            size: 20,
-          ),
-          12.widthBox,
-          VStack(crossAlignment: CrossAxisAlignment.start, [
-            role.name
-                .toUpperCase()
-                .text
-                .semiBold
-                .color(isSelected ? color : AppColors.textPrimaryDark)
-                .make(),
-            _getRoleDescription(role).text.xs.gray500.make(),
-          ]).expand(),
-        ]),
+        child: Row(
+          children: [
+            Icon(
+              isSelected ? LucideIcons.checkCircle2 : LucideIcons.circle,
+              color: isSelected ? color : context.textMuted,
+              size: 20,
+            ),
+            const Gap(12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    role.name.toUpperCase(),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: isSelected ? color : context.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    _getRoleDescription(role),
+                    style: AppTypography.bodySmall.copyWith(
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -691,9 +852,9 @@ class _ChangeRoleSheetState extends ConsumerState<_ChangeRoleSheet> {
       case MemberRole.member:
         return AppColors.success;
       case MemberRole.temp:
-        return AppColors.textSecondaryDark;
+        return context.textSecondary;
       case MemberRole.guest:
-        return AppColors.textMutedDark;
+        return context.textMuted;
     }
   }
 
@@ -742,7 +903,7 @@ class _TransferRightsSheetState extends ConsumerState<_TransferRightsSheet> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
+        color: context.surfaceColor,
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(AppSpacing.radiusLg),
         ),
@@ -757,7 +918,7 @@ class _TransferRightsSheetState extends ConsumerState<_TransferRightsSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.borderDark,
+                color: context.borderColor,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -765,21 +926,23 @@ class _TransferRightsSheetState extends ConsumerState<_TransferRightsSheet> {
           const Gap(AppSpacing.lg),
 
           // Title
-          HStack([
-            const Icon(LucideIcons.arrowRightLeft, color: AppColors.warning),
-            12.widthBox,
-            'Transfer ${widget.fromMember.role.name.toUpperCase()} Rights'
-                .text
-                .lg
-                .bold
-                .make(),
-          ]),
+          Row(
+            children: [
+              const Icon(LucideIcons.arrowRightLeft, color: AppColors.warning),
+              const Gap(12),
+              Text(
+                'Transfer ${widget.fromMember.role.name.toUpperCase()} Rights',
+                style: AppTypography.titleMedium.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
           const Gap(AppSpacing.sm),
-          'Select a member to receive ${widget.fromMember.name}\'s rights:'
-              .text
-              .sm
-              .gray500
-              .make(),
+          Text(
+            'Select a member to receive ${widget.fromMember.name}\'s rights:',
+            style: AppTypography.bodySmall.copyWith(color: Colors.grey[500]),
+          ),
           const Gap(AppSpacing.lg),
 
           // Member List
@@ -790,7 +953,7 @@ class _TransferRightsSheetState extends ConsumerState<_TransferRightsSheet> {
             child: ListView.separated(
               shrinkWrap: true,
               itemCount: eligibleMembers.length,
-              separatorBuilder: (_, __) => 8.heightBox,
+              separatorBuilder: (_, __) => const Gap(8),
               itemBuilder: (context, index) {
                 final member = eligibleMembers[index];
                 final isSelected = member.id == _selectedMemberId;
@@ -805,33 +968,50 @@ class _TransferRightsSheetState extends ConsumerState<_TransferRightsSheet> {
                     decoration: BoxDecoration(
                       color: isSelected
                           ? AppColors.warning.withValues(alpha: 0.1)
-                          : AppColors.surfaceDark,
+                          : context.surfaceColor,
                       borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
                       border: Border.all(
                         color: isSelected
                             ? AppColors.warning
-                            : AppColors.borderDark,
+                            : context.borderColor,
                         width: isSelected ? 2 : 1,
                       ),
                     ),
-                    child: HStack([
-                      Icon(
-                        isSelected
-                            ? LucideIcons.checkCircle2
-                            : LucideIcons.circle,
-                        color: isSelected
-                            ? AppColors.warning
-                            : AppColors.textMutedDark,
-                        size: 20,
-                      ),
-                      12.widthBox,
-                      GFMemberAvatar(name: member.name, size: 32),
-                      12.widthBox,
-                      VStack(crossAlignment: CrossAxisAlignment.start, [
-                        member.name.text.semiBold.make(),
-                        member.role.name.text.xs.gray500.make(),
-                      ]).expand(),
-                    ]),
+                    child: Row(
+                      children: [
+                        Icon(
+                          isSelected
+                              ? LucideIcons.checkCircle2
+                              : LucideIcons.circle,
+                          color: isSelected
+                              ? AppColors.warning
+                              : context.textMuted,
+                          size: 20,
+                        ),
+                        const Gap(12),
+                        AppMemberAvatar(name: member.name, size: 32),
+                        const Gap(12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                member.name,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                member.role.name,
+                                style: AppTypography.bodySmall.copyWith(
+                                  color: Colors.grey[500],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
@@ -849,44 +1029,62 @@ class _TransferRightsSheetState extends ConsumerState<_TransferRightsSheet> {
                 color: AppColors.warning.withValues(alpha: 0.3),
               ),
             ),
-            child: VStack(crossAlignment: CrossAxisAlignment.start, [
-              HStack([
-                const Icon(
-                  LucideIcons.alertTriangle,
-                  color: AppColors.warning,
-                  size: 16,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      LucideIcons.alertTriangle,
+                      color: AppColors.warning,
+                      size: 16,
+                    ),
+                    const Gap(8),
+                    Text(
+                      'What will happen:',
+                      style: AppTypography.bodySmall.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.warning,
+                      ),
+                    ),
+                  ],
                 ),
-                8.widthBox,
-                'What will happen:'.text.sm.bold
-                    .color(AppColors.warning)
-                    .make(),
-              ]),
-              8.heightBox,
-              '• ${widget.fromMember.name} will become a regular Member'.text.xs
-                  .make(),
-              '• Selected member will become ${widget.fromMember.role.name}'
-                  .text
-                  .xs
-                  .make(),
-            ]),
+                const Gap(8),
+                Text(
+                  '${widget.fromMember.name} will become a regular Member',
+                  style: AppTypography.bodySmall,
+                ),
+                Text(
+                  'Selected member will become ${widget.fromMember.role.name}',
+                  style: AppTypography.bodySmall,
+                ),
+              ],
+            ),
           ),
           const Gap(AppSpacing.lg),
 
           // Actions
-          HStack([
-            GFButton(
-              onPressed: () => Navigator.pop(context),
-              text: 'Cancel',
-              type: GFButtonType.outline,
-            ).expand(),
-            12.widthBox,
-            GFButton(
-              onPressed: _selectedMemberId != null ? _transferRights : null,
-              text: 'Transfer Rights',
-              color: AppColors.warning,
-              disabledColor: AppColors.borderDark,
-            ).expand(),
-          ]),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+              ),
+              const Gap(12),
+              Expanded(
+                child: FilledButton(
+                  onPressed: _selectedMemberId != null ? _transferRights : null,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.warning,
+                    disabledBackgroundColor: context.borderColor,
+                  ),
+                  child: const Text('Transfer Rights'),
+                ),
+              ),
+            ],
+          ),
           const Gap(AppSpacing.md),
         ],
       ),
@@ -903,29 +1101,52 @@ class _TransferRightsSheetState extends ConsumerState<_TransferRightsSheet> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surfaceDark,
-        title: 'Confirm Transfer'.text.bold.make(),
-        content: VStack([
-          'Transfer ${widget.fromMember.role.name.toUpperCase()} rights from:'
-              .text
-              .sm
-              .make(),
-          8.heightBox,
-          HStack([
-            '${widget.fromMember.name}'.text.bold.make(),
-            const Icon(LucideIcons.arrowRight, size: 16).px8(),
-            '${targetMember.name}'.text.bold.color(AppColors.warning).make(),
-          ]),
-        ]),
+        backgroundColor: context.surfaceColor,
+        title: const Text(
+          'Confirm Transfer',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Transfer ${widget.fromMember.role.name.toUpperCase()} rights from:',
+              style: AppTypography.bodySmall,
+            ),
+            const Gap(8),
+            Row(
+              children: [
+                Text(
+                  widget.fromMember.name,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: const Icon(LucideIcons.arrowRight, size: 16),
+                ),
+                Text(
+                  targetMember.name,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.warning,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: 'Cancel'.text.make(),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.warning),
             onPressed: () => Navigator.pop(ctx, true),
-            child: 'Transfer'.text.bold.make(),
+            child: const Text(
+              'Transfer',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -982,7 +1203,7 @@ class _ManagerHandoffSheetState extends ConsumerState<_ManagerHandoffSheet> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
+        color: context.surfaceColor,
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(AppSpacing.radiusLg),
         ),
@@ -997,7 +1218,7 @@ class _ManagerHandoffSheetState extends ConsumerState<_ManagerHandoffSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.borderDark,
+                color: context.borderColor,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1005,40 +1226,63 @@ class _ManagerHandoffSheetState extends ConsumerState<_ManagerHandoffSheet> {
           const Gap(AppSpacing.lg),
 
           // Title with step indicator
-          HStack([
-            const Icon(LucideIcons.userPlus2, color: AppColors.primary),
-            12.widthBox,
-            VStack(crossAlignment: CrossAxisAlignment.start, [
-              'Manager Handoff'.text.lg.bold.make(),
-              'Step $_step of 2'.text.xs.color(AppColors.textMutedDark).make(),
-            ]).expand(),
-            // Step indicators
-            HStack([
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
+          Row(
+            children: [
+              const Icon(LucideIcons.userPlus2, color: AppColors.primary),
+              const Gap(12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Manager Handoff',
+                      style: AppTypography.titleMedium.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Step $_step of 2',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: context.textMuted,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              4.widthBox,
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: _step == 2 ? AppColors.primary : AppColors.borderDark,
-                  shape: BoxShape.circle,
-                ),
+              // Step indicators
+              Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const Gap(4),
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color:
+                          _step == 2 ? AppColors.primary : context.borderColor,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ],
               ),
-            ]),
-          ]),
+            ],
+          ),
           const Gap(AppSpacing.lg),
 
           if (_step == 1) ...[
             // Step 1: Select new manager
-            'Select New Manager'.text.semiBold.make(),
-            8.heightBox,
+            const Text(
+              'Select New Manager',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const Gap(8),
             ConstrainedBox(
               constraints: BoxConstraints(
                 maxHeight: MediaQuery.of(context).size.height * 0.35,
@@ -1046,7 +1290,7 @@ class _ManagerHandoffSheetState extends ConsumerState<_ManagerHandoffSheet> {
               child: ListView.separated(
                 shrinkWrap: true,
                 itemCount: eligibleMembers.length,
-                separatorBuilder: (_, __) => 8.heightBox,
+                separatorBuilder: (_, __) => const Gap(8),
                 itemBuilder: (context, index) {
                   final member = eligibleMembers[index];
                   final isSelected = member.id == _selectedMemberId;
@@ -1061,35 +1305,52 @@ class _ManagerHandoffSheetState extends ConsumerState<_ManagerHandoffSheet> {
                       decoration: BoxDecoration(
                         color: isSelected
                             ? AppColors.primary.withValues(alpha: 0.1)
-                            : AppColors.surfaceDark,
+                            : context.surfaceColor,
                         borderRadius: BorderRadius.circular(
                           AppSpacing.radiusMd,
                         ),
                         border: Border.all(
                           color: isSelected
                               ? AppColors.primary
-                              : AppColors.borderDark,
+                              : context.borderColor,
                           width: isSelected ? 2 : 1,
                         ),
                       ),
-                      child: HStack([
-                        Icon(
-                          isSelected
-                              ? LucideIcons.checkCircle2
-                              : LucideIcons.circle,
-                          color: isSelected
-                              ? AppColors.primary
-                              : AppColors.textMutedDark,
-                          size: 20,
-                        ),
-                        12.widthBox,
-                        GFMemberAvatar(name: member.name, size: 32),
-                        12.widthBox,
-                        VStack(crossAlignment: CrossAxisAlignment.start, [
-                          member.name.text.semiBold.make(),
-                          member.role.name.text.xs.gray500.make(),
-                        ]).expand(),
-                      ]),
+                      child: Row(
+                        children: [
+                          Icon(
+                            isSelected
+                                ? LucideIcons.checkCircle2
+                                : LucideIcons.circle,
+                            color: isSelected
+                                ? AppColors.primary
+                                : context.textMuted,
+                            size: 20,
+                          ),
+                          const Gap(12),
+                          AppMemberAvatar(name: member.name, size: 32),
+                          const Gap(12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  member.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  member.role.name,
+                                  style: AppTypography.bodySmall.copyWith(
+                                    color: Colors.grey[500],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },
@@ -1097,80 +1358,110 @@ class _ManagerHandoffSheetState extends ConsumerState<_ManagerHandoffSheet> {
             ),
           ] else ...[
             // Step 2: Cash in hand amount
-            'Cash in Hand Amount'.text.semiBold.make(),
-            8.heightBox,
-            'Enter the amount of cash being transferred to the new manager:'
-                .text
-                .sm
-                .gray500
-                .make(),
-            16.heightBox,
+            const Text(
+              'Cash in Hand Amount',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const Gap(8),
+            Text(
+              'Enter the amount of cash being transferred to the new manager:',
+              style: AppTypography.bodySmall.copyWith(color: Colors.grey[500]),
+            ),
+            const Gap(16),
             TextField(
               controller: _cashController,
               keyboardType: TextInputType.number,
               autofocus: true,
               decoration: InputDecoration(
-                prefixText: '৳ ',
+                prefixText: ' ',
                 hintText: '0',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
                 ),
                 filled: true,
-                fillColor: AppColors.cardDark,
+                fillColor: context.cardColor,
               ),
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            16.heightBox,
+            const Gap(16),
             Container(
               padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
                 color: AppColors.info.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
               ),
-              child: VStack(crossAlignment: CrossAxisAlignment.start, [
-                HStack([
-                  const Icon(LucideIcons.info, color: AppColors.info, size: 16),
-                  8.widthBox,
-                  'This will:'.text.sm.bold.color(AppColors.info).make(),
-                ]),
-                8.heightBox,
-                '• Transfer ${widget.fromMember.role.name.toUpperCase()} role to new manager'
-                    .text
-                    .xs
-                    .make(),
-                '• Create transaction record for cash handoff'.text.xs.make(),
-                '• Set your role to regular Member'.text.xs.make(),
-              ]),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        LucideIcons.info,
+                        color: AppColors.info,
+                        size: 16,
+                      ),
+                      const Gap(8),
+                      Text(
+                        'This will:',
+                        style: AppTypography.bodySmall.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.info,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Gap(8),
+                  Text(
+                    'Transfer ${widget.fromMember.role.name.toUpperCase()} role to new manager',
+                    style: AppTypography.bodySmall,
+                  ),
+                  Text(
+                    'Create transaction record for cash handoff',
+                    style: AppTypography.bodySmall,
+                  ),
+                  Text(
+                    'Set your role to regular Member',
+                    style: AppTypography.bodySmall,
+                  ),
+                ],
+              ),
             ),
           ],
 
           const Gap(AppSpacing.lg),
 
           // Actions
-          HStack([
-            GFButton(
-              onPressed: () {
-                if (_step == 1) {
-                  Navigator.pop(context);
-                } else {
-                  setState(() => _step = 1);
-                }
-              },
-              text: _step == 1 ? 'Cancel' : 'Back',
-              type: GFButtonType.outline,
-            ).expand(),
-            12.widthBox,
-            GFButton(
-              onPressed: _step == 1
-                  ? (_selectedMemberId != null
-                        ? () => setState(() => _step = 2)
-                        : null)
-                  : _completeHandoff,
-              text: _step == 1 ? 'Next' : 'Complete Handoff',
-              color: AppColors.primary,
-              disabledColor: AppColors.borderDark,
-            ).expand(),
-          ]),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    if (_step == 1) {
+                      Navigator.pop(context);
+                    } else {
+                      setState(() => _step = 1);
+                    }
+                  },
+                  child: Text(_step == 1 ? 'Cancel' : 'Back'),
+                ),
+              ),
+              const Gap(12),
+              Expanded(
+                child: FilledButton(
+                  onPressed: _step == 1
+                      ? (_selectedMemberId != null
+                            ? () => setState(() => _step = 2)
+                            : null)
+                      : _completeHandoff,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    disabledBackgroundColor: context.borderColor,
+                  ),
+                  child: Text(_step == 1 ? 'Next' : 'Complete Handoff'),
+                ),
+              ),
+            ],
+          ),
           const Gap(AppSpacing.md),
         ],
       ),
@@ -1188,47 +1479,79 @@ class _ManagerHandoffSheetState extends ConsumerState<_ManagerHandoffSheet> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surfaceDark,
-        title: 'Confirm Handoff'.text.bold.make(),
-        content: VStack([
-          'Complete manager handoff:'.text.sm.make(),
-          12.heightBox,
-          HStack([
-            widget.fromMember.name.text.bold.make(),
-            const Icon(LucideIcons.arrowRight, size: 16).px8(),
-            targetMember.name.text.bold.color(AppColors.primary).make(),
-          ]),
-          if (cashAmount > 0) ...[
-            12.heightBox,
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.sm),
-              decoration: BoxDecoration(
-                color: AppColors.moneyPositive.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-              ),
-              child: HStack([
-                const Icon(
-                  LucideIcons.banknote,
-                  color: AppColors.moneyPositive,
-                  size: 16,
-                ),
-                8.widthBox,
-                'Cash Transfer: ৳${cashAmount.toStringAsFixed(0)}'.text.bold
-                    .color(AppColors.moneyPositive)
-                    .make(),
-              ]),
+        backgroundColor: context.surfaceColor,
+        title: const Text(
+          'Confirm Handoff',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Complete manager handoff:',
+              style: AppTypography.bodySmall,
             ),
+            const Gap(12),
+            Row(
+              children: [
+                Text(
+                  widget.fromMember.name,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: const Icon(LucideIcons.arrowRight, size: 16),
+                ),
+                Text(
+                  targetMember.name,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
+            ),
+            if (cashAmount > 0) ...[
+              const Gap(12),
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                decoration: BoxDecoration(
+                  color: AppColors.moneyPositive.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      LucideIcons.banknote,
+                      color: AppColors.moneyPositive,
+                      size: 16,
+                    ),
+                    const Gap(8),
+                    Text(
+                      'Cash Transfer: ${cashAmount.toStringAsFixed(0)}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.moneyPositive,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
-        ]),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: 'Cancel'.text.make(),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
             onPressed: () => Navigator.pop(ctx, true),
-            child: 'Confirm'.text.bold.make(),
+            child: const Text(
+              'Confirm',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -1254,9 +1577,9 @@ class _ManagerHandoffSheetState extends ConsumerState<_ManagerHandoffSheet> {
       Navigator.pop(context);
       showSuccessToast(
         context,
-        '✅ Manager handoff complete!\n'
+        'Manager handoff complete!\n'
         '${targetMember.name} is now ${widget.fromMember.role.name}.\n'
-        '${cashAmount > 0 ? "৳${cashAmount.toStringAsFixed(0)} transferred." : ""}',
+        '${cashAmount > 0 ? "${cashAmount.toStringAsFixed(0)} transferred." : ""}',
       );
     }
   }

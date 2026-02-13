@@ -54,10 +54,10 @@ class MainShell extends StatelessWidget {
       bottomNavigationBar:
           Container(
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceDark,
+                  color: context.surfaceColor,
                   border: Border(
                     top: BorderSide(
-                      color: AppColors.borderDark.withValues(alpha: 0.3),
+                      color: context.borderColor.withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),

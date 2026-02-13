@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// User Roles
@@ -99,8 +100,8 @@ final currentTestUserProvider =
       CurrentTestUserNotifier.new,
     );
 
-/// Convenience providers
-final isTestModeProvider = Provider<bool>((ref) => true); // Toggle for prod
+/// Convenience providers — only true in debug builds
+final isTestModeProvider = Provider<bool>((ref) => kDebugMode);
 
 final currentUserIdProvider = Provider<String>((ref) {
   return ref.watch(currentTestUserProvider).id;

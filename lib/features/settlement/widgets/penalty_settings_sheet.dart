@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:velocity_x/velocity_x.dart';
 import 'package:gap/gap.dart';
-import 'package:getwidget/getwidget.dart';
 
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
@@ -20,7 +18,7 @@ class PenaltySettingsSheet extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
+        color: context.surfaceColor,
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(AppSpacing.radiusLg),
         ),
@@ -36,7 +34,7 @@ class PenaltySettingsSheet extends ConsumerWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.borderDark,
+                  color: context.borderColor,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -44,25 +42,34 @@ class PenaltySettingsSheet extends ConsumerWidget {
             const Gap(AppSpacing.lg),
 
             // Header
-            HStack([
-              const Icon(
-                LucideIcons.percent,
-                color: AppColors.warning,
-                size: 24,
-              ),
-              12.widthBox,
-              'Late Payment Penalty'.text.xl.bold.make().expand(),
-              GFToggle(
-                value: settings.isEnabled,
-                onChanged: (value) {
-                  HapticService.lightTap();
-                  ref
-                      .read(penaltySettingsProvider.notifier)
-                      .setEnabled(value ?? false);
-                },
-                enabledTrackColor: AppColors.warning,
-              ),
-            ]),
+            Row(
+              children: [
+                const Icon(
+                  LucideIcons.percent,
+                  color: AppColors.warning,
+                  size: 24,
+                ),
+                const Gap(12),
+                Expanded(
+                  child: Text(
+                    'Late Payment Penalty',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Switch.adaptive(
+                  value: settings.isEnabled,
+                  onChanged: (value) {
+                    HapticService.lightTap();
+                    ref
+                        .read(penaltySettingsProvider.notifier)
+                        .setEnabled(value);
+                  },
+                  activeColor: AppColors.warning,
+                ),
+              ],
+            ),
             const Gap(AppSpacing.md),
 
             if (!settings.isEnabled)
@@ -72,14 +79,21 @@ class PenaltySettingsSheet extends ConsumerWidget {
                   color: AppColors.info.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                 ),
-                child: HStack([
-                  const Icon(LucideIcons.info, size: 18, color: AppColors.info),
-                  8.widthBox,
-                  'Enable to add automatic penalty for late payments.'.text.sm
-                      .color(AppColors.info)
-                      .make()
-                      .expand(),
-                ]),
+                child: Row(
+                  children: [
+                    const Icon(LucideIcons.info, size: 18, color: AppColors.info),
+                    const Gap(8),
+                    Expanded(
+                      child: Text(
+                        'Enable to add automatic penalty for late payments.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.info,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
 
             if (settings.isEnabled) ...[
@@ -87,125 +101,145 @@ class PenaltySettingsSheet extends ConsumerWidget {
 
               // Penalty Percent
               _buildSettingRow(
+                context: context,
                 label: 'Penalty Rate',
                 description: 'Percentage added after grace period',
-                child: HStack([
-                  IconButton(
-                    icon: const Icon(LucideIcons.minus, size: 18),
-                    onPressed: () {
-                      HapticService.lightTap();
-                      ref
-                          .read(penaltySettingsProvider.notifier)
-                          .setPenaltyPercent(settings.penaltyPercent - 1);
-                    },
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(LucideIcons.minus, size: 18),
+                      onPressed: () {
+                        HapticService.lightTap();
+                        ref
+                            .read(penaltySettingsProvider.notifier)
+                            .setPenaltyPercent(settings.penaltyPercent - 1);
+                      },
                     ),
-                    decoration: BoxDecoration(
-                      color: AppColors.warning.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.warning.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                      ),
+                      child: Text(
+                        '${settings.penaltyPercent.toStringAsFixed(0)}%',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.warning,
+                        ),
+                      ),
                     ),
-                    child: '${settings.penaltyPercent.toStringAsFixed(0)}%'
-                        .text
-                        .bold
-                        .color(AppColors.warning)
-                        .make(),
-                  ),
-                  IconButton(
-                    icon: const Icon(LucideIcons.plus, size: 18),
-                    onPressed: () {
-                      HapticService.lightTap();
-                      ref
-                          .read(penaltySettingsProvider.notifier)
-                          .setPenaltyPercent(settings.penaltyPercent + 1);
-                    },
-                  ),
-                ]),
+                    IconButton(
+                      icon: const Icon(LucideIcons.plus, size: 18),
+                      onPressed: () {
+                        HapticService.lightTap();
+                        ref
+                            .read(penaltySettingsProvider.notifier)
+                            .setPenaltyPercent(settings.penaltyPercent + 1);
+                      },
+                    ),
+                  ],
+                ),
               ),
               const Gap(AppSpacing.md),
 
               // Grace Period
               _buildSettingRow(
+                context: context,
                 label: 'Grace Period',
                 description: 'Days before penalty starts',
-                child: HStack([
-                  IconButton(
-                    icon: const Icon(LucideIcons.minus, size: 18),
-                    onPressed: () {
-                      HapticService.lightTap();
-                      ref
-                          .read(penaltySettingsProvider.notifier)
-                          .setGracePeriodDays(settings.gracePeriodDays - 1);
-                    },
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(LucideIcons.minus, size: 18),
+                      onPressed: () {
+                        HapticService.lightTap();
+                        ref
+                            .read(penaltySettingsProvider.notifier)
+                            .setGracePeriodDays(settings.gracePeriodDays - 1);
+                      },
                     ),
-                    decoration: BoxDecoration(
-                      color: AppColors.info.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.info.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                      ),
+                      child: Text(
+                        '${settings.gracePeriodDays} days',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.info,
+                        ),
+                      ),
                     ),
-                    child: '${settings.gracePeriodDays} days'.text.bold
-                        .color(AppColors.info)
-                        .make(),
-                  ),
-                  IconButton(
-                    icon: const Icon(LucideIcons.plus, size: 18),
-                    onPressed: () {
-                      HapticService.lightTap();
-                      ref
-                          .read(penaltySettingsProvider.notifier)
-                          .setGracePeriodDays(settings.gracePeriodDays + 1);
-                    },
-                  ),
-                ]),
+                    IconButton(
+                      icon: const Icon(LucideIcons.plus, size: 18),
+                      onPressed: () {
+                        HapticService.lightTap();
+                        ref
+                            .read(penaltySettingsProvider.notifier)
+                            .setGracePeriodDays(settings.gracePeriodDays + 1);
+                      },
+                    ),
+                  ],
+                ),
               ),
               const Gap(AppSpacing.md),
 
               // Max Penalty Cap
               _buildSettingRow(
+                context: context,
                 label: 'Maximum Penalty',
                 description: 'Cap on total penalty amount',
-                child: HStack([
-                  IconButton(
-                    icon: const Icon(LucideIcons.minus, size: 18),
-                    onPressed: () {
-                      HapticService.lightTap();
-                      ref
-                          .read(penaltySettingsProvider.notifier)
-                          .setMaxPenaltyPercent(settings.maxPenaltyPercent - 5);
-                    },
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(LucideIcons.minus, size: 18),
+                      onPressed: () {
+                        HapticService.lightTap();
+                        ref
+                            .read(penaltySettingsProvider.notifier)
+                            .setMaxPenaltyPercent(settings.maxPenaltyPercent - 5);
+                      },
                     ),
-                    decoration: BoxDecoration(
-                      color: AppColors.error.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.error.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                      ),
+                      child: Text(
+                        '${settings.maxPenaltyPercent.toStringAsFixed(0)}%',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.error,
+                        ),
+                      ),
                     ),
-                    child: '${settings.maxPenaltyPercent.toStringAsFixed(0)}%'
-                        .text
-                        .bold
-                        .color(AppColors.error)
-                        .make(),
-                  ),
-                  IconButton(
-                    icon: const Icon(LucideIcons.plus, size: 18),
-                    onPressed: () {
-                      HapticService.lightTap();
-                      ref
-                          .read(penaltySettingsProvider.notifier)
-                          .setMaxPenaltyPercent(settings.maxPenaltyPercent + 5);
-                    },
-                  ),
-                ]),
+                    IconButton(
+                      icon: const Icon(LucideIcons.plus, size: 18),
+                      onPressed: () {
+                        HapticService.lightTap();
+                        ref
+                            .read(penaltySettingsProvider.notifier)
+                            .setMaxPenaltyPercent(settings.maxPenaltyPercent + 5);
+                      },
+                    ),
+                  ],
+                ),
               ),
               const Gap(AppSpacing.md),
 
@@ -213,30 +247,42 @@ class PenaltySettingsSheet extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
-                  color: AppColors.cardDark,
+                  color: context.cardColor,
                   borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                  border: Border.all(color: AppColors.borderDark),
+                  border: Border.all(color: context.borderColor),
                 ),
-                child: HStack([
-                  VStack(crossAlignment: CrossAxisAlignment.start, [
-                    'Compound Daily'.text.semiBold.make(),
-                    'Penalty increases each day after grace period'
-                        .text
-                        .xs
-                        .gray500
-                        .make(),
-                  ]).expand(),
-                  GFToggle(
-                    value: settings.compoundDaily,
-                    onChanged: (value) {
-                      HapticService.lightTap();
-                      ref
-                          .read(penaltySettingsProvider.notifier)
-                          .setCompoundDaily(value ?? false);
-                    },
-                    enabledTrackColor: AppColors.error,
-                  ),
-                ]),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Compound Daily',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          Text(
+                            'Penalty increases each day after grace period',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch.adaptive(
+                      value: settings.compoundDaily,
+                      onChanged: (value) {
+                        HapticService.lightTap();
+                        ref
+                            .read(penaltySettingsProvider.notifier)
+                            .setCompoundDaily(value);
+                      },
+                      activeColor: AppColors.error,
+                    ),
+                  ],
+                ),
               ),
               const Gap(AppSpacing.lg),
 
@@ -250,43 +296,63 @@ class PenaltySettingsSheet extends ConsumerWidget {
                     color: AppColors.warning.withValues(alpha: 0.3),
                   ),
                 ),
-                child: VStack(crossAlignment: CrossAxisAlignment.start, [
-                  HStack([
-                    const Icon(
-                      LucideIcons.calculator,
-                      size: 16,
-                      color: AppColors.warning,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          LucideIcons.calculator,
+                          size: 16,
+                          color: AppColors.warning,
+                        ),
+                        const Gap(8),
+                        Text(
+                          'Example Calculation',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.warning,
+                          ),
+                        ),
+                      ],
                     ),
-                    8.widthBox,
-                    'Example Calculation'.text.semiBold
-                        .color(AppColors.warning)
-                        .make(),
-                  ]),
-                  8.heightBox,
-                  'If someone owes ৳1,000:'.text.sm.make(),
-                  4.heightBox,
-                  '• After ${settings.gracePeriodDays} days: +৳${(1000 * settings.penaltyPercent / 100).toStringAsFixed(0)} (${settings.penaltyPercent.toStringAsFixed(0)}% penalty)'
-                      .text
-                      .xs
-                      .gray500
-                      .make(),
-                  '• Maximum: ৳${(1000 * settings.maxPenaltyPercent / 100).toStringAsFixed(0)} cap (${settings.maxPenaltyPercent.toStringAsFixed(0)}% max)'
-                      .text
-                      .xs
-                      .gray500
-                      .make(),
-                ]),
+                    const Gap(8),
+                    const Text(
+                      'If someone owes ৳1,000:',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                    const Gap(4),
+                    Text(
+                      '• After ${settings.gracePeriodDays} days: +৳${(1000 * settings.penaltyPercent / 100).toStringAsFixed(0)} (${settings.penaltyPercent.toStringAsFixed(0)}% penalty)',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey[500],
+                      ),
+                    ),
+                    Text(
+                      '• Maximum: ৳${(1000 * settings.maxPenaltyPercent / 100).toStringAsFixed(0)} cap (${settings.maxPenaltyPercent.toStringAsFixed(0)}% max)',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey[500],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
 
             const Gap(AppSpacing.lg),
 
             // Close Button
-            GFButton(
-              onPressed: () => Navigator.pop(context),
-              text: 'Done',
-              fullWidthButton: true,
-              color: AppColors.primary,
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () => Navigator.pop(context),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                ),
+                child: const Text('Done'),
+              ),
             ),
             const Gap(AppSpacing.md),
           ],
@@ -296,6 +362,7 @@ class PenaltySettingsSheet extends ConsumerWidget {
   }
 
   Widget _buildSettingRow({
+    required BuildContext context,
     required String label,
     required String description,
     required Widget child,
@@ -303,17 +370,33 @@ class PenaltySettingsSheet extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.cardDark,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: AppColors.borderDark),
+        border: Border.all(color: context.borderColor),
       ),
-      child: HStack([
-        VStack(crossAlignment: CrossAxisAlignment.start, [
-          label.text.semiBold.make(),
-          description.text.xs.gray500.make(),
-        ]).expand(),
-        child,
-      ]),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.grey[500],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          child,
+        ],
+      ),
     );
   }
 }

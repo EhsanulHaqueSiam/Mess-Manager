@@ -1,16 +1,16 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:velocity_x/velocity_x.dart';
 import 'package:gap/gap.dart';
-import 'package:getwidget/getwidget.dart';
 
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/models/meal.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
-import 'package:mess_manager/core/widgets/gf_components.dart';
+import 'package:mess_manager/core/widgets/app_components.dart';
 import 'package:mess_manager/features/vacation/providers/fixed_expenses_provider.dart';
 
 /// Fixed Expenses Screen - Manage Rent, Wifi, Bua, etc.
@@ -25,118 +25,338 @@ class FixedExpensesScreen extends ConsumerWidget {
     final monthName = _getMonthName(now.month);
 
     return Scaffold(
-      appBar: AppBar(
-        title: HStack([
-          const Icon(
-            LucideIcons.receipt,
-            color: AppColors.textSecondaryDark,
-            size: 22,
-          ),
-          const Gap(AppSpacing.sm),
-          'Fixed Expenses'.text.make(),
-        ]),
-        actions: [
-          GFIconButton(
-            icon: const Icon(LucideIcons.plus, color: AppColors.primary),
-            type: GFButtonType.transparent,
-            onPressed: () => _showAddExpenseSheet(context, ref),
-            tooltip: 'Add Expense',
-          ),
-        ],
-      ),
-      body: Column(
+      backgroundColor: const Color(0xFF0A0E1A),
+      body: Stack(
         children: [
-          // Summary Card
-          Container(
-            margin: const EdgeInsets.all(AppSpacing.md),
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppColors.warning.withValues(alpha: 0.15),
-                  AppColors.warning.withValues(alpha: 0.05),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-              border: Border.all(
-                color: AppColors.warning.withValues(alpha: 0.3),
+          // Background gradient
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFF0A0E1A), Color(0xFF0D1520)],
+                ),
               ),
             ),
-            child: HStack([
-              VStack(crossAlignment: CrossAxisAlignment.start, [
-                '$monthName Fixed Costs'.text.semiBold.make(),
-                4.heightBox,
-                '৳${expenses.fold(0.0, (sum, e) => sum + e.amount).toStringAsFixed(0)}'
-                    .text
-                    .xl2
-                    .bold
-                    .color(AppColors.warning)
-                    .make(),
-              ]).expand(),
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceDark,
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                ),
-                child: VStack(crossAlignment: CrossAxisAlignment.center, [
-                  '৳${perMember.toStringAsFixed(0)}'.text.lg.bold.make(),
-                  'Per Member'.text.xs.gray500.make(),
-                ]),
-              ),
-            ]),
-          ).animate().fadeIn().slideY(begin: -0.05),
+          ),
 
-          // Expense List
-          Expanded(
-            child: expenses.isEmpty
-                ? _buildEmptyState(context, ref)
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md,
-                    ),
-                    itemCount: expenses.length,
-                    itemBuilder: (context, index) {
-                      final expense = expenses[index];
-                      return _buildExpenseCard(context, ref, expense, index);
-                    },
+          // Breathing accent orb 1
+          Positioned(
+            top: -60,
+            right: -40,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppColors.warning.withValues(alpha: 0.15),
+                    AppColors.warning.withValues(alpha: 0.0),
+                  ],
+                ),
+              ),
+            )
+                .animate(onPlay: (c) => c.repeat(reverse: true))
+                .scaleXY(begin: 1.0, end: 1.15, duration: 4.seconds),
+          ),
+
+          // Breathing accent orb 2
+          Positioned(
+            bottom: 120,
+            left: -60,
+            child: Container(
+              width: 180,
+              height: 180,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppColors.warning.withValues(alpha: 0.1),
+                    AppColors.warning.withValues(alpha: 0.0),
+                  ],
+                ),
+              ),
+            )
+                .animate(onPlay: (c) => c.repeat(reverse: true))
+                .scaleXY(begin: 1.0, end: 1.15, duration: 4.seconds),
+          ),
+
+          // Main content
+          SafeArea(
+            child: Column(
+              children: [
+                // Custom header
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
                   ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          LucideIcons.arrowLeft,
+                          color: Colors.white.withValues(alpha: 0.9),
+                        ),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      const Gap(4),
+                      // Gradient halo icon
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              AppColors.warning.withValues(alpha: 0.3),
+                              AppColors.warning.withValues(alpha: 0.0),
+                            ],
+                          ),
+                        ),
+                        child: const Icon(
+                          LucideIcons.receipt,
+                          color: AppColors.warning,
+                          size: 22,
+                        ),
+                      ),
+                      const Gap(10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Fixed Expenses',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white.withValues(alpha: 0.9),
+                              ),
+                            ),
+                            Text(
+                              'Rent, Wifi, Bua & more',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white.withValues(alpha: 0.5),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                            LucideIcons.plus, color: AppColors.primary),
+                        onPressed: () => _showAddExpenseSheet(context, ref),
+                        tooltip: 'Add Expense',
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Summary Card — glass
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
+                  ),
+                  child: ClipRRect(
+                    borderRadius:
+                        BorderRadius.circular(AppSpacing.radiusLg),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                      child: Container(
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppColors.warning.withValues(alpha: 0.12),
+                              AppColors.warning.withValues(alpha: 0.04),
+                            ],
+                          ),
+                          borderRadius:
+                              BorderRadius.circular(AppSpacing.radiusLg),
+                          border: Border.all(
+                            color:
+                                AppColors.warning.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '$monthName Fixed Costs',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white
+                                          .withValues(alpha: 0.9),
+                                    ),
+                                  ),
+                                  const Gap(4),
+                                  Text(
+                                    '${expenses.fold(0.0, (sum, e) => sum + e.amount).toStringAsFixed(0)}',
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.warning,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              padding:
+                                  const EdgeInsets.all(AppSpacing.md),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0D1520),
+                                borderRadius: BorderRadius.circular(
+                                    AppSpacing.radiusMd),
+                              ),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    '${perMember.toStringAsFixed(0)}',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white
+                                          .withValues(alpha: 0.9),
+                                    ),
+                                  ),
+                                  Text(
+                                    'Per Member',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.white
+                                          .withValues(alpha: 0.5),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ).animate().fadeIn().slideY(begin: -0.05),
+
+                // Expense List
+                Expanded(
+                  child: expenses.isEmpty
+                      ? _buildEmptyState(context, ref)
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                          ),
+                          itemCount: expenses.length,
+                          itemBuilder: (context, index) {
+                            final expense = expenses[index];
+                            return _buildExpenseCard(
+                                context, ref, expense, index);
+                          },
+                        ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          HapticService.buttonPress();
-          _showAddExpenseSheet(context, ref);
-        },
-        icon: const Icon(LucideIcons.plus),
-        label: 'Add Expense'.text.bold.make(),
-        backgroundColor: AppColors.warning,
-      ).animate().scale(delay: 300.ms),
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+          gradient: LinearGradient(
+            colors: [
+              AppColors.warning,
+              AppColors.warning.withValues(alpha: 0.8),
+            ],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.warning.withValues(alpha: 0.3),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+            onTap: () {
+              HapticService.buttonPress();
+              _showAddExpenseSheet(context, ref);
+            },
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(LucideIcons.plus, color: Colors.white, size: 20),
+                  const Gap(8),
+                  const Text(
+                    'Add Expense',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      )
+          .animate()
+          .scale(delay: 300.ms)
+          .shimmer(delay: 700.ms, duration: 1500.ms),
     );
   }
 
   Widget _buildEmptyState(BuildContext context, WidgetRef ref) {
     return Center(
-      child: VStack(crossAlignment: CrossAxisAlignment.center, [
-        const Icon(
-          LucideIcons.receipt,
-          size: 64,
-          color: AppColors.textMutedDark,
-        ),
-        16.heightBox,
-        'No Fixed Expenses'.text.xl.semiBold.gray500.make(),
-        8.heightBox,
-        'Add recurring costs like Rent, Wifi, Bua'.text.sm.gray500.center
-            .make(),
-        24.heightBox,
-        GFButton(
-          onPressed: () => _showAddExpenseSheet(context, ref),
-          text: 'Add First Expense',
-          icon: const Icon(LucideIcons.plus, color: Colors.white, size: 18),
-          color: AppColors.warning,
-        ),
-      ]),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            LucideIcons.receipt,
+            size: 64,
+            color: Colors.white.withValues(alpha: 0.15),
+          ),
+          const Gap(16),
+          Text(
+            'No Fixed Expenses',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.white.withValues(alpha: 0.5),
+            ),
+          ),
+          const Gap(8),
+          Text(
+            'Add recurring costs like Rent, Wifi, Bua',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.white.withValues(alpha: 0.5),
+            ),
+          ),
+          const Gap(24),
+          FilledButton.icon(
+            onPressed: () => _showAddExpenseSheet(context, ref),
+            icon: const Icon(LucideIcons.plus, size: 18),
+            label: const Text('Add First Expense'),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.warning,
+            ),
+          ),
+        ],
+      ),
     ).animate().fadeIn();
   }
 
@@ -177,7 +397,7 @@ class FixedExpensesScreen extends ConsumerWidget {
                             .addExpense(deletedExpense);
                       },
                     ),
-                    backgroundColor: AppColors.cardDark,
+                    backgroundColor: const Color(0xFF0D1520),
                     duration: const Duration(seconds: 4),
                   ),
                 );
@@ -191,62 +411,116 @@ class FixedExpensesScreen extends ConsumerWidget {
           ),
         ],
       ),
-      child: GFCard(
-        margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-        padding: const EdgeInsets.all(AppSpacing.md),
-        color: AppColors.cardDark,
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+      child: ClipRRect(
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        content: HStack([
-          // Icon
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.sm),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+            padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-            ),
-            child: Icon(icon, color: color, size: 24),
-          ),
-          12.widthBox,
-
-          // Details
-          VStack(crossAlignment: CrossAxisAlignment.start, [
-            HStack([
-              getExpenseTypeName(expense.type).text.semiBold.make().expand(),
-              if (expense.isPaid)
-                GFBadge(
-                  text: 'Paid',
-                  color: AppColors.success,
-                  size: GFSize.SMALL,
-                ),
-            ]),
-            if (expense.description != null && expense.description!.isNotEmpty)
-              expense.description!.text.xs.gray500.make(),
-            4.heightBox,
-            'Due: ${_formatDate(expense.dueDate)}'.text.xs.gray400.make(),
-          ]).expand(),
-
-          // Amount & Actions
-          VStack(crossAlignment: CrossAxisAlignment.end, [
-            '৳${expense.amount.toStringAsFixed(0)}'.text.lg.bold
-                .color(color)
-                .make(),
-            8.heightBox,
-            if (!expense.isPaid)
-              GFButton(
-                onPressed: () {
-                  HapticService.success();
-                  ref
-                      .read(fixedExpensesProvider.notifier)
-                      .markPaid(expense.id, 'current');
-                  showSuccessToast(context, 'Marked as paid!');
-                },
-                text: 'Pay',
-                size: GFSize.SMALL,
-                color: AppColors.success,
+              color: Colors.white.withValues(alpha: 0.03),
+              border: Border.all(
+                color: color.withValues(alpha: 0.2),
               ),
-          ]),
-        ]),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            ),
+            child: Row(
+              children: [
+                // Icon
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.sm),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius:
+                        BorderRadius.circular(AppSpacing.radiusSm),
+                  ),
+                  child: Icon(icon, color: color, size: 24),
+                ),
+                const Gap(12),
+
+                // Details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              getExpenseTypeName(expense.type),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white
+                                    .withValues(alpha: 0.9),
+                              ),
+                            ),
+                          ),
+                          if (expense.isPaid) AppBadge.success('Paid'),
+                        ],
+                      ),
+                      if (expense.description != null &&
+                          expense.description!.isNotEmpty)
+                        Text(
+                          expense.description!,
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.white
+                                .withValues(alpha: 0.5),
+                          ),
+                        ),
+                      const Gap(4),
+                      Text(
+                        'Due: ${_formatDate(expense.dueDate)}',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.white
+                              .withValues(alpha: 0.3),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Amount & Actions
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '${expense.amount.toStringAsFixed(0)}',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: color,
+                      ),
+                    ),
+                    const Gap(8),
+                    if (!expense.isPaid)
+                      FilledButton(
+                        onPressed: () {
+                          HapticService.success();
+                          ref
+                              .read(fixedExpensesProvider.notifier)
+                              .markPaid(expense.id, 'current');
+                          showSuccessToast(context, 'Marked as paid!');
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.success,
+                          minimumSize: const Size(0, 32),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
+                        ),
+                        child: const Text(
+                            'Pay', style: TextStyle(fontSize: 12)),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ).animate(delay: (index * 50).ms).fadeIn().slideX(begin: 0.05),
     );
   }
@@ -265,20 +539,39 @@ class FixedExpensesScreen extends ConsumerWidget {
     return await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            backgroundColor: AppColors.surfaceDark,
-            title: 'Delete Expense?'.text.bold.make(),
-            content: 'This action cannot be undone.'.text.make(),
+            backgroundColor: const Color(0xFF0D1520),
+            title: Text(
+              'Delete Expense?',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white.withValues(alpha: 0.9),
+              ),
+            ),
+            content: Text(
+              'This action cannot be undone.',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.5),
+              ),
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: 'Cancel'.text.make(),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.5),
+                  ),
+                ),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.error,
                 ),
                 onPressed: () => Navigator.pop(ctx, true),
-                child: 'Delete'.text.bold.make(),
+                child: const Text(
+                  'Delete',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
@@ -359,9 +652,9 @@ class _AddExpenseSheetState extends ConsumerState<_AddExpenseSheet> {
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
-        borderRadius: const BorderRadius.vertical(
+      decoration: const BoxDecoration(
+        color: Color(0xFF0D1520),
+        borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppSpacing.radiusLg),
         ),
       ),
@@ -371,13 +664,18 @@ class _AddExpenseSheetState extends ConsumerState<_AddExpenseSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Handle
+            // Gradient handle bar
             Center(
               child: Container(
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.borderDark,
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.warning.withValues(alpha: 0.6),
+                      AppColors.warning.withValues(alpha: 0.2),
+                    ],
+                  ),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -385,97 +683,237 @@ class _AddExpenseSheetState extends ConsumerState<_AddExpenseSheet> {
             const Gap(AppSpacing.lg),
 
             // Title
-            'Add Fixed Expense'.text.xl.bold.make(),
+            Text(
+              'Add Fixed Expense',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white.withValues(alpha: 0.9),
+              ),
+            ),
             const Gap(AppSpacing.lg),
 
             // Type Selection
-            'Expense Type'.text.sm.gray500.make(),
+            Text(
+              'Expense Type',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.white.withValues(alpha: 0.5),
+              ),
+            ),
             const Gap(AppSpacing.sm),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: FixedExpenseType.values.map((type) {
                 final isSelected = type == _selectedType;
-                return GFButton(
-                  onPressed: () {
-                    HapticService.lightTap();
-                    setState(() => _selectedType = type);
-                  },
-                  text: getExpenseTypeName(type),
-                  type: isSelected ? GFButtonType.solid : GFButtonType.outline,
-                  color: isSelected
-                      ? AppColors.warning
-                      : AppColors.textSecondaryDark,
-                  size: GFSize.SMALL,
-                );
+                return isSelected
+                    ? FilledButton(
+                        onPressed: () {
+                          HapticService.lightTap();
+                          setState(() => _selectedType = type);
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.warning,
+                          minimumSize: const Size(0, 32),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
+                        ),
+                        child: Text(
+                          getExpenseTypeName(type),
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      )
+                    : OutlinedButton(
+                        onPressed: () {
+                          HapticService.lightTap();
+                          setState(() => _selectedType = type);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor:
+                              Colors.white.withValues(alpha: 0.5),
+                          side: BorderSide(
+                            color:
+                                Colors.white.withValues(alpha: 0.15),
+                          ),
+                          minimumSize: const Size(0, 32),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
+                        ),
+                        child: Text(
+                          getExpenseTypeName(type),
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      );
               }).toList(),
             ),
             const Gap(AppSpacing.lg),
 
             // Amount
-            'Amount (৳)'.text.sm.gray500.make(),
+            Text(
+              'Amount (\u09F3)',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.white.withValues(alpha: 0.5),
+              ),
+            ),
             const Gap(AppSpacing.sm),
             TextFormField(
               controller: _amountController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.9),
+              ),
+              decoration: InputDecoration(
                 hintText: 'Enter amount',
-                prefixIcon: Icon(LucideIcons.banknote),
+                hintStyle: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.3),
+                ),
+                prefixIcon: Icon(
+                  LucideIcons.banknote,
+                  color: Colors.white.withValues(alpha: 0.5),
+                ),
+                filled: true,
+                fillColor: Colors.white.withValues(alpha: 0.03),
+                border: OutlineInputBorder(
+                  borderRadius:
+                      BorderRadius.circular(AppSpacing.radiusMd),
+                  borderSide: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.06),
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius:
+                      BorderRadius.circular(AppSpacing.radiusMd),
+                  borderSide: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.06),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius:
+                      BorderRadius.circular(AppSpacing.radiusMd),
+                  borderSide: BorderSide(
+                    color: AppColors.warning.withValues(alpha: 0.5),
+                  ),
+                ),
               ),
             ),
             const Gap(AppSpacing.lg),
 
             // Description
-            'Description (optional)'.text.sm.gray500.make(),
+            Text(
+              'Description (optional)',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.white.withValues(alpha: 0.5),
+              ),
+            ),
             const Gap(AppSpacing.sm),
             TextFormField(
               controller: _descriptionController,
-              decoration: const InputDecoration(
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.9),
+              ),
+              decoration: InputDecoration(
                 hintText: 'e.g., January Rent',
-                prefixIcon: Icon(LucideIcons.text),
+                hintStyle: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.3),
+                ),
+                prefixIcon: Icon(
+                  LucideIcons.text,
+                  color: Colors.white.withValues(alpha: 0.5),
+                ),
+                filled: true,
+                fillColor: Colors.white.withValues(alpha: 0.03),
+                border: OutlineInputBorder(
+                  borderRadius:
+                      BorderRadius.circular(AppSpacing.radiusMd),
+                  borderSide: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.06),
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius:
+                      BorderRadius.circular(AppSpacing.radiusMd),
+                  borderSide: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.06),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius:
+                      BorderRadius.circular(AppSpacing.radiusMd),
+                  borderSide: BorderSide(
+                    color: AppColors.warning.withValues(alpha: 0.5),
+                  ),
+                ),
               ),
             ),
             const Gap(AppSpacing.lg),
 
             // Due Date
-            'Due Date'.text.sm.gray500.make(),
+            Text(
+              'Due Date',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.white.withValues(alpha: 0.5),
+              ),
+            ),
             const Gap(AppSpacing.sm),
             GestureDetector(
               onTap: _pickDueDate,
               child: Container(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
-                  color: AppColors.cardDark,
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                  border: Border.all(color: AppColors.borderDark),
+                  color: Colors.white.withValues(alpha: 0.03),
+                  borderRadius:
+                      BorderRadius.circular(AppSpacing.radiusSm),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.06),
+                  ),
                 ),
-                child: HStack([
-                  const Icon(
-                    LucideIcons.calendar,
-                    size: 20,
-                    color: AppColors.textSecondaryDark,
-                  ),
-                  12.widthBox,
-                  '${_dueDate.day}/${_dueDate.month}/${_dueDate.year}'.text
-                      .make()
-                      .expand(),
-                  const Icon(
-                    LucideIcons.chevronDown,
-                    size: 20,
-                    color: AppColors.textSecondaryDark,
-                  ),
-                ]),
+                child: Row(
+                  children: [
+                    Icon(
+                      LucideIcons.calendar,
+                      size: 20,
+                      color: Colors.white.withValues(alpha: 0.5),
+                    ),
+                    const Gap(12),
+                    Expanded(
+                      child: Text(
+                        '${_dueDate.day}/${_dueDate.month}/${_dueDate.year}',
+                        style: TextStyle(
+                          color: Colors.white
+                              .withValues(alpha: 0.9),
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      LucideIcons.chevronDown,
+                      size: 20,
+                      color: Colors.white.withValues(alpha: 0.5),
+                    ),
+                  ],
+                ),
               ),
             ),
             const Gap(AppSpacing.xl),
 
             // Submit Button
-            GFButton(
-              onPressed: _submit,
-              text: 'Add Expense',
-              icon: const Icon(LucideIcons.plus, color: Colors.white),
-              fullWidthButton: true,
-              color: AppColors.warning,
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _submit,
+                icon: const Icon(LucideIcons.plus),
+                label: const Text('Add Expense'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.warning,
+                ),
+              ),
             ),
             const Gap(AppSpacing.md),
           ],

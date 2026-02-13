@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:velocity_x/velocity_x.dart';
 import 'package:gap/gap.dart';
 
 import 'package:mess_manager/core/theme/app_theme.dart';
@@ -33,6 +32,7 @@ import 'package:mess_manager/core/theme/app_theme.dart';
 
 /// Common input decoration for all form fields
 InputDecoration appInputDecoration({
+  required BuildContext context,
   required String label,
   String? hint,
   IconData? prefixIcon,
@@ -44,14 +44,14 @@ InputDecoration appInputDecoration({
     prefixIcon: prefixIcon != null ? Icon(prefixIcon, size: 20) : null,
     suffix: suffix,
     filled: true,
-    fillColor: AppColors.cardDark,
+    fillColor: context.cardColor,
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-      borderSide: BorderSide(color: AppColors.borderDark),
+      borderSide: BorderSide(color: context.borderColor),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-      borderSide: BorderSide(color: AppColors.borderDark),
+      borderSide: BorderSide(color: context.borderColor),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
@@ -109,6 +109,7 @@ class AppFormTextField extends StatelessWidget {
         name: name,
         initialValue: initialValue,
         decoration: appInputDecoration(
+          context: context,
           label: label,
           hint: hint,
           prefixIcon: prefixIcon,
@@ -164,6 +165,7 @@ class AppFormNumberField extends StatelessWidget {
         name: name,
         initialValue: initialValue?.toString(),
         decoration: appInputDecoration(
+          context: context,
           label: label,
           hint: hint,
           prefixIcon: prefixIcon ?? LucideIcons.hash,
@@ -207,7 +209,7 @@ class AppFormDropdown<T> extends StatelessWidget {
       child: FormBuilderDropdown<T>(
         name: name,
         initialValue: initialValue,
-        decoration: appInputDecoration(label: label, prefixIcon: prefixIcon),
+        decoration: appInputDecoration(context: context, label: label, prefixIcon: prefixIcon),
         items: items,
         validator: isRequired ? FormBuilderValidators.required() : null,
       ),
@@ -244,6 +246,7 @@ class AppFormDatePicker extends StatelessWidget {
         inputType: InputType.date,
         format: null, // Uses locale default
         decoration: appInputDecoration(
+          context: context,
           label: label,
           prefixIcon: LucideIcons.calendar,
         ),
@@ -277,10 +280,17 @@ class AppFormSwitch extends StatelessWidget {
       child: FormBuilderSwitch(
         name: name,
         initialValue: initialValue,
-        title: VStack(crossAlignment: CrossAxisAlignment.start, [
-          label.text.semiBold.make(),
-          if (subtitle != null) subtitle!.text.xs.gray500.make(),
-        ]),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+            if (subtitle != null)
+              Text(
+                subtitle!,
+                style: TextStyle(fontSize: 12, color: context.textMuted),
+              ),
+          ],
+        ),
         decoration: const InputDecoration(border: InputBorder.none),
         activeColor: AppColors.primary,
       ),
@@ -312,7 +322,7 @@ class AppFormRadioGroup<T> extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          label.text.semiBold.make(),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
           const Gap(AppSpacing.sm),
           FormBuilderRadioGroup<T>(
             name: name,
@@ -355,7 +365,7 @@ class AppFormCheckboxGroup<T> extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          label.text.semiBold.make(),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
           const Gap(AppSpacing.sm),
           FormBuilderCheckboxGroup<T>(
             name: name,
@@ -409,19 +419,19 @@ class AppFormAmountField extends StatelessWidget {
           labelText: label,
           prefixText: '৳ ',
           prefixStyle: TextStyle(
-            color: AppColors.textPrimaryDark,
+            color: context.textPrimary,
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
           filled: true,
-          fillColor: AppColors.cardDark,
+          fillColor: context.cardColor,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            borderSide: BorderSide(color: AppColors.borderDark),
+            borderSide: BorderSide(color: context.borderColor),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            borderSide: BorderSide(color: AppColors.borderDark),
+            borderSide: BorderSide(color: context.borderColor),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppSpacing.radiusMd),

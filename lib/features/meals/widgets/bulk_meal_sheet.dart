@@ -43,7 +43,7 @@ class _BulkMealSheetState extends ConsumerState<BulkMealSheet> {
         maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
+        color: context.surfaceColor,
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(AppSpacing.radiusLg),
         ),
@@ -59,7 +59,7 @@ class _BulkMealSheetState extends ConsumerState<BulkMealSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.borderDark,
+                  color: context.borderColor,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -88,13 +88,13 @@ class _BulkMealSheetState extends ConsumerState<BulkMealSheet> {
                     Text(
                       'Bulk Meal Entry',
                       style: AppTypography.headlineMedium.copyWith(
-                        color: AppColors.textPrimaryDark,
+                        color: context.textPrimary,
                       ),
                     ),
                     Text(
                       'Add meals for multiple days at once',
                       style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textMutedDark,
+                        color: context.textMuted,
                       ),
                     ),
                   ],
@@ -107,7 +107,7 @@ class _BulkMealSheetState extends ConsumerState<BulkMealSheet> {
             Text(
               'Quick Templates',
               style: AppTypography.labelMedium.copyWith(
-                color: AppColors.textSecondaryDark,
+                color: context.textSecondary,
               ),
             ),
             const Gap(AppSpacing.sm),
@@ -159,7 +159,7 @@ class _BulkMealSheetState extends ConsumerState<BulkMealSheet> {
             Text(
               'Who ate?',
               style: AppTypography.labelMedium.copyWith(
-                color: AppColors.textSecondaryDark,
+                color: context.textSecondary,
               ),
             ),
             const Gap(AppSpacing.sm),
@@ -184,12 +184,12 @@ class _BulkMealSheetState extends ConsumerState<BulkMealSheet> {
             Text(
               'Starting from',
               style: AppTypography.labelMedium.copyWith(
-                color: AppColors.textSecondaryDark,
+                color: context.textSecondary,
               ),
             ),
             const Gap(AppSpacing.sm),
             Material(
-              color: AppColors.cardDark,
+              color: context.cardColor,
               borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
               child: InkWell(
                 onTap: _selectStartDate,
@@ -207,13 +207,13 @@ class _BulkMealSheetState extends ConsumerState<BulkMealSheet> {
                       Text(
                         _formatDate(_startDate),
                         style: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.textPrimaryDark,
+                          color: context.textPrimary,
                         ),
                       ),
                       const Spacer(),
-                      const Icon(
+                      Icon(
                         LucideIcons.chevronRight,
-                        color: AppColors.textMutedDark,
+                        color: context.textMuted,
                         size: 20,
                       ),
                     ],
@@ -227,7 +227,7 @@ class _BulkMealSheetState extends ConsumerState<BulkMealSheet> {
             Text(
               'Number of days',
               style: AppTypography.labelMedium.copyWith(
-                color: AppColors.textSecondaryDark,
+                color: context.textSecondary,
               ),
             ),
             const Gap(AppSpacing.sm),
@@ -248,7 +248,7 @@ class _BulkMealSheetState extends ConsumerState<BulkMealSheet> {
             Text(
               'Meal types',
               style: AppTypography.labelMedium.copyWith(
-                color: AppColors.textSecondaryDark,
+                color: context.textSecondary,
               ),
             ),
             const Gap(AppSpacing.sm),
@@ -271,7 +271,7 @@ class _BulkMealSheetState extends ConsumerState<BulkMealSheet> {
             Text(
               'Guest meals per entry',
               style: AppTypography.labelMedium.copyWith(
-                color: AppColors.textSecondaryDark,
+                color: context.textSecondary,
               ),
             ),
             const Gap(AppSpacing.sm),
@@ -281,9 +281,9 @@ class _BulkMealSheetState extends ConsumerState<BulkMealSheet> {
                 vertical: AppSpacing.sm,
               ),
               decoration: BoxDecoration(
-                color: AppColors.cardDark,
+                color: context.cardColor,
                 borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                border: Border.all(color: AppColors.borderDark),
+                border: Border.all(color: context.borderColor),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -295,15 +295,15 @@ class _BulkMealSheetState extends ConsumerState<BulkMealSheet> {
                         size: 18,
                         color: _guestCount > 0
                             ? AppColors.mealColor
-                            : AppColors.textMutedDark,
+                            : context.textMuted,
                       ),
                       const Gap(AppSpacing.sm),
                       Text(
                         _guestCount > 0 ? '$_guestCount guest(s)' : 'No guests',
                         style: AppTypography.bodyMedium.copyWith(
                           color: _guestCount > 0
-                              ? AppColors.textPrimaryDark
-                              : AppColors.textMutedDark,
+                              ? context.textPrimary
+                              : context.textMuted,
                         ),
                       ),
                     ],
@@ -315,8 +315,8 @@ class _BulkMealSheetState extends ConsumerState<BulkMealSheet> {
                         onPressed: _guestCount > 0
                             ? () => setState(() => _guestCount--)
                             : null,
-                        color: AppColors.textPrimaryDark,
-                        disabledColor: AppColors.textMutedDark,
+                        color: context.textPrimary,
+                        disabledColor: context.textMuted,
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(
                           minWidth: 32,
@@ -364,7 +364,7 @@ class _BulkMealSheetState extends ConsumerState<BulkMealSheet> {
                       Text(
                         'Preview',
                         style: AppTypography.labelMedium.copyWith(
-                          color: AppColors.textSecondaryDark,
+                          color: context.textSecondary,
                         ),
                       ),
                       Container(
@@ -402,7 +402,7 @@ class _BulkMealSheetState extends ConsumerState<BulkMealSheet> {
                   Text(
                     '${_formatDateShort(_startDate)} → ${_formatDateShort(_startDate.add(Duration(days: _numberOfDays - 1)))}',
                     style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textMutedDark,
+                      color: context.textMuted,
                     ),
                   ),
                 ],
@@ -434,7 +434,7 @@ class _BulkMealSheetState extends ConsumerState<BulkMealSheet> {
     final isSelected = _numberOfDays == days;
     return Expanded(
       child: Material(
-        color: isSelected ? AppColors.mealColor : AppColors.cardDark,
+        color: isSelected ? AppColors.mealColor : context.cardColor,
         borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
         child: InkWell(
           onTap: () => setState(() => _numberOfDays = days),
@@ -445,7 +445,7 @@ class _BulkMealSheetState extends ConsumerState<BulkMealSheet> {
               child: Text(
                 label,
                 style: AppTypography.labelMedium.copyWith(
-                  color: isSelected ? Colors.white : AppColors.textPrimaryDark,
+                  color: isSelected ? Colors.white : context.textPrimary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -463,7 +463,7 @@ class _BulkMealSheetState extends ConsumerState<BulkMealSheet> {
     VoidCallback onTap,
   ) {
     return Material(
-      color: AppColors.cardDark,
+      color: context.cardColor,
       borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
       child: InkWell(
         onTap: onTap,
@@ -491,14 +491,14 @@ class _BulkMealSheetState extends ConsumerState<BulkMealSheet> {
                   Text(
                     title,
                     style: AppTypography.labelMedium.copyWith(
-                      color: AppColors.textPrimaryDark,
+                      color: context.textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   Text(
                     subtitle,
                     style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textMutedDark,
+                      color: context.textMuted,
                       fontSize: 10,
                     ),
                   ),
@@ -564,7 +564,7 @@ class _BulkMealSheetState extends ConsumerState<BulkMealSheet> {
           Icon(
             icon,
             size: 14,
-            color: isSelected ? AppColors.mealColor : AppColors.textMutedDark,
+            color: isSelected ? AppColors.mealColor : context.textMuted,
           ),
           const Gap(4),
           Text(label),
@@ -598,7 +598,7 @@ class _BulkMealSheetState extends ConsumerState<BulkMealSheet> {
         Text(
           label,
           style: AppTypography.labelSmall.copyWith(
-            color: AppColors.textMutedDark,
+            color: context.textMuted,
           ),
         ),
       ],
@@ -629,9 +629,9 @@ class _BulkMealSheetState extends ConsumerState<BulkMealSheet> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
+            colorScheme: ColorScheme.dark(
               primary: AppColors.mealColor,
-              surface: AppColors.surfaceDark,
+              surface: context.surfaceColor,
             ),
           ),
           child: child!,

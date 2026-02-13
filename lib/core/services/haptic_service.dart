@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:haptic_feedback/haptic_feedback.dart';
 import 'package:flutter_advanced_haptic/flutter_advanced_haptic.dart';
 
 /// Premium Haptic Feedback Service - Android 16 Style

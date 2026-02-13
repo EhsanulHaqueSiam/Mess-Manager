@@ -83,8 +83,10 @@ class FirebaseService {
         appleProvider: kDebugMode
             ? AppleProvider.debug
             : AppleProvider.appAttest,
-        // Web uses reCAPTCHA
-        webProvider: ReCaptchaV3Provider('your-recaptcha-site-key'),
+        // Web uses reCAPTCHA — key set via --dart-define=RECAPTCHA_SITE_KEY=...
+        webProvider: ReCaptchaV3Provider(
+          const String.fromEnvironment('RECAPTCHA_SITE_KEY', defaultValue: ''),
+        ),
       );
 
       // Listen for token changes

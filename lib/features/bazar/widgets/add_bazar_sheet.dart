@@ -129,7 +129,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
         maxHeight: MediaQuery.of(context).size.height * 0.9,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
+        color: context.surfaceColor,
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(AppSpacing.radiusLg),
         ),
@@ -145,7 +145,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.borderDark,
+                  color: context.borderColor,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -164,7 +164,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
                 Text(
                   _isEditMode ? 'Edit Entry' : 'Add Entry',
                   style: AppTypography.headlineMedium.copyWith(
-                    color: AppColors.textPrimaryDark,
+                    color: context.textPrimary,
                   ),
                 ),
               ],
@@ -176,22 +176,22 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
               Text(
                 'Who Paid',
                 style: AppTypography.labelMedium.copyWith(
-                  color: AppColors.textSecondaryDark,
+                  color: context.textSecondary,
                 ),
               ),
               const Gap(AppSpacing.sm),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                 decoration: BoxDecoration(
-                  color: AppColors.cardDark,
+                  color: context.cardColor,
                   borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                  border: Border.all(color: AppColors.borderDark),
+                  border: Border.all(color: context.borderColor),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     value: _selectedPayerId,
                     isExpanded: true,
-                    dropdownColor: AppColors.cardDark,
+                    dropdownColor: context.cardColor,
                     icon: const Icon(LucideIcons.chevronDown, size: 18),
                     items: members
                         .map(
@@ -217,7 +217,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
                                 Text(
                                   m.name,
                                   style: AppTypography.bodyMedium.copyWith(
-                                    color: AppColors.textPrimaryDark,
+                                    color: context.textPrimary,
                                   ),
                                 ),
                               ],
@@ -250,7 +250,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
                       child: Text(
                         'This entry will be added under your name',
                         style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.textSecondaryDark,
+                          color: context.textSecondary,
                         ),
                       ),
                     ),
@@ -266,7 +266,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
                 Text(
                   'Entry Type',
                   style: AppTypography.labelMedium.copyWith(
-                    color: AppColors.textSecondaryDark,
+                    color: context.textSecondary,
                   ),
                 ),
                 if (_isAutoDetected &&
@@ -330,14 +330,14 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
                       decoration: BoxDecoration(
                         color: isSelected
                             ? _getTypeColor(type).withValues(alpha: 0.2)
-                            : AppColors.cardDark,
+                            : context.cardColor,
                         borderRadius: BorderRadius.circular(
                           AppSpacing.radiusSm,
                         ),
                         border: Border.all(
                           color: isSelected
                               ? _getTypeColor(type)
-                              : AppColors.borderDark.withValues(alpha: 0.5),
+                              : context.borderColor.withValues(alpha: 0.5),
                         ),
                       ),
                       child: Column(
@@ -347,7 +347,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
                             size: 18,
                             color: isSelected
                                 ? _getTypeColor(type)
-                                : AppColors.textMutedDark,
+                                : context.textMuted,
                           ),
                           const Gap(4),
                           Text(
@@ -355,7 +355,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
                             style: AppTypography.labelSmall.copyWith(
                               color: isSelected
                                   ? _getTypeColor(type)
-                                  : AppColors.textMutedDark,
+                                  : context.textMuted,
                               fontWeight: isSelected
                                   ? FontWeight.w600
                                   : FontWeight.normal,
@@ -400,7 +400,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
                 Text(
                   'Amount (৳)',
                   style: AppTypography.labelMedium.copyWith(
-                    color: AppColors.textSecondaryDark,
+                    color: context.textSecondary,
                   ),
                 ),
                 const Gap(AppSpacing.sm),
@@ -408,7 +408,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
                   controller: _amountController,
                   keyboardType: TextInputType.number,
                   style: AppTypography.titleLarge.copyWith(
-                    color: AppColors.textPrimaryDark,
+                    color: context.textPrimary,
                   ),
                   decoration: InputDecoration(
                     hintText: '0',
@@ -428,14 +428,14 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
               Text(
                 'Description (optional)',
                 style: AppTypography.labelMedium.copyWith(
-                  color: AppColors.textSecondaryDark,
+                  color: context.textSecondary,
                 ),
               ),
               const Gap(AppSpacing.sm),
               TextField(
                 controller: _descriptionController,
                 style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.textPrimaryDark,
+                  color: context.textPrimary,
                 ),
                 decoration: const InputDecoration(
                   hintText: 'What was this for?',
@@ -471,7 +471,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
               Text(
                 'Amount (৳)',
                 style: AppTypography.labelMedium.copyWith(
-                  color: AppColors.textSecondaryDark,
+                  color: context.textSecondary,
                 ),
               ),
               const Gap(AppSpacing.sm),
@@ -479,7 +479,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
                 controller: _amountController,
                 keyboardType: TextInputType.number,
                 style: AppTypography.titleLarge.copyWith(
-                  color: AppColors.textPrimaryDark,
+                  color: context.textPrimary,
                 ),
                 decoration: InputDecoration(
                   hintText: '0',
@@ -495,14 +495,14 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
               Text(
                 'Description',
                 style: AppTypography.labelMedium.copyWith(
-                  color: AppColors.textSecondaryDark,
+                  color: context.textSecondary,
                 ),
               ),
               const Gap(AppSpacing.sm),
               TextField(
                 controller: _descriptionController,
                 style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.textPrimaryDark,
+                  color: context.textPrimary,
                 ),
                 decoration: const InputDecoration(
                   hintText: 'What is this for?',
@@ -521,7 +521,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _getTypeColor(_selectedType),
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-                  disabledBackgroundColor: AppColors.cardDark,
+                  disabledBackgroundColor: context.cardColor,
                 ),
               ),
             ).animate().fadeIn(delay: 500.ms),
@@ -589,7 +589,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
         Text(
           'Items',
           style: AppTypography.labelMedium.copyWith(
-            color: AppColors.textSecondaryDark,
+            color: context.textSecondary,
           ),
         ),
         const Gap(AppSpacing.sm),
@@ -599,7 +599,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
             margin: const EdgeInsets.only(bottom: AppSpacing.xs),
             padding: const EdgeInsets.all(AppSpacing.sm),
             decoration: BoxDecoration(
-              color: AppColors.cardDark,
+              color: context.cardColor,
               borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
             ),
             child: Row(
@@ -608,7 +608,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
                   child: Text(
                     item.name,
                     style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.textPrimaryDark,
+                      color: context.textPrimary,
                     ),
                   ),
                 ),
@@ -646,7 +646,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
               child: TextField(
                 controller: _itemNameController,
                 style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.textPrimaryDark,
+                  color: context.textPrimary,
                 ),
                 decoration: const InputDecoration(
                   hintText: 'Item name',
@@ -663,7 +663,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
                 controller: _itemPriceController,
                 keyboardType: TextInputType.number,
                 style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.textPrimaryDark,
+                  color: context.textPrimary,
                 ),
                 decoration: const InputDecoration(
                   hintText: '৳',
@@ -700,7 +700,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
                 Text(
                   'Total',
                   style: AppTypography.titleMedium.copyWith(
-                    color: AppColors.textPrimaryDark,
+                    color: context.textPrimary,
                   ),
                 ),
                 Text(
@@ -741,7 +741,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
             Text(
               title,
               style: AppTypography.labelMedium.copyWith(
-                color: AppColors.textSecondaryDark,
+                color: context.textSecondary,
               ),
             ),
             if (isRequired) ...[
@@ -769,7 +769,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
         Text(
           subtitle,
           style: AppTypography.bodySmall.copyWith(
-            color: AppColors.textMutedDark,
+            color: context.textMuted,
           ),
         ),
         const Gap(AppSpacing.sm),
@@ -788,7 +788,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: AppColors.cardDark,
+                    color: context.cardColor,
                     borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                     border: Border.all(color: color.withValues(alpha: 0.5)),
                   ),
@@ -815,10 +815,10 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
                               Container(
                                 width: 80,
                                 height: 80,
-                                color: AppColors.cardDark,
-                                child: const Icon(
+                                color: context.cardColor,
+                                child: Icon(
                                   LucideIcons.imageOff,
-                                  color: AppColors.textMutedDark,
+                                  color: context.textMuted,
                                 ),
                               ),
                         ),
@@ -863,7 +863,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
     required VoidCallback onTap,
   }) {
     return Material(
-      color: isSelected ? AppColors.bazarColor : AppColors.cardDark,
+      color: isSelected ? AppColors.bazarColor : context.cardColor,
       borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
       child: InkWell(
         onTap: () {
@@ -878,14 +878,14 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
             children: [
               Icon(
                 icon,
-                color: isSelected ? Colors.white : AppColors.textSecondaryDark,
+                color: isSelected ? Colors.white : context.textSecondary,
                 size: 18,
               ),
               const Gap(AppSpacing.sm),
               Text(
                 label,
                 style: AppTypography.labelMedium.copyWith(
-                  color: isSelected ? Colors.white : AppColors.textPrimaryDark,
+                  color: isSelected ? Colors.white : context.textPrimary,
                 ),
               ),
             ],
@@ -899,7 +899,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
     HapticService.modalOpen();
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
-      backgroundColor: AppColors.surfaceDark,
+      backgroundColor: context.surfaceColor,
       builder: (context) => Container(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
@@ -912,7 +912,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
               ),
               title: Text(
                 'Take Photo',
-                style: TextStyle(color: AppColors.textPrimaryDark),
+                style: TextStyle(color: context.textPrimary),
               ),
               onTap: () => Navigator.pop(context, ImageSource.camera),
             ),
@@ -923,7 +923,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
               ),
               title: Text(
                 'Choose from Gallery',
-                style: TextStyle(color: AppColors.textPrimaryDark),
+                style: TextStyle(color: context.textPrimary),
               ),
               onTap: () => Navigator.pop(context, ImageSource.gallery),
             ),
@@ -995,7 +995,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          backgroundColor: AppColors.surfaceDark,
+          backgroundColor: context.surfaceColor,
           title: Row(
             children: [
               const Icon(LucideIcons.helpCircle, color: AppColors.warning),
@@ -1010,14 +1010,14 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
               Text(
                 'Did you mean "${_getTypeLabel(_selectedType)}"?',
                 style: AppTypography.titleMedium.copyWith(
-                  color: AppColors.textPrimaryDark,
+                  color: context.textPrimary,
                 ),
               ),
               const Gap(8),
               Text(
                 'The auto-detection is ${(_confidence * 100).toStringAsFixed(0)}% confident. Please confirm this is the correct category.',
                 style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.textSecondaryDark,
+                  color: context.textSecondary,
                 ),
               ),
               const Gap(16),
@@ -1041,7 +1041,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
                     labelStyle: TextStyle(
                       color: isSelected
                           ? _getTypeColor(type)
-                          : AppColors.textSecondaryDark,
+                          : context.textSecondary,
                     ),
                   );
                 }).toList(),
@@ -1071,7 +1071,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          backgroundColor: AppColors.surfaceDark,
+          backgroundColor: context.surfaceColor,
           title: Row(
             children: [
               const Icon(LucideIcons.alertTriangle, color: AppColors.warning),

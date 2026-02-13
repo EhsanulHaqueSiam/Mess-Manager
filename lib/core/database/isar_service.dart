@@ -219,15 +219,19 @@ class IsarService {
 
   static void saveMember(Member member) {
     if (!isAvailable) return; // Web fallback
-    final collection = MemberCollection.fromModel(member);
-    final existing = instance.memberCollections
-        .where()
-        .memberIdEqualTo(member.id)
-        .findFirst();
-    if (existing != null) {
-      collection.id = existing.id;
-    }
-    instance.memberCollections.put(collection);
+    instance.write((isar) {
+      final collection = MemberCollection.fromModel(member);
+      final existing = isar.memberCollections
+          .where()
+          .memberIdEqualTo(member.id)
+          .findFirst();
+      if (existing != null) {
+        collection.id = existing.id;
+      } else {
+        collection.id = 0;
+      }
+      isar.memberCollections.put(collection);
+    });
   }
 
   static void saveMembers(List<Member> members) {
@@ -285,15 +289,19 @@ class IsarService {
 
   static void saveMeal(Meal meal) {
     if (!isAvailable) return; // Web fallback
-    final collection = MealCollection.fromModel(meal);
-    final existing = instance.mealCollections
-        .where()
-        .mealIdEqualTo(meal.id)
-        .findFirst();
-    if (existing != null) {
-      collection.id = existing.id;
-    }
-    instance.mealCollections.put(collection);
+    instance.write((isar) {
+      final collection = MealCollection.fromModel(meal);
+      final existing = isar.mealCollections
+          .where()
+          .mealIdEqualTo(meal.id)
+          .findFirst();
+      if (existing != null) {
+        collection.id = existing.id;
+      } else {
+        collection.id = 0;
+      }
+      isar.mealCollections.put(collection);
+    });
   }
 
   static void saveMeals(List<Meal> meals) {
@@ -328,15 +336,19 @@ class IsarService {
 
   static void saveBazarEntry(BazarEntry entry) {
     if (!isAvailable) return; // Web fallback
-    final collection = BazarEntryCollection.fromModel(entry);
-    final existing = instance.bazarEntryCollections
-        .where()
-        .entryIdEqualTo(entry.id)
-        .findFirst();
-    if (existing != null) {
-      collection.id = existing.id;
-    }
-    instance.bazarEntryCollections.put(collection);
+    instance.write((isar) {
+      final collection = BazarEntryCollection.fromModel(entry);
+      final existing = isar.bazarEntryCollections
+          .where()
+          .entryIdEqualTo(entry.id)
+          .findFirst();
+      if (existing != null) {
+        collection.id = existing.id;
+      } else {
+        collection.id = 0;
+      }
+      isar.bazarEntryCollections.put(collection);
+    });
   }
 
   static void saveBazarEntries(List<BazarEntry> entries) {
@@ -371,15 +383,19 @@ class IsarService {
 
   static void saveTransaction(MoneyTransaction transaction) {
     if (!isAvailable) return; // Web fallback
-    final collection = TransactionCollection.fromModel(transaction);
-    final existing = instance.transactionCollections
-        .where()
-        .transactionIdEqualTo(transaction.id)
-        .findFirst();
-    if (existing != null) {
-      collection.id = existing.id;
-    }
-    instance.transactionCollections.put(collection);
+    instance.write((isar) {
+      final collection = TransactionCollection.fromModel(transaction);
+      final existing = isar.transactionCollections
+          .where()
+          .transactionIdEqualTo(transaction.id)
+          .findFirst();
+      if (existing != null) {
+        collection.id = existing.id;
+      } else {
+        collection.id = 0;
+      }
+      isar.transactionCollections.put(collection);
+    });
   }
 
   static void saveTransactions(List<MoneyTransaction> transactions) {

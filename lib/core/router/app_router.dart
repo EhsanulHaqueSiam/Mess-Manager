@@ -147,7 +147,7 @@ GoRouter createAppRouter(WidgetRef ref) {
         builder: (context, state) => const PendingApprovalScreen(),
       ),
 
-      /// Main Shell with Bottom Navigation
+      /// Main Shell with Bottom Navigation (only main tabs)
       ShellRoute(
         builder: (context, state, child) => MainShell(child: child),
         routes: [
@@ -162,7 +162,6 @@ GoRouter createAppRouter(WidgetRef ref) {
             name: 'bazar',
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: BazarScreen()),
-            // Note: Add bazar entry uses showModalBottomSheet, not navigation
           ),
           GoRoute(
             path: AppRoutes.meals,
@@ -182,85 +181,74 @@ GoRouter createAppRouter(WidgetRef ref) {
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: SettingsScreen()),
           ),
-          GoRoute(
-            path: AppRoutes.analytics,
-            name: 'analytics',
-            pageBuilder: (context, state) =>
-                const NoTransitionPage(child: AnalyticsScreen()),
-          ),
-          GoRoute(
-            path: AppRoutes.money,
-            name: 'money',
-            pageBuilder: (context, state) =>
-                const NoTransitionPage(child: MoneyScreen()),
-          ),
-          GoRoute(
-            path: AppRoutes.members,
-            name: 'members',
-            pageBuilder: (context, state) =>
-                const NoTransitionPage(child: MembersScreen()),
-          ),
-          GoRoute(
-            path: AppRoutes.vacation,
-            name: 'vacation',
-            pageBuilder: (context, state) =>
-                const NoTransitionPage(child: VacationScreen()),
-          ),
-          GoRoute(
-            path: AppRoutes.desco,
-            name: 'desco',
-            pageBuilder: (context, state) =>
-                const NoTransitionPage(child: DescoScreen()),
-          ),
-          GoRoute(
-            path: AppRoutes.ramadan,
-            name: 'ramadan',
-            pageBuilder: (context, state) =>
-                const NoTransitionPage(child: RamadanScreen()),
-          ),
-          GoRoute(
-            path: AppRoutes.ramadanCalendar,
-            name: 'ramadan-calendar',
-            pageBuilder: (context, state) =>
-                const NoTransitionPage(child: RamadanCalendarScreen()),
-          ),
-          GoRoute(
-            path: AppRoutes.settlement,
-            name: 'settlement',
-            pageBuilder: (context, state) =>
-                const NoTransitionPage(child: SettlementScreen()),
-          ),
-          GoRoute(
-            path: AppRoutes.duties,
-            name: 'duties',
-            pageBuilder: (context, state) =>
-                const NoTransitionPage(child: DutiesScreen()),
-          ),
-          GoRoute(
-            path: AppRoutes.fixedExpenses,
-            name: 'fixed-expenses',
-            pageBuilder: (context, state) =>
-                const NoTransitionPage(child: FixedExpensesScreen()),
-          ),
-          GoRoute(
-            path: AppRoutes.info,
-            name: 'info',
-            pageBuilder: (context, state) =>
-                const NoTransitionPage(child: InfoScreen()),
-          ),
-          GoRoute(
-            path: AppRoutes.notificationSettings,
-            name: 'notification-settings',
-            pageBuilder: (context, state) =>
-                const NoTransitionPage(child: NotificationSettingsScreen()),
-          ),
-          GoRoute(
-            path: AppRoutes.chatbot,
-            name: 'chatbot',
-            pageBuilder: (context, state) =>
-                const NoTransitionPage(child: ChatbotScreen()),
-          ),
         ],
+      ),
+
+      // Sub-module routes (outside shell for proper back navigation)
+      GoRoute(
+        path: AppRoutes.analytics,
+        name: 'analytics',
+        builder: (context, state) => const AnalyticsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.money,
+        name: 'money',
+        builder: (context, state) => const MoneyScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.members,
+        name: 'members',
+        builder: (context, state) => const MembersScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.vacation,
+        name: 'vacation',
+        builder: (context, state) => const VacationScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.desco,
+        name: 'desco',
+        builder: (context, state) => const DescoScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.ramadan,
+        name: 'ramadan',
+        builder: (context, state) => const RamadanScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.ramadanCalendar,
+        name: 'ramadan-calendar',
+        builder: (context, state) => const RamadanCalendarScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.settlement,
+        name: 'settlement',
+        builder: (context, state) => const SettlementScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.duties,
+        name: 'duties',
+        builder: (context, state) => const DutiesScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.fixedExpenses,
+        name: 'fixed-expenses',
+        builder: (context, state) => const FixedExpensesScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.info,
+        name: 'info',
+        builder: (context, state) => const InfoScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.notificationSettings,
+        name: 'notification-settings',
+        builder: (context, state) => const NotificationSettingsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.chatbot,
+        name: 'chatbot',
+        builder: (context, state) => const ChatbotScreen(),
       ),
     ],
   );

@@ -1,20 +1,21 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:velocity_x/velocity_x.dart';
-import 'package:getwidget/getwidget.dart';
+import 'package:gap/gap.dart';
 
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/models/meal.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
-import 'package:mess_manager/core/widgets/gf_components.dart';
+import 'package:mess_manager/core/widgets/app_components.dart';
 import 'package:mess_manager/core/widgets/animated_widgets.dart';
 import 'package:mess_manager/features/vacation/providers/vacation_provider.dart';
 import 'package:mess_manager/features/vacation/providers/fixed_expenses_provider.dart';
 
-/// Vacation Screen - Uses GetWidget + VelocityX + flutter_animate
+/// Vacation Screen - Cosmic Bioluminescence design
 class VacationScreen extends ConsumerWidget {
   const VacationScreen({super.key});
 
@@ -26,117 +27,442 @@ class VacationScreen extends ConsumerWidget {
     final members = ref.watch(membersProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: [
-          const Icon(LucideIcons.palmtree, color: AppColors.success, size: 22),
-          8.widthBox,
-          'Vacation & Bills'.text.make(),
-        ].hStack(),
-      ),
-      body: SingleChildScrollView(
-        child: VStack([
-          // Unpaid Expenses Alert
-          if (unpaidExpenses.isNotEmpty) ...[
-            _buildUnpaidExpensesCard(unpaidExpenses, ref),
-            16.heightBox,
-          ],
-
-          // My Vacations
-          HStack([
-            'My Vacation'.text.xl.bold.color(AppColors.textPrimaryDark).make(),
-            const Spacer(),
-            GFIconButton(
-              icon: const Icon(LucideIcons.plus, color: AppColors.success),
-              type: GFButtonType.transparent,
-              onPressed: () => _showAddVacationSheet(context),
-            ),
-          ]),
-          8.heightBox,
-          if (myVacations.isEmpty)
-            EmptyStateWidget(
-              icon: LucideIcons.palmtree,
-              title: 'No vacation planned',
-              subtitle: 'Add a vacation to skip meal notifications',
-            )
-          else
-            ...myVacations.asMap().entries.map(
-              (e) => _buildVacationCard(context, ref, e.value, e.key),
-            ),
-          24.heightBox,
-
-          // Who's on vacation
-          if (membersOnVacation.isNotEmpty) ...[
-            'Currently on Vacation'.text.xl.bold
-                .color(AppColors.textPrimaryDark)
-                .make(),
-            8.heightBox,
-            Wrap(
-              spacing: AppSpacing.sm,
-              children: membersOnVacation.map((memberId) {
-                final member = members.firstWhere(
-                  (m) => m.id == memberId,
-                  orElse: () => members.first,
-                );
-                return GFBadge(
-                  text: member.name,
-                  color: AppColors.success.withValues(alpha: 0.1),
-                  textColor: AppColors.success,
-                  shape: GFBadgeShape.pills,
-                );
-              }).toList(),
-            ),
-            24.heightBox,
-          ],
-
-          // Fixed Monthly Expenses
-          _buildFixedExpensesSection(ref),
-          32.heightBox,
-        ]).p16(),
-      ),
-      floatingActionButton:
-          FloatingActionButton.extended(
-                onPressed: () {
-                  HapticService.buttonPress();
-                  _showAddVacationSheet(context);
-                },
-                backgroundColor: AppColors.success,
-                icon: const Icon(LucideIcons.palmtree),
-                label: const Text('Add Vacation'),
-              )
-              .animate(onPlay: (c) => c.repeat())
-              .shimmer(
-                duration: 2.seconds,
-                color: Colors.white.withValues(alpha: 0.2),
+      backgroundColor: const Color(0xFF0A0E1A),
+      body: Stack(
+        children: [
+          // Background gradient
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFF0A0E1A), Color(0xFF0D1520)],
+                ),
               ),
+            ),
+          ),
+
+          // Breathing accent orb - top right
+          Positioned(
+            top: -60,
+            right: -40,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppColors.success.withValues(alpha: 0.15),
+                    AppColors.success.withValues(alpha: 0.0),
+                  ],
+                ),
+              ),
+            )
+                .animate(onPlay: (c) => c.repeat(reverse: true))
+                .scaleXY(begin: 1.0, end: 1.15, duration: 4.seconds),
+          ),
+
+          // Breathing accent orb - bottom left
+          Positioned(
+            bottom: 80,
+            left: -60,
+            child: Container(
+              width: 180,
+              height: 180,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppColors.success.withValues(alpha: 0.10),
+                    AppColors.success.withValues(alpha: 0.0),
+                  ],
+                ),
+              ),
+            )
+                .animate(onPlay: (c) => c.repeat(reverse: true))
+                .scaleXY(begin: 1.0, end: 1.15, duration: 4.seconds),
+          ),
+
+          // Main content
+          SafeArea(
+            child: Column(
+              children: [
+                // Custom header
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
+                  ),
+                  child: Row(
+                    children: [
+                      // Gradient halo icon
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              AppColors.success.withValues(alpha: 0.25),
+                              AppColors.success.withValues(alpha: 0.0),
+                            ],
+                          ),
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            LucideIcons.palmtree,
+                            color: AppColors.success,
+                            size: 22,
+                          ),
+                        ),
+                      ),
+                      const Gap(12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Vacation & Bills',
+                            style: AppTypography.titleLarge.copyWith(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Manage your time away',
+                            style: AppTypography.bodySmall.copyWith(
+                              color: Colors.white.withValues(alpha: 0.5),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Scrollable content
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          // Unpaid Expenses Alert
+                          if (unpaidExpenses.isNotEmpty) ...[
+                            _buildUnpaidExpensesCard(
+                                context, unpaidExpenses, ref),
+                            const Gap(16),
+                          ],
+
+                          // My Vacations section label
+                          Row(
+                            children: [
+                              Container(
+                                width: 3,
+                                height: 14,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      AppColors.success,
+                                      AppColors.success.withValues(alpha: 0.3),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                              const Gap(8),
+                              Text(
+                                'MY VACATION',
+                                style: AppTypography.labelMedium.copyWith(
+                                  color: Colors.white.withValues(alpha: 0.5),
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                              const Spacer(),
+                              GestureDetector(
+                                onTap: () => _showAddVacationSheet(context),
+                                child: Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: AppColors.success
+                                        .withValues(alpha: 0.15),
+                                    border: Border.all(
+                                      color: AppColors.success
+                                          .withValues(alpha: 0.3),
+                                    ),
+                                  ),
+                                  child: const Center(
+                                    child: Icon(
+                                      LucideIcons.plus,
+                                      color: AppColors.success,
+                                      size: 16,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Gap(12),
+                          if (myVacations.isEmpty)
+                            // Cosmic empty state
+                            ClipRRect(
+                              borderRadius:
+                                  BorderRadius.circular(AppSpacing.radiusMd),
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 40, horizontal: 24),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        Colors.white.withValues(alpha: 0.03),
+                                    border: Border.all(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.05),
+                                    ),
+                                    borderRadius: BorderRadius.circular(
+                                        AppSpacing.radiusMd),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Icon(
+                                        LucideIcons.palmtree,
+                                        size: 40,
+                                        color: Colors.white
+                                            .withValues(alpha: 0.3),
+                                      ),
+                                      const Gap(12),
+                                      Text(
+                                        'No vacation planned',
+                                        style:
+                                            AppTypography.titleMedium.copyWith(
+                                          color: Colors.white
+                                              .withValues(alpha: 0.5),
+                                        ),
+                                      ),
+                                      const Gap(4),
+                                      Text(
+                                        'Add a vacation to skip meal notifications',
+                                        style:
+                                            AppTypography.bodySmall.copyWith(
+                                          color: Colors.white
+                                              .withValues(alpha: 0.3),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            )
+                          else
+                            ...myVacations.asMap().entries.map(
+                                  (e) => _buildVacationCard(
+                                      context, ref, e.value, e.key),
+                                ),
+                          const Gap(24),
+
+                          // Who's on vacation
+                          if (membersOnVacation.isNotEmpty) ...[
+                            Row(
+                              children: [
+                                Container(
+                                  width: 3,
+                                  height: 14,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        AppColors.success,
+                                        AppColors.success
+                                            .withValues(alpha: 0.3),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                ),
+                                const Gap(8),
+                                Text(
+                                  'CURRENTLY ON VACATION',
+                                  style: AppTypography.labelMedium.copyWith(
+                                    color:
+                                        Colors.white.withValues(alpha: 0.5),
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 1.2,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Gap(12),
+                            Wrap(
+                              spacing: AppSpacing.sm,
+                              children: membersOnVacation.map((memberId) {
+                                if (members.isEmpty) {
+                                  return const SizedBox.shrink();
+                                }
+                                final member =
+                                    members.cast<dynamic>().firstWhere(
+                                          (m) => m.id == memberId,
+                                          orElse: () => null,
+                                        );
+                                if (member == null) {
+                                  return const SizedBox.shrink();
+                                }
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.success
+                                        .withValues(alpha: 0.1),
+                                    border: Border.all(
+                                      color: AppColors.success
+                                          .withValues(alpha: 0.2),
+                                    ),
+                                    borderRadius: BorderRadius.circular(
+                                        AppSpacing.radiusFull),
+                                  ),
+                                  child: Text(
+                                    member.name,
+                                    style: AppTypography.labelMedium.copyWith(
+                                      color: AppColors.success,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                            const Gap(24),
+                          ],
+
+                          // Fixed Monthly Expenses
+                          _buildFixedExpensesSection(context, ref),
+                          const Gap(32),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+          gradient: LinearGradient(
+            colors: [
+              AppColors.success,
+              AppColors.success.withValues(alpha: 0.8),
+            ],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.success.withValues(alpha: 0.4),
+              blurRadius: 16,
+              spreadRadius: -2,
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              HapticService.buttonPress();
+              _showAddVacationSheet(context);
+            },
+            borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(LucideIcons.palmtree,
+                      color: Colors.white, size: 20),
+                  const Gap(8),
+                  Text(
+                    'Add Vacation',
+                    style: AppTypography.labelLarge.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      )
+          .animate(onPlay: (c) => c.repeat())
+          .shimmer(
+            duration: 2.seconds,
+            color: Colors.white.withValues(alpha: 0.2),
+          ),
     );
   }
 
-  Widget _buildUnpaidExpensesCard(List<FixedExpense> expenses, WidgetRef ref) {
+  Widget _buildUnpaidExpensesCard(
+      BuildContext context, List<FixedExpense> expenses, WidgetRef ref) {
     final total = expenses.fold(0.0, (sum, e) => sum + e.amount);
     final memberCount = ref.watch(membersProvider).length;
     final perMember = memberCount > 0 ? total / memberCount : 0;
 
-    return GFCard(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      margin: EdgeInsets.zero,
-      gradient: LinearGradient(
-        colors: [AppColors.warning.withValues(alpha: 0.8), AppColors.warning],
-      ),
+    return ClipRRect(
       borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-      content: HStack([
-        const Icon(LucideIcons.alertTriangle, color: Colors.white, size: 32),
-        12.widthBox,
-        VStack(crossAlignment: CrossAxisAlignment.start, [
-          'Unpaid Bills'.text.lg.white.bold.make(),
-          '${expenses.length} bills • ৳${total.toStringAsFixed(0)} total'
-              .text
-              .sm
-              .white
-              .make(),
-          'Your share: ৳${perMember.toStringAsFixed(0)}'.text.lg.white.bold
-              .make(),
-        ]).expand(),
-      ]),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppColors.warning.withValues(alpha: 0.8),
+                AppColors.warning,
+              ],
+            ),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.15),
+            ),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          ),
+          child: Row(
+            children: [
+              const Icon(LucideIcons.alertTriangle,
+                  color: Colors.white, size: 32),
+              const Gap(12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Unpaid Bills',
+                        style: AppTypography.titleMedium.copyWith(
+                            color: Colors.white, fontWeight: FontWeight.bold)),
+                    Text(
+                      '${expenses.length} bills \u2022 \u09F3${total.toStringAsFixed(0)} total',
+                      style:
+                          AppTypography.bodySmall.copyWith(color: Colors.white),
+                    ),
+                    Text(
+                      'Your share: \u09F3${perMember.toStringAsFixed(0)}',
+                      style: AppTypography.titleMedium.copyWith(
+                          color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     ).animate().fadeIn().shake();
   }
 
@@ -148,119 +474,233 @@ class VacationScreen extends ConsumerWidget {
   ) {
     final isActive = vacation.isActive;
 
-    return GFAppCard(
-      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      borderColor: isActive
-          ? AppColors.success.withValues(alpha: 0.5)
-          : AppColors.borderDark,
-      child: VStack(crossAlignment: CrossAxisAlignment.start, [
-        HStack([
-          Icon(
-            isActive ? LucideIcons.check : LucideIcons.x,
-            color: isActive ? AppColors.success : AppColors.textMutedDark,
-            size: 18,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.03),
+              border: Border.all(
+                color: isActive
+                    ? AppColors.success.withValues(alpha: 0.3)
+                    : Colors.white.withValues(alpha: 0.05),
+              ),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      isActive ? LucideIcons.check : LucideIcons.x,
+                      color: isActive
+                          ? AppColors.success
+                          : Colors.white.withValues(alpha: 0.3),
+                      size: 18,
+                    ),
+                    const Gap(8),
+                    Expanded(
+                      child: Text(
+                        vacation.reason ?? 'Vacation',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.9),
+                        ),
+                      ),
+                    ),
+                    Switch.adaptive(
+                      value: isActive,
+                      onChanged: (_) => ref
+                          .read(vacationsProvider.notifier)
+                          .toggleActive(vacation.id),
+                      activeColor: AppColors.success,
+                    ),
+                  ],
+                ),
+                const Gap(8),
+                _buildDateChip(
+                  context,
+                  'From: ${_formatDateWithMeal(vacation.startDate, vacation.lastMealBefore)} (after)',
+                ),
+                const Gap(4),
+                _buildDateChip(
+                  context,
+                  'To: ${_formatDateWithMeal(vacation.endDate, vacation.firstMealAfter)} (before)',
+                ),
+              ],
+            ),
           ),
-          8.widthBox,
-          (vacation.reason ?? 'Vacation').text
-              .color(AppColors.textPrimaryDark)
-              .make()
-              .expand(),
-          GFToggle(
-            value: isActive,
-            onChanged: (_) =>
-                ref.read(vacationsProvider.notifier).toggleActive(vacation.id),
-            enabledThumbColor: AppColors.success,
-            type: GFToggleType.ios,
-          ),
-        ]),
-        8.heightBox,
-        _buildDateChip(
-          'From: ${_formatDateWithMeal(vacation.startDate, vacation.lastMealBefore)} (after)',
         ),
-        4.heightBox,
-        _buildDateChip(
-          'To: ${_formatDateWithMeal(vacation.endDate, vacation.firstMealAfter)} (before)',
-        ),
-      ]),
+      ),
     ).animate(delay: (80 * index).ms).fadeIn().slideX(begin: 0.03);
   }
 
-  Widget _buildDateChip(String text) {
-    return GFBadge(
-      text: text,
-      color: AppColors.surfaceDark,
-      textColor: AppColors.textSecondaryDark,
-      size: GFSize.SMALL,
-      shape: GFBadgeShape.pills,
+  Widget _buildDateChip(BuildContext context, String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0D1520),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+      ),
+      child: Text(
+        text,
+        style: AppTypography.bodySmall.copyWith(
+          color: Colors.white.withValues(alpha: 0.5),
+        ),
+      ),
     );
   }
 
   String _formatDateWithMeal(DateTime date, MealType meal) {
     final mealName = switch (meal) {
-      MealType.breakfast => 'সকাল',
-      MealType.lunch => 'দুপুর',
-      MealType.dinner => 'রাত',
+      MealType.breakfast => '\u09B8\u0995\u09BE\u09B2',
+      MealType.lunch => '\u09A6\u09C1\u09AA\u09C1\u09B0',
+      MealType.dinner => '\u09B0\u09BE\u09A4',
     };
     return '${date.day}/${date.month}/${date.year} $mealName';
   }
 
-  Widget _buildFixedExpensesSection(WidgetRef ref) {
+  Widget _buildFixedExpensesSection(BuildContext context, WidgetRef ref) {
     final expenses = ref.watch(currentMonthExpensesProvider);
 
-    return VStack(crossAlignment: CrossAxisAlignment.start, [
-      'Fixed Monthly Expenses'.text.xl.bold
-          .color(AppColors.textPrimaryDark)
-          .make(),
-      4.heightBox,
-      'These apply to everyone, even during vacation'.text.sm
-          .color(AppColors.textMutedDark)
-          .make(),
-      12.heightBox,
-      if (expenses.isEmpty)
-        GFAppCard(
-          child: 'No fixed expenses this month'.text
-              .color(AppColors.textMutedDark)
-              .center
-              .make()
-              .p16(),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 3,
+              height: 14,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppColors.success,
+                    AppColors.success.withValues(alpha: 0.3),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const Gap(8),
+            Text(
+              'FIXED MONTHLY EXPENSES',
+              style: AppTypography.labelMedium.copyWith(
+                color: Colors.white.withValues(alpha: 0.5),
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ],
         ),
-      ...expenses.asMap().entries.map(
-        (e) => _buildExpenseCard(ref, e.value, e.key),
-      ),
-    ]);
+        const Gap(4),
+        Padding(
+          padding: const EdgeInsets.only(left: 11),
+          child: Text(
+            'These apply to everyone, even during vacation',
+            style: AppTypography.bodySmall.copyWith(
+              color: Colors.white.withValues(alpha: 0.3),
+            ),
+          ),
+        ),
+        const Gap(12),
+        if (expenses.isEmpty)
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.03),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.05),
+                  ),
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                ),
+                child: Center(
+                  child: Text(
+                    'No fixed expenses this month',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.3),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ...expenses.asMap().entries.map(
+              (e) => _buildExpenseCard(context, ref, e.value, e.key),
+            ),
+      ],
+    );
   }
 
-  Widget _buildExpenseCard(WidgetRef ref, FixedExpense expense, int index) {
+  Widget _buildExpenseCard(
+      BuildContext context, WidgetRef ref, FixedExpense expense, int index) {
     final isPaid = expense.isPaid;
     final typeName = getExpenseTypeName(expense.type);
     final statusColor = isPaid ? AppColors.success : AppColors.warning;
 
-    return GFAppCard(
-      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      borderColor: statusColor.withValues(alpha: 0.5),
-      child: HStack([
-        GFAvatar(
-          size: 40,
-          backgroundColor: statusColor.withValues(alpha: 0.1),
-          child: Icon(
-            isPaid ? LucideIcons.check : LucideIcons.clock,
-            color: statusColor,
-            size: 18,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.03),
+              border: Border.all(
+                color: statusColor.withValues(alpha: 0.3),
+              ),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: statusColor.withValues(alpha: 0.1),
+                  child: Icon(
+                    isPaid ? LucideIcons.check : LucideIcons.clock,
+                    color: statusColor,
+                    size: 18,
+                  ),
+                ),
+                const Gap(12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(typeName,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.9),
+                          )),
+                      if (expense.description != null)
+                        Text(expense.description!,
+                            style: AppTypography.bodySmall.copyWith(
+                              color: Colors.white.withValues(alpha: 0.5),
+                            )),
+                    ],
+                  ),
+                ),
+                Text(
+                  '\u09F3${expense.amount.toStringAsFixed(0)}',
+                  style: AppTypography.titleMedium.copyWith(
+                      color: statusColor, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
           ),
         ),
-        12.widthBox,
-        VStack(crossAlignment: CrossAxisAlignment.start, [
-          typeName.text.color(AppColors.textPrimaryDark).make(),
-          if (expense.description != null)
-            expense.description!.text.sm
-                .color(AppColors.textSecondaryDark)
-                .make(),
-        ]).expand(),
-        '৳${expense.amount.toStringAsFixed(0)}'.text.lg
-            .color(statusColor)
-            .bold
-            .make(),
-      ]),
+      ),
     ).animate(delay: (80 * index).ms).fadeIn().slideX(begin: 0.03);
   }
 
@@ -306,94 +746,167 @@ class _AddVacationSheetState extends ConsumerState<AddVacationSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
       ),
       decoration: const BoxDecoration(
-        color: AppColors.surfaceDark,
+        color: Color(0xFF0D1520),
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppSpacing.radiusLg),
         ),
       ),
       child: SingleChildScrollView(
-        child: VStack([
-          // Handle
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppColors.borderDark,
-              borderRadius: BorderRadius.circular(2),
+        child: Column(
+          children: [
+            // Glass-styled handle bar
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
             ),
-          ).centered(),
-          16.heightBox,
+            const Gap(16),
 
-          // Header
-          HStack([
-            const Icon(LucideIcons.palmtree, color: AppColors.success),
-            8.widthBox,
-            'Add Vacation'.text.xl.bold.color(AppColors.textPrimaryDark).make(),
-          ]),
-          16.heightBox,
+            // Header
+            Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        AppColors.success.withValues(alpha: 0.25),
+                        AppColors.success.withValues(alpha: 0.0),
+                      ],
+                    ),
+                  ),
+                  child: const Center(
+                    child: Icon(LucideIcons.palmtree,
+                        color: AppColors.success, size: 20),
+                  ),
+                ),
+                const Gap(8),
+                Text('Add Vacation',
+                    style: AppTypography.titleLarge.copyWith(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const Gap(16),
 
-          // Start Date
-          'Starting from'.text.sm
-              .color(AppColors.textSecondaryDark)
-              .make()
-              .wFull(context),
-          8.heightBox,
-          HStack([
-            _buildDatePicker(
-              'Date',
-              _startDate,
-              (d) => setState(() => _startDate = d),
-            ).expand(),
-            8.widthBox,
-            _buildMealSelector(
-              'Last meal',
-              _lastMealBefore,
-              (m) => setState(() => _lastMealBefore = m),
-            ).expand(),
-          ]),
-          12.heightBox,
+            // Start Date
+            SizedBox(
+              width: double.infinity,
+              child: Text('Starting from',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: Colors.white.withValues(alpha: 0.5),
+                  )),
+            ),
+            const Gap(8),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildDatePicker(
+                    'Date',
+                    _startDate,
+                    (d) => setState(() => _startDate = d),
+                  ),
+                ),
+                const Gap(8),
+                Expanded(
+                  child: _buildMealSelector(
+                    'Last meal',
+                    _lastMealBefore,
+                    (m) => setState(() => _lastMealBefore = m),
+                  ),
+                ),
+              ],
+            ),
+            const Gap(12),
 
-          // End Date
-          'Returning on'.text.sm
-              .color(AppColors.textSecondaryDark)
-              .make()
-              .wFull(context),
-          8.heightBox,
-          HStack([
-            _buildDatePicker(
-              'Date',
-              _endDate,
-              (d) => setState(() => _endDate = d),
-            ).expand(),
-            8.widthBox,
-            _buildMealSelector(
-              'First meal',
-              _firstMealAfter,
-              (m) => setState(() => _firstMealAfter = m),
-            ).expand(),
-          ]),
-          16.heightBox,
+            // End Date
+            SizedBox(
+              width: double.infinity,
+              child: Text('Returning on',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: Colors.white.withValues(alpha: 0.5),
+                  )),
+            ),
+            const Gap(8),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildDatePicker(
+                    'Date',
+                    _endDate,
+                    (d) => setState(() => _endDate = d),
+                  ),
+                ),
+                const Gap(8),
+                Expanded(
+                  child: _buildMealSelector(
+                    'First meal',
+                    _firstMealAfter,
+                    (m) => setState(() => _firstMealAfter = m),
+                  ),
+                ),
+              ],
+            ),
+            const Gap(16),
 
-          // Reason
-          'Reason (optional)'.text.sm
-              .color(AppColors.textSecondaryDark)
-              .make()
-              .wFull(context),
-          8.heightBox,
-          TextField(
-            controller: _reasonController,
-            decoration: const InputDecoration(hintText: 'বাড়ি যাচ্ছি...'),
-          ),
-          24.heightBox,
+            // Reason
+            SizedBox(
+              width: double.infinity,
+              child: Text('Reason (optional)',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: Colors.white.withValues(alpha: 0.5),
+                  )),
+            ),
+            const Gap(8),
+            TextField(
+              controller: _reasonController,
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.9)),
+              decoration: InputDecoration(
+                hintText:
+                    '\u09AC\u09BE\u09DC\u09BF \u09AF\u09BE\u099A\u09CD\u099B\u09BF...',
+                hintStyle: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.3),
+                ),
+                filled: true,
+                fillColor: Colors.white.withValues(alpha: 0.03),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                  borderSide: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.05),
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                  borderSide: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.05),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                  borderSide: BorderSide(
+                    color: AppColors.success.withValues(alpha: 0.5),
+                  ),
+                ),
+              ),
+            ),
+            const Gap(24),
 
-          // Submit
-          GFPrimaryButton(
-            text: 'Save Vacation',
-            icon: LucideIcons.check,
-            onPressed: _submit,
-          ),
-          12.heightBox,
-        ]),
+            // Submit
+            AppPrimaryButton(
+              text: 'Save Vacation',
+              icon: LucideIcons.check,
+              onPressed: _submit,
+            ),
+            const Gap(12),
+          ],
+        ),
       ),
     );
   }
@@ -413,14 +926,32 @@ class _AddVacationSheetState extends ConsumerState<AddVacationSheet> {
         );
         if (picked != null) onChanged(picked);
       },
-      child: GFAppCard(
-        child: HStack([
-          const Icon(LucideIcons.calendar, size: 18, color: AppColors.success),
-          8.widthBox,
-          '${date.day}/${date.month}/${date.year}'.text
-              .color(AppColors.textPrimaryDark)
-              .make(),
-        ]),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.03),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.05),
+              ),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            ),
+            child: Row(
+              children: [
+                const Icon(LucideIcons.calendar,
+                    size: 18, color: AppColors.success),
+                const Gap(8),
+                Text('${date.day}/${date.month}/${date.year}',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.9),
+                    )),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -430,34 +961,51 @@ class _AddVacationSheetState extends ConsumerState<AddVacationSheet> {
     MealType selected,
     Function(MealType) onChanged,
   ) {
-    return GFAppCard(
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<MealType>(
-          value: selected,
-          isExpanded: true,
-          dropdownColor: AppColors.cardDark,
-          items: MealType.values
-              .map(
-                (m) => DropdownMenuItem(
-                  value: m,
-                  child: Text(
-                    _mealLabel(m),
-                    style: TextStyle(color: AppColors.textPrimaryDark),
-                  ),
-                ),
-              )
-              .toList(),
-          onChanged: (v) => onChanged(v!),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md, vertical: AppSpacing.xs),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.03),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.05),
+            ),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<MealType>(
+              value: selected,
+              isExpanded: true,
+              dropdownColor: const Color(0xFF0D1520),
+              items: MealType.values
+                  .map(
+                    (m) => DropdownMenuItem(
+                      value: m,
+                      child: Text(
+                        _mealLabel(m),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.9),
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (v) => onChanged(v!),
+            ),
+          ),
         ),
       ),
     );
   }
 
   String _mealLabel(MealType type) => switch (type) {
-    MealType.breakfast => 'সকাল',
-    MealType.lunch => 'দুপুর',
-    MealType.dinner => 'রাত',
-  };
+        MealType.breakfast => '\u09B8\u0995\u09BE\u09B2',
+        MealType.lunch => '\u09A6\u09C1\u09AA\u09C1\u09B0',
+        MealType.dinner => '\u09B0\u09BE\u09A4',
+      };
 
   void _submit() {
     HapticService.success();

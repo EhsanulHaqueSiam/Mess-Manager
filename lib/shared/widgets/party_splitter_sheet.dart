@@ -71,7 +71,7 @@ class _PartySplitterSheetState extends ConsumerState<PartySplitterSheet> {
         maxHeight: MediaQuery.of(context).size.height * 0.9,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
+        color: context.surfaceColor,
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(AppSpacing.radiusLg),
         ),
@@ -87,7 +87,7 @@ class _PartySplitterSheetState extends ConsumerState<PartySplitterSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.borderDark,
+                  color: context.borderColor,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -113,7 +113,7 @@ class _PartySplitterSheetState extends ConsumerState<PartySplitterSheet> {
                 Text(
                   'Party Splitter',
                   style: AppTypography.headlineMedium.copyWith(
-                    color: AppColors.textPrimaryDark,
+                    color: context.textPrimary,
                   ),
                 ),
               ],
@@ -124,7 +124,7 @@ class _PartySplitterSheetState extends ConsumerState<PartySplitterSheet> {
             TextField(
               controller: _descriptionController,
               style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.textPrimaryDark,
+                color: context.textPrimary,
               ),
               decoration: const InputDecoration(
                 hintText: 'Party name (Birthday, Eid, etc.)',
@@ -141,7 +141,7 @@ class _PartySplitterSheetState extends ConsumerState<PartySplitterSheet> {
             Text(
               'Additional Costs (৳)',
               style: AppTypography.labelMedium.copyWith(
-                color: AppColors.textSecondaryDark,
+                color: context.textSecondary,
               ),
             ),
             const Gap(AppSpacing.sm),
@@ -149,7 +149,7 @@ class _PartySplitterSheetState extends ConsumerState<PartySplitterSheet> {
               controller: _totalAmountController,
               keyboardType: TextInputType.number,
               style: AppTypography.titleLarge.copyWith(
-                color: AppColors.textPrimaryDark,
+                color: context.textPrimary,
               ),
               decoration: InputDecoration(
                 hintText: '0',
@@ -192,7 +192,7 @@ class _PartySplitterSheetState extends ConsumerState<PartySplitterSheet> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.accentWarm,
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-                  disabledBackgroundColor: AppColors.cardDark,
+                  disabledBackgroundColor: context.cardColor,
                 ),
               ),
             ).animate().fadeIn(delay: 500.ms),
@@ -207,7 +207,7 @@ class _PartySplitterSheetState extends ConsumerState<PartySplitterSheet> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.cardDark,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
         border: Border.all(color: AppColors.accentWarm.withValues(alpha: 0.3)),
       ),
@@ -225,7 +225,7 @@ class _PartySplitterSheetState extends ConsumerState<PartySplitterSheet> {
               Text(
                 'Party Bazar',
                 style: AppTypography.titleSmall.copyWith(
-                  color: AppColors.textPrimaryDark,
+                  color: context.textPrimary,
                 ),
               ),
               const Spacer(),
@@ -253,7 +253,7 @@ class _PartySplitterSheetState extends ConsumerState<PartySplitterSheet> {
           Text(
             'Track party-specific purchases',
             style: AppTypography.bodySmall.copyWith(
-              color: AppColors.textMutedDark,
+              color: context.textMuted,
             ),
           ),
           const Gap(AppSpacing.md),
@@ -268,7 +268,7 @@ class _PartySplitterSheetState extends ConsumerState<PartySplitterSheet> {
                   vertical: AppSpacing.xs,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceDark,
+                  color: context.surfaceColor,
                   borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                 ),
                 child: Row(
@@ -276,7 +276,7 @@ class _PartySplitterSheetState extends ConsumerState<PartySplitterSheet> {
                     Expanded(
                       child: Text(
                         entry.value.name,
-                        style: TextStyle(color: AppColors.textPrimaryDark),
+                        style: TextStyle(color: context.textPrimary),
                       ),
                     ),
                     Text(
@@ -313,7 +313,7 @@ class _PartySplitterSheetState extends ConsumerState<PartySplitterSheet> {
                 child: TextField(
                   controller: _itemNameController,
                   style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textPrimaryDark,
+                    color: context.textPrimary,
                   ),
                   decoration: const InputDecoration(
                     hintText: 'Item (cake, drinks...)',
@@ -331,7 +331,7 @@ class _PartySplitterSheetState extends ConsumerState<PartySplitterSheet> {
                   controller: _itemAmountController,
                   keyboardType: TextInputType.number,
                   style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textPrimaryDark,
+                    color: context.textPrimary,
                   ),
                   decoration: const InputDecoration(
                     hintText: '৳',
@@ -368,7 +368,7 @@ class _PartySplitterSheetState extends ConsumerState<PartySplitterSheet> {
             Text(
               'Mess Members',
               style: AppTypography.labelMedium.copyWith(
-                color: AppColors.textSecondaryDark,
+                color: context.textSecondary,
               ),
             ),
             TextButton(
@@ -437,13 +437,13 @@ class _PartySplitterSheetState extends ConsumerState<PartySplitterSheet> {
                 Text(
                   'External Guests',
                   style: AppTypography.titleSmall.copyWith(
-                    color: AppColors.textPrimaryDark,
+                    color: context.textPrimary,
                   ),
                 ),
                 Text(
                   'Non-members joining the party',
                   style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textMutedDark,
+                    color: context.textMuted,
                   ),
                 ),
               ],
@@ -510,13 +510,13 @@ class _PartySplitterSheetState extends ConsumerState<PartySplitterSheet> {
               Text(
                 'Total Bill',
                 style: AppTypography.labelMedium.copyWith(
-                  color: AppColors.textSecondaryDark,
+                  color: context.textSecondary,
                 ),
               ),
               Text(
                 '৳${_totalAmount.toStringAsFixed(0)}',
                 style: AppTypography.titleLarge.copyWith(
-                  color: AppColors.textPrimaryDark,
+                  color: context.textPrimary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -529,13 +529,13 @@ class _PartySplitterSheetState extends ConsumerState<PartySplitterSheet> {
               Text(
                 'Total People',
                 style: AppTypography.labelMedium.copyWith(
-                  color: AppColors.textSecondaryDark,
+                  color: context.textSecondary,
                 ),
               ),
               Text(
                 '$_totalPeople (${_selectedMembers.length} members + $_guestCount guests)',
                 style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.textMutedDark,
+                  color: context.textMuted,
                 ),
               ),
             ],
@@ -547,7 +547,7 @@ class _PartySplitterSheetState extends ConsumerState<PartySplitterSheet> {
               Text(
                 'Per Person',
                 style: AppTypography.titleSmall.copyWith(
-                  color: AppColors.textPrimaryDark,
+                  color: context.textPrimary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -572,7 +572,7 @@ class _PartySplitterSheetState extends ConsumerState<PartySplitterSheet> {
         Text(
           'Member Breakdown',
           style: AppTypography.labelMedium.copyWith(
-            color: AppColors.textSecondaryDark,
+            color: context.textSecondary,
           ),
         ),
         const Gap(AppSpacing.sm),
@@ -586,7 +586,7 @@ class _PartySplitterSheetState extends ConsumerState<PartySplitterSheet> {
                   vertical: AppSpacing.sm,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.cardDark,
+                  color: context.cardColor,
                   borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                 ),
                 child: Row(
@@ -610,7 +610,7 @@ class _PartySplitterSheetState extends ConsumerState<PartySplitterSheet> {
                         Text(
                           member.name,
                           style: AppTypography.bodyMedium.copyWith(
-                            color: AppColors.textPrimaryDark,
+                            color: context.textPrimary,
                           ),
                         ),
                       ],

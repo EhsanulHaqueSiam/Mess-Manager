@@ -41,7 +41,6 @@ class SmartSuggestionCard extends ConsumerWidget {
     };
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
@@ -73,7 +72,7 @@ class SmartSuggestionCard extends ConsumerWidget {
                 Text(
                   suggestion.message,
                   style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textSecondaryDark,
+                    color: context.textSecondary,
                   ),
                 ),
               ],

@@ -15,7 +15,7 @@ List<Meal> _generateSampleMeals() {
     meals.add(
       Meal(
         id: 'meal_1_${day}_l',
-        memberId: '1',
+        memberId: 'member_1',
         date: date,
         count: 1,
         type: MealType.lunch,
@@ -25,7 +25,7 @@ List<Meal> _generateSampleMeals() {
     meals.add(
       Meal(
         id: 'meal_1_${day}_d',
-        memberId: '1',
+        memberId: 'member_1',
         date: date,
         count: 1,
         type: MealType.dinner,
@@ -37,7 +37,7 @@ List<Meal> _generateSampleMeals() {
     meals.add(
       Meal(
         id: 'meal_2_${day}_l',
-        memberId: '2',
+        memberId: 'member_2',
         date: date,
         count: 1,
         type: MealType.lunch,
@@ -47,7 +47,7 @@ List<Meal> _generateSampleMeals() {
     meals.add(
       Meal(
         id: 'meal_2_${day}_d',
-        memberId: '2',
+        memberId: 'member_2',
         date: date,
         count: 1,
         type: MealType.dinner,
@@ -59,7 +59,7 @@ List<Meal> _generateSampleMeals() {
     meals.add(
       Meal(
         id: 'meal_3_${day}_l',
-        memberId: '3',
+        memberId: 'member_3',
         date: date,
         count: 1,
         type: MealType.lunch,
@@ -69,7 +69,7 @@ List<Meal> _generateSampleMeals() {
     meals.add(
       Meal(
         id: 'meal_3_${day}_d',
-        memberId: '3',
+        memberId: 'member_3',
         date: date,
         count: 1,
         type: MealType.dinner,
@@ -81,7 +81,7 @@ List<Meal> _generateSampleMeals() {
     meals.add(
       Meal(
         id: 'meal_4_${day}_d',
-        memberId: '4',
+        memberId: 'member_4',
         date: date,
         count: 1,
         type: MealType.dinner,

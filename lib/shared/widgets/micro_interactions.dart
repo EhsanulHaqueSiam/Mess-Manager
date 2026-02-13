@@ -318,7 +318,7 @@ class ShimmerLoading extends StatelessWidget {
           width: width,
           height: height,
           decoration: BoxDecoration(
-            color: AppColors.cardDark,
+            color: context.cardColor,
             borderRadius:
                 borderRadius ?? BorderRadius.circular(AppSpacing.radiusSm),
           ),
@@ -326,7 +326,7 @@ class ShimmerLoading extends StatelessWidget {
         .animate(onPlay: (c) => c.repeat())
         .shimmer(
           duration: 1200.ms,
-          color: AppColors.borderDark.withValues(alpha: 0.3),
+          color: context.borderColor.withValues(alpha: 0.3),
         );
   }
 }

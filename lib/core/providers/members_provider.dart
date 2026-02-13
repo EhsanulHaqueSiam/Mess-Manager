@@ -1,6 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mess_manager/core/models/member.dart';
 import 'package:mess_manager/core/services/member_service.dart';
+import 'package:mess_manager/core/database/isar_service.dart';
+import 'package:mess_manager/core/services/mock_data_service.dart';
+import 'package:mess_manager/core/providers/demo_mode_provider.dart';
 import 'package:mess_manager/features/auth/providers/auth_provider.dart';
 
 /// Provider for all members
@@ -17,15 +21,38 @@ class MembersNotifier extends Notifier<List<Member>> {
   }
 
   Future<void> _loadMembers() async {
+    // In demo mode, use mock data directly - no Firebase
+    if (DemoMode.isEnabled) {
+      state = MockDataService.mockMembers;
+      debugPrint('MembersNotifier: Demo mode - using mock members');
+      return;
+    }
+
+    // Normal mode: try Isar first, then Firebase
+    final localMembers = IsarService.getAllMembers();
+    if (localMembers.isNotEmpty) {
+      state = localMembers;
+    } else if (kDebugMode) {
+      state = MockDataService.mockMembers;
+    }
+
     try {
       final members = await MemberService.getMembers();
-      state = members;
+      if (members.isNotEmpty) {
+        state = members;
+      }
     } catch (e) {
-      // Keep empty or handle error
+      debugPrint('MembersNotifier: Failed to load from Firestore: $e');
     }
   }
 
   Future<void> refresh() async {
+    if (DemoMode.isEnabled) {
+      // In demo mode, just reset to mock data
+      state = MockDataService.mockMembers;
+      return;
+    }
+
     try {
       final members = await MemberService.getMembers(forceRefresh: true);
       state = members;
@@ -37,10 +64,12 @@ class MembersNotifier extends Notifier<List<Member>> {
   Future<void> addMember(Member member) async {
     // Optimistic update
     state = [...state, member];
+
+    if (DemoMode.isEnabled) return; // Skip Firebase in demo mode
+
     try {
       await MemberService.saveMember(member);
     } catch (e) {
-      // Revert on failure
       state = state.where((m) => m.id != member.id).toList();
       rethrow;
     }
@@ -48,10 +77,14 @@ class MembersNotifier extends Notifier<List<Member>> {
 
   Future<void> updateMember(Member member) async {
     final oldState = state;
+
     state = [
       for (final m in state)
         if (m.id == member.id) member else m,
     ];
+
+    if (DemoMode.isEnabled) return; // Skip Firebase in demo mode
+
     try {
       await MemberService.saveMember(member);
     } catch (e) {
@@ -62,7 +95,11 @@ class MembersNotifier extends Notifier<List<Member>> {
 
   Future<void> deleteMember(String id) async {
     final oldState = state;
+
     state = state.where((m) => m.id != id).toList();
+
+    if (DemoMode.isEnabled) return; // Skip Firebase in demo mode
+
     try {
       await MemberService.deleteMember(id);
     } catch (e) {

@@ -105,7 +105,7 @@ class _EditInfoSheetState extends ConsumerState<EditInfoSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
+        color: context.surfaceColor,
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(AppSpacing.radiusLg),
         ),
@@ -122,7 +122,7 @@ class _EditInfoSheetState extends ConsumerState<EditInfoSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.borderDark,
+                color: context.borderColor,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -135,7 +135,7 @@ class _EditInfoSheetState extends ConsumerState<EditInfoSheet> {
                 Text(
                   'Edit Mess Info',
                   style: AppTypography.headlineMedium.copyWith(
-                    color: AppColors.textPrimaryDark,
+                    color: context.textPrimary,
                   ),
                 ),
                 TextButton(onPressed: _save, child: const Text('Save')),
@@ -260,7 +260,7 @@ class _EditInfoSheetState extends ConsumerState<EditInfoSheet> {
         controller: controller,
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, size: 18, color: AppColors.textSecondaryDark),
+          prefixIcon: Icon(icon, size: 18, color: context.textSecondary),
         ),
         validator: (v) => v?.isEmpty == true ? 'Required' : null,
       ),

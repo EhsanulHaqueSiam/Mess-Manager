@@ -1,17 +1,17 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:gap/gap.dart';
-import 'package:velocity_x/velocity_x.dart';
-import 'package:getwidget/getwidget.dart';
 
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
 import 'package:mess_manager/core/providers/role_provider.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
 import 'package:mess_manager/core/services/export_service.dart';
-import 'package:mess_manager/core/widgets/gf_components.dart';
+import 'package:mess_manager/core/widgets/app_components.dart';
 import 'package:mess_manager/core/widgets/animated_widgets.dart';
 import 'package:mess_manager/features/bazar/providers/bazar_provider.dart';
 import 'package:mess_manager/features/bazar/providers/bazar_list_provider.dart';
@@ -21,7 +21,7 @@ import 'package:mess_manager/features/settlement/providers/settlement_provider.d
 import 'package:mess_manager/features/balance/providers/balance_provider.dart';
 import 'package:mess_manager/features/bazar/widgets/budget_card.dart';
 
-/// Bazar Screen - Uses GetWidget + VelocityX + flutter_animate
+/// Bazar Screen - Cosmic Bioluminescence Design
 class BazarScreen extends ConsumerStatefulWidget {
   const BazarScreen({super.key});
 
@@ -56,52 +56,127 @@ class _BazarScreenState extends ConsumerState<BazarScreen>
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.surfaceDark,
-      builder: (context) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(
-                LucideIcons.fileSpreadsheet,
-                color: AppColors.success,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ClipRRect(
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppSpacing.radiusLg),
+        ),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF0D1520).withValues(alpha: 0.95),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(AppSpacing.radiusLg),
               ),
-              title: const Text('Export as Excel (XLSX)'),
-              subtitle: const Text('Detailed balance sheet'),
-              onTap: () async {
-                Navigator.pop(context);
-                final xlsxBytes = ExportService.generateBalancesXlsx(
-                  year: now.year,
-                  month: now.month,
-                  totalBazar: totalBazar,
-                  mealRate: mealRate,
-                  balances: balances,
-                  members: members,
-                );
-                await ExportService.shareXlsx(
-                  xlsxBytes,
-                  'bazar_report_${now.year}_${now.month}.xlsx',
-                );
-                HapticService.success();
-              },
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.08),
+              ),
             ),
-            ListTile(
-              leading: const Icon(LucideIcons.fileText, color: AppColors.info),
-              title: const Text('Export as CSV'),
-              subtitle: const Text('Simple comma-separated'),
-              onTap: () async {
-                Navigator.pop(context);
-                final csv = ExportService.generateBalancesCsv(
-                  balances: balances,
-                  members: members,
-                );
-                await ExportService.shareCsv(
-                  csv,
-                  'bazar_report_${now.year}_${now.month}.csv',
-                );
-                HapticService.success();
-              },
+            child: SafeArea(
+              child: Wrap(
+                children: [
+                  // Handle bar
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.only(top: 12, bottom: 8),
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  ListTile(
+                    leading: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            AppColors.success.withValues(alpha: 0.3),
+                            AppColors.success.withValues(alpha: 0.05),
+                          ],
+                        ),
+                      ),
+                      child: const Icon(
+                        LucideIcons.fileSpreadsheet,
+                        color: AppColors.success,
+                        size: 18,
+                      ),
+                    ),
+                    title: Text(
+                      'Export as Excel (XLSX)',
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.9)),
+                    ),
+                    subtitle: Text(
+                      'Detailed balance sheet',
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.4)),
+                    ),
+                    onTap: () async {
+                      Navigator.pop(context);
+                      final xlsxBytes = ExportService.generateBalancesXlsx(
+                        year: now.year,
+                        month: now.month,
+                        totalBazar: totalBazar,
+                        mealRate: mealRate,
+                        balances: balances,
+                        members: members,
+                      );
+                      await ExportService.shareXlsx(
+                        xlsxBytes,
+                        'bazar_report_${now.year}_${now.month}.xlsx',
+                      );
+                      HapticService.success();
+                    },
+                  ),
+                  ListTile(
+                    leading: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            AppColors.info.withValues(alpha: 0.3),
+                            AppColors.info.withValues(alpha: 0.05),
+                          ],
+                        ),
+                      ),
+                      child: const Icon(
+                        LucideIcons.fileText,
+                        color: AppColors.info,
+                        size: 18,
+                      ),
+                    ),
+                    title: Text(
+                      'Export as CSV',
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.9)),
+                    ),
+                    subtitle: Text(
+                      'Simple comma-separated',
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.4)),
+                    ),
+                    onTap: () async {
+                      Navigator.pop(context);
+                      final csv = ExportService.generateBalancesCsv(
+                        balances: balances,
+                        members: members,
+                      );
+                      await ExportService.shareCsv(
+                        csv,
+                        'bazar_report_${now.year}_${now.month}.csv',
+                      );
+                      HapticService.success();
+                    },
+                  ),
+                  const Gap(AppSpacing.md),
+                ],
+              ),
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -116,88 +191,286 @@ class _BazarScreenState extends ConsumerState<BazarScreen>
     final pendingItemsCount = ref.watch(pendingItemsCountProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: [
-          const Icon(
-            LucideIcons.shoppingCart,
-            color: AppColors.bazarColor,
-            size: 22,
-          ),
-          const Gap(AppSpacing.sm),
-          'Bazar'.text.make(),
-        ].hStack(),
-        actions: [
-          GFIconButton(
-            icon: const Icon(LucideIcons.download, size: 20),
-            type: GFButtonType.transparent,
-            onPressed: () => _showExportOptions(context),
-          ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: [
-            const Tab(
-              icon: Icon(LucideIcons.receipt, size: 18),
-              text: 'Entries',
-            ),
-            Tab(
-              icon: GFBadge(
-                text: pendingItemsCount > 0 ? pendingItemsCount.toString() : '',
-                size: GFSize.SMALL,
-                color: pendingItemsCount > 0
-                    ? AppColors.warning
-                    : Colors.transparent,
-                child: const Icon(LucideIcons.listTodo, size: 18),
-              ),
-              text: 'Shopping List',
-            ),
-          ],
-          labelColor: AppColors.bazarColor,
-          unselectedLabelColor: AppColors.textSecondaryDark,
-          indicatorColor: AppColors.bazarColor,
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
+      backgroundColor: const Color(0xFF0A0E1A),
+      body: Stack(
         children: [
-          _EntriesTab(
-            entries: entries,
-            members: members,
-            totalBazar: totalBazar,
-            bazarByMember: bazarByMember,
+          // === Deep Space Background ===
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFF0A0E1A), Color(0xFF0D1520)],
+                ),
+              ),
+            ),
           ),
-          const BazarListTab(),
+
+          // Bazar-themed accent orb (warm green glow)
+          Positioned(
+            top: -40,
+            right: -60,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppColors.bazarColor.withValues(alpha: 0.15),
+                    AppColors.bazarColor.withValues(alpha: 0.02),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            )
+                .animate(onPlay: (c) => c.repeat(reverse: true))
+                .scaleXY(begin: 1.0, end: 1.15, duration: 4.seconds),
+          ),
+
+          // Secondary teal orb
+          Positioned(
+            bottom: 100,
+            left: -40,
+            child: Container(
+              width: 160,
+              height: 160,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppColors.primary.withValues(alpha: 0.08),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            )
+                .animate(onPlay: (c) => c.repeat(reverse: true))
+                .scaleXY(begin: 0.9, end: 1.1, duration: 5.seconds),
+          ),
+
+          // === Main Content ===
+          SafeArea(
+            child: NestedScrollView(
+              headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                // Custom Header
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                    child: Row(
+                      children: [
+                        // Icon with gradient halo
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: RadialGradient(
+                              colors: [
+                                AppColors.bazarColor.withValues(alpha: 0.3),
+                                AppColors.bazarColor.withValues(alpha: 0.05),
+                              ],
+                            ),
+                            border: Border.all(
+                              color: AppColors.bazarColor.withValues(alpha: 0.2),
+                            ),
+                          ),
+                          child: const Icon(
+                            LucideIcons.shoppingCart,
+                            color: AppColors.bazarColor,
+                            size: 20,
+                          ),
+                        ),
+                        const Gap(12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Bazar',
+                                style: AppTypography.headlineMedium.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              Text(
+                                '${entries.length} entries this month',
+                                style: AppTypography.bodySmall.copyWith(
+                                  color: Colors.white.withValues(alpha: 0.4),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Export button
+                        _buildGlassIconButton(
+                          icon: LucideIcons.download,
+                          onTap: () => _showExportOptions(context),
+                        ),
+                      ],
+                    ).animate().fadeIn(duration: 500.ms).slideY(begin: -0.1),
+                  ),
+                ),
+
+                // Glass Tab Bar
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                        child: Container(
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.04),
+                            borderRadius:
+                                BorderRadius.circular(AppSpacing.radiusMd),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.06),
+                            ),
+                          ),
+                          child: TabBar(
+                            controller: _tabController,
+                            labelColor: AppColors.bazarColor,
+                            unselectedLabelColor:
+                                Colors.white.withValues(alpha: 0.4),
+                            indicatorSize: TabBarIndicatorSize.tab,
+                            indicator: BoxDecoration(
+                              color: AppColors.bazarColor.withValues(alpha: 0.12),
+                              borderRadius:
+                                  BorderRadius.circular(AppSpacing.radiusMd - 2),
+                              border: Border.all(
+                                color:
+                                    AppColors.bazarColor.withValues(alpha: 0.2),
+                              ),
+                            ),
+                            dividerColor: Colors.transparent,
+                            tabs: [
+                              const Tab(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(LucideIcons.receipt, size: 16),
+                                    Gap(6),
+                                    Text('Entries'),
+                                  ],
+                                ),
+                              ),
+                              Tab(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Badge(
+                                      label: pendingItemsCount > 0
+                                          ? Text(
+                                              pendingItemsCount.toString(),
+                                              style: const TextStyle(fontSize: 9),
+                                            )
+                                          : null,
+                                      isLabelVisible: pendingItemsCount > 0,
+                                      backgroundColor: AppColors.warning,
+                                      child: const Icon(
+                                          LucideIcons.listTodo, size: 16),
+                                    ),
+                                    const Gap(6),
+                                    const Text('Shopping List'),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ).animate().fadeIn(delay: 200.ms),
+                ),
+              ],
+              body: TabBarView(
+                controller: _tabController,
+                children: [
+                  _EntriesTab(
+                    entries: entries,
+                    members: members,
+                    totalBazar: totalBazar,
+                    bazarByMember: bazarByMember,
+                  ),
+                  const BazarListTab(),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
-      floatingActionButton: _buildShimmerFAB(context),
+      floatingActionButton: _buildCosmicFAB(context),
     );
   }
 
-  /// Shimmer FAB with animation for CTA
-  Widget _buildShimmerFAB(BuildContext context) {
-    return FloatingActionButton.extended(
-          onPressed: () {
-            HapticService.buttonPress();
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.transparent,
-              builder: (context) => const AddBazarSheet(),
-            );
-          },
-          icon: const Icon(LucideIcons.plus, size: 20),
-          label: const Text('Add Entry'),
-          backgroundColor: AppColors.bazarColor,
-        )
+  Widget _buildGlassIconButton({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.08),
+              ),
+            ),
+            child: Icon(icon, color: Colors.white.withValues(alpha: 0.7), size: 18),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCosmicFAB(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.bazarColor.withValues(alpha: 0.4),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: FloatingActionButton.extended(
+        onPressed: () {
+          HapticService.buttonPress();
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (context) => const AddBazarSheet(),
+          );
+        },
+        icon: const Icon(LucideIcons.plus, size: 20),
+        label: const Text('Add Entry'),
+        backgroundColor: AppColors.bazarColor,
+        foregroundColor: Colors.white,
+      ),
+    )
         .animate(onPlay: (c) => c.repeat())
         .shimmer(
           duration: 2.seconds,
-          color: Colors.white.withValues(alpha: 0.2),
+          color: Colors.white.withValues(alpha: 0.15),
         );
   }
 }
 
-/// Entries Tab - Uses VelocityX and GetWidget
+/// Entries Tab - Cosmic Design
 class _EntriesTab extends ConsumerStatefulWidget {
   final List entries;
   final List members;
@@ -300,314 +573,678 @@ class _EntriesTabState extends ConsumerState<_EntriesTab> {
     final sortedEntries = [..._filteredEntries]
       ..sort((a, b) => b.date.compareTo(a.date));
 
-    return CustomScrollView(
-      slivers: [
-        // Budget Card
-        const SliverToBoxAdapter(
-          child: Padding(
-            padding: EdgeInsets.only(top: AppSpacing.md),
-            child: BudgetCard(),
+    return RefreshIndicator(
+      onRefresh: () async {
+        HapticService.lightTap();
+        ref.invalidate(bazarEntriesProvider);
+        await Future.delayed(const Duration(milliseconds: 300));
+      },
+      color: AppColors.bazarColor,
+      backgroundColor: const Color(0xFF0D1520),
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          // Budget Card
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.only(top: AppSpacing.md),
+              child: BudgetCard(),
+            ),
+          ),
+
+          // Glass Search Bar
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (value) =>
+                            setState(() => _searchQuery = value),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.9),
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Search entries...',
+                          hintStyle: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.3),
+                          ),
+                          prefixIcon: Icon(
+                            LucideIcons.search,
+                            size: 20,
+                            color: Colors.white.withValues(alpha: 0.4),
+                          ),
+                          suffixIcon: _searchQuery.isNotEmpty
+                              ? IconButton(
+                                  icon: Icon(
+                                    LucideIcons.x,
+                                    size: 18,
+                                    color: Colors.white.withValues(alpha: 0.4),
+                                  ),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() => _searchQuery = '');
+                                  },
+                                )
+                              : null,
+                          filled: true,
+                          fillColor: Colors.white.withValues(alpha: 0.04),
+                          border: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.circular(AppSpacing.radiusMd),
+                            borderSide: BorderSide(
+                              color: Colors.white.withValues(alpha: 0.06),
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.circular(AppSpacing.radiusMd),
+                            borderSide: BorderSide(
+                              color: Colors.white.withValues(alpha: 0.06),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.circular(AppSpacing.radiusMd),
+                            borderSide: BorderSide(
+                              color:
+                                  AppColors.bazarColor.withValues(alpha: 0.4),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const Gap(AppSpacing.sm),
+                  // Filter chips
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _buildGlassFilterChip(
+                          label: _dateRange != null
+                              ? '${_dateRange!.start.day}/${_dateRange!.start.month} - ${_dateRange!.end.day}/${_dateRange!.end.month}'
+                              : 'Date Range',
+                          icon: LucideIcons.calendar,
+                          isSelected: _dateRange != null,
+                          onTap: _showDateRangePicker,
+                        ),
+                        const Gap(AppSpacing.sm),
+                        _buildGlassFilterChip(
+                          label: _selectedMemberId != null &&
+                                  widget.members.isNotEmpty
+                              ? (widget.members
+                                        .cast<dynamic>()
+                                        .firstWhere(
+                                          (m) => m.id == _selectedMemberId,
+                                          orElse: () => null,
+                                        )
+                                        ?.name
+                                        ?.toString() ??
+                                    'Unknown')
+                              : 'All Members',
+                          icon: LucideIcons.user,
+                          isSelected: _selectedMemberId != null,
+                          onTap: _showMemberPicker,
+                        ),
+                        if (_hasActiveFilters) ...[
+                          const Gap(AppSpacing.sm),
+                          GestureDetector(
+                            onTap: _clearAllFilters,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.error.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color:
+                                      AppColors.error.withValues(alpha: 0.2),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    LucideIcons.x,
+                                    size: 14,
+                                    color:
+                                        AppColors.error.withValues(alpha: 0.8),
+                                  ),
+                                  const Gap(4),
+                                  Text(
+                                    'Clear',
+                                    style: AppTypography.bodySmall.copyWith(
+                                      color: AppColors.error
+                                          .withValues(alpha: 0.8),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ).animate().fadeIn(delay: 300.ms),
+          ),
+
+          // Total Bazar Card
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+              child: _buildTotalCard(context),
+            ),
+          ),
+
+          // Contributions Section
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+              child: _buildSectionLabel('CONTRIBUTIONS'),
+            ),
+          ),
+
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+              child: Column(
+                children: widget.members
+                    .asMap()
+                    .entries
+                    .map((e) => _buildContributionRow(context, e.value, e.key))
+                    .toList(),
+              ),
+            ),
+          ),
+
+          // Recent Entries Section
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+              child: _buildSectionLabel('RECENT ENTRIES'),
+            ),
+          ),
+
+          // Entries List
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
+                final entry = sortedEntries[index];
+                if (widget.members.isEmpty) return const SizedBox.shrink();
+                final member = widget.members.cast<dynamic>().firstWhere(
+                  (m) => m.id == entry.memberId,
+                  orElse: () => null,
+                );
+                if (member == null) return const SizedBox.shrink();
+                return _buildEntryCard(context, entry, member, index);
+              }, childCount: sortedEntries.length),
+            ),
+          ),
+
+          const SliverToBoxAdapter(child: Gap(100)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionLabel(String text) {
+    return Row(
+      children: [
+        Container(
+          width: 3,
+          height: 14,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(2),
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [AppColors.bazarColor, AppColors.primary],
+            ),
           ),
         ),
+        const Gap(8),
+        Text(
+          text,
+          style: AppTypography.bodySmall.copyWith(
+            color: Colors.white.withValues(alpha: 0.4),
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.5,
+            fontSize: 11,
+          ),
+        ),
+      ],
+    );
+  }
 
-        // Search Bar
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  controller: _searchController,
-                  onChanged: (value) => setState(() => _searchQuery = value),
-                  decoration: InputDecoration(
-                    hintText: 'Search entries...',
-                    prefixIcon: const Icon(LucideIcons.search, size: 20),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(LucideIcons.x, size: 18),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() => _searchQuery = '');
-                            },
-                          )
-                        : null,
-                    filled: true,
-                    fillColor: AppColors.cardDark,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                      borderSide: BorderSide.none,
+  Widget _buildGlassFilterChip({
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.bazarColor.withValues(alpha: 0.15)
+              : Colors.white.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.bazarColor.withValues(alpha: 0.3)
+                : Colors.white.withValues(alpha: 0.08),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: isSelected
+                  ? AppColors.bazarColor
+                  : Colors.white.withValues(alpha: 0.4),
+            ),
+            const Gap(6),
+            Text(
+              label,
+              style: AppTypography.bodySmall.copyWith(
+                color: isSelected
+                    ? AppColors.bazarColor
+                    : Colors.white.withValues(alpha: 0.5),
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTotalCard(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppColors.bazarColor.withValues(alpha: 0.2),
+                AppColors.bazarColor.withValues(alpha: 0.08),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+            border: Border.all(
+              color: AppColors.bazarColor.withValues(alpha: 0.2),
+            ),
+          ),
+          child: Row(
+            children: [
+              // Icon with gradient halo
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppColors.bazarColor.withValues(alpha: 0.3),
+                      AppColors.bazarColor.withValues(alpha: 0.05),
+                    ],
+                  ),
+                  border: Border.all(
+                    color: AppColors.bazarColor.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: const Icon(
+                  LucideIcons.wallet,
+                  color: AppColors.bazarColor,
+                  size: 22,
+                ),
+              ),
+              const Gap(AppSpacing.md),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Total Bazar',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: Colors.white.withValues(alpha: 0.5),
                     ),
+                  ),
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0, end: widget.totalBazar),
+                    duration: const Duration(milliseconds: 1200),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, value, _) => Text(
+                      '৳${value.toStringAsFixed(0)}',
+                      style: AppTypography.headlineLarge.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'JetBrains Mono',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.08),
+                  ),
+                ),
+                child: Text(
+                  '${widget.entries.length} entries',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: Colors.white.withValues(alpha: 0.5),
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.05);
+  }
+
+  Widget _buildContributionRow(
+      BuildContext context, dynamic member, int index) {
+    final contribution = widget.bazarByMember[member.id] ?? 0;
+    final percentage =
+        widget.totalBazar > 0 ? (contribution / widget.totalBazar * 100) : 0;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+          child: Container(
+            padding: const EdgeInsets.all(AppSpacing.sm + 2),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.03),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.05),
+              ),
+            ),
+            child: Row(
+              children: [
+                // Avatar with glow ring
+                Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.bazarColor.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: AppMemberAvatar(
+                    name: member.name,
+                    size: 32,
+                    backgroundColor:
+                        AppColors.bazarColor.withValues(alpha: 0.15),
                   ),
                 ),
                 const Gap(AppSpacing.sm),
-                // Filter chips
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Date range filter
-                      FilterChip(
-                        label: Text(
-                          _dateRange != null
-                              ? '${_dateRange!.start.day}/${_dateRange!.start.month} - ${_dateRange!.end.day}/${_dateRange!.end.month}'
-                              : 'Date Range',
+                      Text(
+                        member.name.toString(),
+                        style: AppTypography.bodySmall.copyWith(
+                          color: Colors.white.withValues(alpha: 0.9),
                         ),
-                        selected: _dateRange != null,
-                        onSelected: (_) => _showDateRangePicker(),
-                        avatar: const Icon(LucideIcons.calendar, size: 16),
-                        selectedColor: AppColors.bazarColor.withValues(
-                          alpha: 0.2,
-                        ),
-                        checkmarkColor: AppColors.bazarColor,
                       ),
-                      const Gap(AppSpacing.sm),
-                      // Member filter
-                      FilterChip(
-                        label: Text(
-                          _selectedMemberId != null
-                              ? widget.members
-                                    .firstWhere(
-                                      (m) => m.id == _selectedMemberId,
-                                      orElse: () => widget.members.first,
-                                    )
-                                    .name
-                                    .toString()
-                              : 'All Members',
+                      const SizedBox(height: 4),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(3),
+                        child: LinearProgressIndicator(
+                          value:
+                              (percentage / 100).clamp(0.0, 1.0).toDouble(),
+                          minHeight: 4,
+                          backgroundColor: Colors.white.withValues(alpha: 0.06),
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            AppColors.bazarColor,
+                          ),
                         ),
-                        selected: _selectedMemberId != null,
-                        onSelected: (_) => _showMemberPicker(),
-                        avatar: const Icon(LucideIcons.user, size: 16),
-                        selectedColor: AppColors.bazarColor.withValues(
-                          alpha: 0.2,
-                        ),
-                        checkmarkColor: AppColors.bazarColor,
                       ),
-                      if (_hasActiveFilters) ...[
-                        const Gap(AppSpacing.sm),
-                        ActionChip(
-                          label: const Text('Clear All'),
-                          avatar: const Icon(LucideIcons.x, size: 16),
-                          onPressed: _clearAllFilters,
-                        ),
-                      ],
                     ],
                   ),
+                ),
+                const Gap(AppSpacing.sm),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '৳${contribution.toStringAsFixed(0)}',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.bazarColor,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'JetBrains Mono',
+                      ),
+                    ),
+                    Text(
+                      '${percentage.toStringAsFixed(0)}%',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: Colors.white.withValues(alpha: 0.3),
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
         ),
-        // Summary Section
-        SliverToBoxAdapter(
-          child: VStack([
-            _buildTotalCard(),
-            16.heightBox,
-            'Contributions'.text.xl.bold
-                .color(AppColors.textPrimaryDark)
-                .make(),
-            8.heightBox,
-            ...widget.members.map((member) => _buildContributionRow(member)),
-            16.heightBox,
-            'Recent Entries'.text.xl.bold
-                .color(AppColors.textPrimaryDark)
-                .make(),
-          ]).p16(),
-        ),
-
-        // Entries List
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-          sliver: SliverList(
-            delegate: SliverChildBuilderDelegate((context, index) {
-              final entry = sortedEntries[index];
-              final member = widget.members.firstWhere(
-                (m) => m.id == entry.memberId,
-                orElse: () => widget.members.first,
-              );
-              return _buildEntryCard(entry, member, index);
-            }, childCount: sortedEntries.length),
-          ),
-        ),
-
-        const SliverToBoxAdapter(child: Gap(100)),
-      ],
-    );
+      ),
+    ).animate(delay: (500 + 60 * index).ms).fadeIn().slideX(begin: 0.03);
   }
 
-  Widget _buildTotalCard() {
-    return GFCard(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      margin: EdgeInsets.zero,
-      elevation: 4,
-      gradient: LinearGradient(
-        colors: [
-          AppColors.bazarColor,
-          AppColors.bazarColor.withValues(alpha: 0.7),
-        ],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-      content: Row(
-        children: [
-          GFAvatar(
-            backgroundColor: Colors.white.withValues(alpha: 0.2),
-            child: const Icon(LucideIcons.wallet, color: Colors.white),
-          ),
-          const Gap(AppSpacing.md),
-          VStack(crossAlignment: CrossAxisAlignment.start, [
-            'Total Bazar'.text.sm.white.make(),
-            '৳${widget.totalBazar.toStringAsFixed(0)}'.text.xl3.white.bold
-                .make(),
-          ]),
-          const Spacer(),
-          '${widget.entries.length} entries'.text.xs.white.make(),
-        ],
-      ),
-    ).animate().fadeIn().slideY(begin: 0.1);
-  }
-
-  Widget _buildContributionRow(dynamic member) {
-    final contribution = widget.bazarByMember[member.id] ?? 0;
-    final percentage = widget.totalBazar > 0
-        ? (contribution / widget.totalBazar * 100)
-        : 0;
-
-    return GFAppCard(
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: Row(
-        children: [
-          GFMemberAvatar(
-            name: member.name,
-            size: 32,
-            backgroundColor: AppColors.bazarColor.withValues(alpha: 0.2),
-          ),
-          const Gap(AppSpacing.sm),
-          Expanded(
-            child: VStack(crossAlignment: CrossAxisAlignment.start, [
-              member.name
-                  .toString()
-                  .text
-                  .sm
-                  .color(AppColors.textPrimaryDark)
-                  .make(),
-              2.heightBox,
-              GFProgressBar(
-                percentage: percentage / 100,
-                lineHeight: 4,
-                backgroundColor: AppColors.borderDark,
-                progressBarColor: AppColors.bazarColor,
-              ),
-            ]),
-          ),
-          const Gap(AppSpacing.sm),
-          VStack(crossAlignment: CrossAxisAlignment.end, [
-            '৳${contribution.toStringAsFixed(0)}'.text.sm
-                .color(AppColors.bazarColor)
-                .bold
-                .make(),
-            '${percentage.toStringAsFixed(0)}%'.text.xs
-                .color(AppColors.textMutedDark)
-                .make(),
-          ]),
-        ],
-      ),
-    ).pOnly(bottom: AppSpacing.sm);
-  }
-
-  Widget _buildEntryCard(dynamic entry, dynamic member, int index) {
+  Widget _buildEntryCard(
+    BuildContext context,
+    dynamic entry,
+    dynamic member,
+    int index,
+  ) {
     // Check if user can edit this entry (admin or entry owner)
     final isAdmin = ref.watch(isAdminProvider);
     final currentMemberId = ref.watch(currentMemberIdProvider);
     final canEdit = isAdmin || entry.memberId == currentMemberId;
 
-    return GFAppCard(
-          child: VStack(crossAlignment: CrossAxisAlignment.start, [
-            HStack([
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.sm),
-                decoration: BoxDecoration(
-                  color: AppColors.bazarColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                ),
-                child: Icon(
-                  entry.isItemized ? LucideIcons.list : LucideIcons.receipt,
-                  color: AppColors.bazarColor,
-                  size: 18,
-                ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+          child: Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.03),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.05),
               ),
-              const Gap(AppSpacing.sm),
-              VStack(crossAlignment: CrossAxisAlignment.start, [
-                member.name
-                    .toString()
-                    .text
-                    .color(AppColors.textPrimaryDark)
-                    .bold
-                    .make(),
-                _formatDate(
-                  entry.date,
-                ).text.xs.color(AppColors.textMutedDark).make(),
-              ]).expand(),
-              // Edit button (for admin or entry owner)
-              if (canEdit)
-                IconButton(
-                  icon: const Icon(
-                    LucideIcons.edit2,
-                    size: 16,
-                    color: AppColors.textMutedDark,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    // Type icon with gradient halo
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        borderRadius:
+                            BorderRadius.circular(AppSpacing.radiusSm),
+                        gradient: RadialGradient(
+                          colors: [
+                            AppColors.bazarColor.withValues(alpha: 0.2),
+                            AppColors.bazarColor.withValues(alpha: 0.03),
+                          ],
+                        ),
+                        border: Border.all(
+                          color:
+                              AppColors.bazarColor.withValues(alpha: 0.15),
+                        ),
+                      ),
+                      child: Icon(
+                        entry.isItemized
+                            ? LucideIcons.list
+                            : LucideIcons.receipt,
+                        color: AppColors.bazarColor,
+                        size: 16,
+                      ),
+                    ),
+                    const Gap(AppSpacing.sm),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            member.name.toString(),
+                            style: AppTypography.bodyMedium.copyWith(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            _formatDate(entry.date),
+                            style: AppTypography.bodySmall.copyWith(
+                              color: Colors.white.withValues(alpha: 0.3),
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Edit button
+                    if (canEdit)
+                      GestureDetector(
+                        onTap: () {
+                          HapticService.buttonPress();
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (ctx) =>
+                                AddBazarSheet(existingEntry: entry),
+                          );
+                        },
+                        child: Container(
+                          width: 30,
+                          height: 30,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.04),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.06),
+                            ),
+                          ),
+                          child: Icon(
+                            LucideIcons.edit2,
+                            size: 13,
+                            color: Colors.white.withValues(alpha: 0.4),
+                          ),
+                        ),
+                      ),
+                    const Gap(AppSpacing.sm),
+                    // Amount
+                    Text(
+                      '৳${entry.amount.toStringAsFixed(0)}',
+                      style: AppTypography.titleMedium.copyWith(
+                        color: AppColors.bazarColor,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'JetBrains Mono',
+                      ),
+                    ),
+                  ],
+                ),
+                if (entry.description != null &&
+                    entry.description!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    entry.description!,
+                    style: AppTypography.bodySmall.copyWith(
+                      color: Colors.white.withValues(alpha: 0.5),
+                    ),
                   ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  onPressed: () {
-                    HapticService.buttonPress();
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      builder: (ctx) => AddBazarSheet(existingEntry: entry),
-                    );
-                  },
-                ),
-              const Gap(AppSpacing.sm),
-              '৳${entry.amount.toStringAsFixed(0)}'.text.lg
-                  .color(AppColors.bazarColor)
-                  .bold
-                  .make(),
-            ]),
-            if (entry.description != null && entry.description!.isNotEmpty) ...[
-              8.heightBox,
-              entry.description!.text.sm
-                  .color(AppColors.textSecondaryDark)
-                  .make(),
-            ],
-            if (entry.isItemized && entry.items.isNotEmpty) ...[
-              8.heightBox,
-              Wrap(
-                spacing: 4,
-                runSpacing: 4,
-                children: entry.items.take(3).map<Widget>((item) {
-                  return GFBadge(
-                    text: item.name,
-                    color: AppColors.borderDark.withValues(alpha: 0.5),
-                    textColor: AppColors.textSecondaryDark,
-                    size: GFSize.SMALL,
-                    shape: GFBadgeShape.pills,
-                  );
-                }).toList(),
-              ),
-              if (entry.items.length > 3)
-                '+${entry.items.length - 3} more'.text.xs
-                    .color(AppColors.textMutedDark)
-                    .make()
-                    .pOnly(top: 4),
-            ],
-          ]),
-        )
-        .pOnly(bottom: AppSpacing.sm)
-        .animate(delay: (50 * index).ms)
-        .fadeIn()
-        .slideX(begin: 0.03);
+                ],
+                if (entry.isItemized && entry.items.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 4,
+                    runSpacing: 4,
+                    children: entry.items.take(3).map<Widget>((item) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.bazarColor.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color:
+                                AppColors.bazarColor.withValues(alpha: 0.12),
+                          ),
+                        ),
+                        child: Text(
+                          item.name,
+                          style: AppTypography.bodySmall.copyWith(
+                            color: Colors.white.withValues(alpha: 0.5),
+                            fontSize: 10,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  if (entry.items.length > 3)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        '+${entry.items.length - 3} more',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: Colors.white.withValues(alpha: 0.3),
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    ).animate(delay: (50 * index).ms).fadeIn().slideX(begin: 0.03);
   }
 
   String _formatDate(DateTime date) {
@@ -639,11 +1276,11 @@ class _EntriesTabState extends ConsumerState<_EntriesTab> {
             start: now.subtract(const Duration(days: 30)),
             end: now,
           ),
-      builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.dark(
+      builder: (pickerContext, child) => Theme(
+        data: Theme.of(pickerContext).copyWith(
+          colorScheme: ColorScheme.dark(
             primary: AppColors.bazarColor,
-            surface: AppColors.surfaceDark,
+            surface: const Color(0xFF0D1520),
           ),
         ),
         child: child!,
@@ -659,43 +1296,121 @@ class _EntriesTabState extends ConsumerState<_EntriesTab> {
     HapticService.lightTap();
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.surfaceDark,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(
-                LucideIcons.users,
-                color: AppColors.bazarColor,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => ClipRRect(
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppSpacing.radiusLg),
+        ),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF0D1520).withValues(alpha: 0.95),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(AppSpacing.radiusLg),
               ),
-              title: const Text('All Members'),
-              selected: _selectedMemberId == null,
-              onTap: () {
-                setState(() => _selectedMemberId = null);
-                Navigator.pop(ctx);
-              },
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.08),
+              ),
             ),
-            const Divider(),
-            ...widget.members.map(
-              (member) => ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: AppColors.bazarColor.withValues(alpha: 0.2),
-                  child: Text(
-                    member.name.toString()[0].toUpperCase(),
-                    style: const TextStyle(color: AppColors.bazarColor),
+            child: SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Handle bar
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.only(top: 12, bottom: 8),
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
                   ),
-                ),
-                title: Text(member.name.toString()),
-                selected: _selectedMemberId == member.id,
-                onTap: () {
-                  setState(() => _selectedMemberId = member.id);
-                  Navigator.pop(ctx);
-                },
+                  ListTile(
+                    leading: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            AppColors.bazarColor.withValues(alpha: 0.2),
+                            AppColors.bazarColor.withValues(alpha: 0.03),
+                          ],
+                        ),
+                      ),
+                      child: const Icon(
+                        LucideIcons.users,
+                        color: AppColors.bazarColor,
+                        size: 18,
+                      ),
+                    ),
+                    title: Text(
+                      'All Members',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.9),
+                      ),
+                    ),
+                    selected: _selectedMemberId == null,
+                    selectedTileColor:
+                        AppColors.bazarColor.withValues(alpha: 0.05),
+                    onTap: () {
+                      setState(() => _selectedMemberId = null);
+                      Navigator.pop(ctx);
+                    },
+                  ),
+                  Divider(
+                    color: Colors.white.withValues(alpha: 0.06),
+                    height: 1,
+                  ),
+                  ...widget.members.map(
+                    (member) => ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color:
+                                AppColors.bazarColor.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: CircleAvatar(
+                          radius: 16,
+                          backgroundColor:
+                              AppColors.bazarColor.withValues(alpha: 0.15),
+                          child: Text(
+                            member.name.toString()[0].toUpperCase(),
+                            style: const TextStyle(
+                              color: AppColors.bazarColor,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      title: Text(
+                        member.name.toString(),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.9),
+                        ),
+                      ),
+                      selected: _selectedMemberId == member.id,
+                      selectedTileColor:
+                          AppColors.bazarColor.withValues(alpha: 0.05),
+                      onTap: () {
+                        setState(() => _selectedMemberId = member.id);
+                        Navigator.pop(ctx);
+                      },
+                    ),
+                  ),
+                  const Gap(AppSpacing.lg),
+                ],
               ),
             ),
-            const Gap(AppSpacing.lg),
-          ],
+          ),
         ),
       ),
     );

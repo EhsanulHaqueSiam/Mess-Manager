@@ -17,15 +17,16 @@ class ToastService {
     toastification.show(
       context: context,
       type: ToastificationType.success,
-      style: ToastificationStyle.flatColored,
-      title: title != null ? Text(title) : null,
-      description: Text(message),
-      icon: const Icon(LucideIcons.checkCircle2),
+      style: ToastificationStyle.flat,
+      title: title != null
+          ? Text(title, style: const TextStyle(color: Colors.black87))
+          : null,
+      description: Text(message, style: const TextStyle(color: Colors.black87)),
+      icon: const Icon(LucideIcons.checkCircle2, color: AppColors.success),
       autoCloseDuration: duration ?? _defaultDuration,
       alignment: Alignment.bottomCenter,
       primaryColor: AppColors.success,
-      backgroundColor: AppColors.cardDark,
-      foregroundColor: AppColors.textPrimaryDark,
+      backgroundColor: Colors.white,
       borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
       boxShadow: [
         BoxShadow(
@@ -47,15 +48,16 @@ class ToastService {
     toastification.show(
       context: context,
       type: ToastificationType.error,
-      style: ToastificationStyle.flatColored,
-      title: title != null ? Text(title) : null,
-      description: Text(message),
-      icon: const Icon(LucideIcons.xCircle),
+      style: ToastificationStyle.flat,
+      title: title != null
+          ? Text(title, style: const TextStyle(color: Colors.black87))
+          : null,
+      description: Text(message, style: const TextStyle(color: Colors.black87)),
+      icon: const Icon(LucideIcons.xCircle, color: AppColors.error),
       autoCloseDuration: duration ?? _defaultDuration,
       alignment: Alignment.bottomCenter,
       primaryColor: AppColors.error,
-      backgroundColor: AppColors.cardDark,
-      foregroundColor: AppColors.textPrimaryDark,
+      backgroundColor: Colors.white,
       borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
     );
   }
@@ -70,15 +72,16 @@ class ToastService {
     toastification.show(
       context: context,
       type: ToastificationType.warning,
-      style: ToastificationStyle.flatColored,
-      title: title != null ? Text(title) : null,
-      description: Text(message),
-      icon: const Icon(LucideIcons.alertTriangle),
+      style: ToastificationStyle.flat,
+      title: title != null
+          ? Text(title, style: const TextStyle(color: Colors.black87))
+          : null,
+      description: Text(message, style: const TextStyle(color: Colors.black87)),
+      icon: const Icon(LucideIcons.alertTriangle, color: AppColors.warning),
       autoCloseDuration: duration ?? _defaultDuration,
       alignment: Alignment.bottomCenter,
       primaryColor: AppColors.warning,
-      backgroundColor: AppColors.cardDark,
-      foregroundColor: AppColors.textPrimaryDark,
+      backgroundColor: Colors.white,
       borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
     );
   }
@@ -93,15 +96,16 @@ class ToastService {
     toastification.show(
       context: context,
       type: ToastificationType.info,
-      style: ToastificationStyle.flatColored,
-      title: title != null ? Text(title) : null,
-      description: Text(message),
-      icon: const Icon(LucideIcons.info),
+      style: ToastificationStyle.flat,
+      title: title != null
+          ? Text(title, style: const TextStyle(color: Colors.black87))
+          : null,
+      description: Text(message, style: const TextStyle(color: Colors.black87)),
+      icon: const Icon(LucideIcons.info, color: AppColors.info),
       autoCloseDuration: duration ?? _defaultDuration,
       alignment: Alignment.bottomCenter,
       primaryColor: AppColors.info,
-      backgroundColor: AppColors.cardDark,
-      foregroundColor: AppColors.textPrimaryDark,
+      backgroundColor: Colors.white,
       borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
     );
   }
@@ -129,8 +133,8 @@ class ToastService {
       autoCloseDuration: null, // Manual dismiss
       alignment: Alignment.bottomCenter,
       primaryColor: AppColors.primary,
-      backgroundColor: AppColors.cardDark,
-      foregroundColor: AppColors.textPrimaryDark,
+      backgroundColor: context.cardColor,
+      foregroundColor: context.textPrimary,
       borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
     );
   }

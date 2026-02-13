@@ -37,7 +37,7 @@ class _SearchSheetState extends ConsumerState<SearchSheet> {
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
       decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
+        color: context.surfaceColor,
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(AppSpacing.radiusLg),
         ),
@@ -51,7 +51,7 @@ class _SearchSheetState extends ConsumerState<SearchSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.borderDark,
+                color: context.borderColor,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -68,7 +68,7 @@ class _SearchSheetState extends ConsumerState<SearchSheet> {
                 ref.read(searchQueryProvider.notifier).setQuery(value);
               },
               style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.textPrimaryDark,
+                color: context.textPrimary,
               ),
               decoration: InputDecoration(
                 hintText: 'Search members, bazar, items...',
@@ -83,7 +83,7 @@ class _SearchSheetState extends ConsumerState<SearchSheet> {
                       )
                     : null,
                 filled: true,
-                fillColor: AppColors.cardDark,
+                fillColor: context.cardColor,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
                   borderSide: BorderSide.none,
@@ -118,18 +118,18 @@ class _SearchSheetState extends ConsumerState<SearchSheet> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(LucideIcons.search, size: 48, color: AppColors.textMutedDark),
+          Icon(LucideIcons.search, size: 48, color: context.textMuted),
           const Gap(AppSpacing.md),
           Text(
             'Search anything',
             style: AppTypography.titleMedium.copyWith(
-              color: AppColors.textSecondaryDark,
+              color: context.textSecondary,
             ),
           ),
           Text(
             'Members, bazar items, expenses...',
             style: AppTypography.bodySmall.copyWith(
-              color: AppColors.textMutedDark,
+              color: context.textMuted,
             ),
           ),
         ],
@@ -142,12 +142,12 @@ class _SearchSheetState extends ConsumerState<SearchSheet> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(LucideIcons.searchX, size: 48, color: AppColors.textMutedDark),
+          Icon(LucideIcons.searchX, size: 48, color: context.textMuted),
           const Gap(AppSpacing.md),
           Text(
             'No results found',
             style: AppTypography.titleMedium.copyWith(
-              color: AppColors.textSecondaryDark,
+              color: context.textSecondary,
             ),
           ),
         ],
@@ -173,9 +173,9 @@ class _SearchSheetState extends ConsumerState<SearchSheet> {
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.cardDark,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-        border: Border.all(color: AppColors.borderDark.withValues(alpha: 0.5)),
+        border: Border.all(color: context.borderColor.withValues(alpha: 0.5)),
       ),
       child: Row(
         children: [
@@ -195,13 +195,13 @@ class _SearchSheetState extends ConsumerState<SearchSheet> {
                 Text(
                   result.title,
                   style: AppTypography.titleSmall.copyWith(
-                    color: AppColors.textPrimaryDark,
+                    color: context.textPrimary,
                   ),
                 ),
                 Text(
                   result.subtitle,
                   style: AppTypography.labelSmall.copyWith(
-                    color: AppColors.textSecondaryDark,
+                    color: context.textSecondary,
                   ),
                 ),
               ],

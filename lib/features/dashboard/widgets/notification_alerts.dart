@@ -75,7 +75,7 @@ class NotificationAlertsArea extends StatelessWidget {
             Text(
               'Notifications',
               style: AppTypography.headlineSmall.copyWith(
-                color: AppColors.textPrimaryDark,
+                color: context.textPrimary,
               ),
             ),
             const Gap(AppSpacing.sm),
@@ -97,13 +97,13 @@ class NotificationAlertsArea extends StatelessWidget {
         ),
         const Gap(AppSpacing.sm),
         ...alerts.asMap().entries.map((entry) {
-          return _buildAlertCard(entry.value, entry.key);
+          return _buildAlertCard(context, entry.value, entry.key);
         }),
       ],
     );
   }
 
-  Widget _buildAlertCard(DashboardAlert alert, int index) {
+  Widget _buildAlertCard(BuildContext context, DashboardAlert alert, int index) {
     final color = getAlertColor(alert.type);
 
     return Container(
@@ -151,14 +151,14 @@ class NotificationAlertsArea extends StatelessWidget {
                       Text(
                         alert.title,
                         style: AppTypography.titleSmall.copyWith(
-                          color: AppColors.textPrimaryDark,
+                          color: context.textPrimary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                       Text(
                         alert.message,
                         style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.textSecondaryDark,
+                          color: context.textSecondary,
                         ),
                       ),
                     ],

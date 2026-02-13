@@ -1,9 +1,10 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:velocity_x/velocity_x.dart';
-import 'package:getwidget/getwidget.dart';
+import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:mess_manager/core/theme/app_theme.dart';
@@ -12,11 +13,11 @@ import 'package:mess_manager/core/models/money_transaction.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
 import 'package:mess_manager/core/services/prayer_times_service.dart';
-import 'package:mess_manager/core/widgets/gf_components.dart';
+import 'package:mess_manager/core/widgets/app_components.dart';
 import 'package:mess_manager/features/ramadan/providers/ramadan_provider.dart';
 import 'package:mess_manager/features/money/providers/money_provider.dart';
 
-/// Ramadan Screen - Uses GetWidget + VelocityX + flutter_animate
+/// Ramadan Screen - Cosmic Bioluminescence Design
 class RamadanScreen extends ConsumerStatefulWidget {
   const RamadanScreen({super.key});
 
@@ -54,96 +55,287 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
     final members = ref.watch(membersProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: HStack([
-          const Icon(LucideIcons.moon, color: AppColors.primary, size: 22),
-          8.widthBox,
-          'Ramadan'.text.make(),
-        ]),
-        actions: [
-          // Calendar button - always visible when season exists
-          if (season != null)
-            IconButton(
-              onPressed: () => context.push('/ramadan-calendar'),
-              icon: const Icon(LucideIcons.calendar, size: 20),
-              tooltip: 'View Calendar',
+      backgroundColor: const Color(0xFF0A0E1A),
+      body: Stack(
+        children: [
+          // Background gradient
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFF0A0E1A), Color(0xFF0D1520)],
+                ),
+              ),
             ),
-          // New Season button - only when no season
-          if (season == null)
-            TextButton.icon(
-              onPressed: () => _showCreateSeasonSheet(context),
-              icon: const Icon(LucideIcons.plus, size: 18),
-              label: 'New Season'.text.make(),
+          ),
+
+          // Breathing accent orb - top right
+          Positioned(
+            top: -60,
+            right: -40,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppColors.primary.withValues(alpha: 0.15),
+                    AppColors.primary.withValues(alpha: 0.0),
+                  ],
+                ),
+              ),
+            )
+                .animate(onPlay: (c) => c.repeat(reverse: true))
+                .scaleXY(begin: 0.8, end: 1.2, duration: 4000.ms, curve: Curves.easeInOut),
+          ),
+
+          // Breathing accent orb - bottom left
+          Positioned(
+            bottom: 100,
+            left: -60,
+            child: Container(
+              width: 180,
+              height: 180,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppColors.secondary.withValues(alpha: 0.1),
+                    AppColors.secondary.withValues(alpha: 0.0),
+                  ],
+                ),
+              ),
+            )
+                .animate(onPlay: (c) => c.repeat(reverse: true))
+                .scaleXY(begin: 1.0, end: 1.3, duration: 5000.ms, curve: Curves.easeInOut),
+          ),
+
+          // Main content
+          SafeArea(
+            child: Column(
+              children: [
+                // Custom header
+                _buildCosmicHeader(season),
+
+                // Body
+                Expanded(
+                  child: season == null
+                      ? _buildNoSeasonState()
+                      : SingleChildScrollView(
+                          padding: const EdgeInsets.all(AppSpacing.md),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Season Info Card
+                              _buildSeasonCard(season, mealRate)
+                                  .animate()
+                                  .fadeIn()
+                                  .scale(begin: const Offset(0.95, 0.95)),
+                              const Gap(16),
+
+                              // Prayer Times Card
+                              _buildPrayerTimesCard(),
+                              const Gap(16),
+
+                              // Quick Actions
+                              _buildQuickActions(season),
+                              const Gap(16),
+
+                              // Today's Meals
+                              _buildTodayMeals(season),
+                              const Gap(16),
+
+                              // Balances section label
+                              _buildSectionLabel('BALANCES'),
+                              const Gap(8),
+                              ...balances.asMap().entries.map(
+                                (e) => _buildBalanceRow(e.value, members, e.key),
+                              ),
+                              const Gap(16),
+
+                              // Credit/Debt Section
+                              _buildCreditDebtSection(members),
+                              const Gap(80), // FAB clearance
+                            ],
+                          ),
+                        ),
+                ),
+              ],
             ),
+          ),
         ],
       ),
-      body: season == null
-          ? _buildNoSeasonState()
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: VStack(crossAlignment: CrossAxisAlignment.start, [
-                // Season Info Card
-                _buildSeasonCard(
-                  season,
-                  mealRate,
-                ).animate().fadeIn().scale(begin: const Offset(0.95, 0.95)),
-                16.heightBox,
-
-                // Prayer Times Card (Iftar/Sehri)
-                _buildPrayerTimesCard(),
-                16.heightBox,
-
-                // Quick Actions
-                _buildQuickActions(season),
-                16.heightBox,
-
-                // Today's Meals
-                _buildTodayMeals(season),
-                16.heightBox,
-
-                // Balances
-                'Balances'.text.xl.bold.color(AppColors.textPrimaryDark).make(),
-                8.heightBox,
-                ...balances.asMap().entries.map(
-                  (e) => _buildBalanceRow(e.value, members, e.key),
-                ),
-                16.heightBox,
-
-                // Credit/Debt Section
-                _buildCreditDebtSection(members),
-              ]),
-            ),
       floatingActionButton: season != null
-          ? FloatingActionButton.extended(
-              onPressed: () => _showAddMealSheet(context, season),
-              icon: const Icon(LucideIcons.utensils),
-              label: 'Add Meal'.text.make(),
-              backgroundColor: AppColors.primary,
-            ).animate().scale(delay: 300.ms)
+          ? Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: LinearGradient(
+                  colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.7)],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.4),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: FloatingActionButton.extended(
+                onPressed: () => _showAddMealSheet(context, season),
+                icon: const Icon(LucideIcons.utensils, color: Colors.white),
+                label: Text('Add Meal', style: TextStyle(color: Colors.white.withValues(alpha: 0.95))),
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+              ),
+            )
+                .animate()
+                .scale(delay: 300.ms)
+                .then()
+                .shimmer(duration: 2000.ms, delay: 1000.ms, color: Colors.white.withValues(alpha: 0.1))
           : null,
     );
   }
 
-  Widget _buildNoSeasonState() {
-    return VStack(alignment: MainAxisAlignment.center, [
-      const Icon(LucideIcons.moon, size: 64, color: AppColors.textMutedDark),
-      16.heightBox,
-      'No Active Ramadan Season'.text.xl
-          .color(AppColors.textPrimaryDark)
-          .center
-          .make(),
-      8.heightBox,
-      'Create a new season to start tracking'.text
-          .color(AppColors.textSecondaryDark)
-          .center
-          .make(),
-      24.heightBox,
-      GFPrimaryButton(
-        text: 'Create Season',
-        icon: LucideIcons.plus,
-        onPressed: () => _showCreateSeasonSheet(context),
+  Widget _buildCosmicHeader(RamadanSeason? season) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+      child: Row(
+        children: [
+          // Gradient halo icon
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  AppColors.primary.withValues(alpha: 0.3),
+                  AppColors.primary.withValues(alpha: 0.0),
+                ],
+              ),
+            ),
+            child: const Center(
+              child: Icon(LucideIcons.moon, color: AppColors.primary, size: 22),
+            ),
+          ),
+          const Gap(10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Ramadan',
+                  style: AppTypography.titleLarge.copyWith(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  'Blessed Month',
+                  style: AppTypography.labelSmall.copyWith(
+                    color: Colors.white.withValues(alpha: 0.3),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Calendar button
+          if (season != null)
+            _glassIconButton(
+              icon: LucideIcons.calendar,
+              onTap: () => context.push('/ramadan-calendar'),
+              tooltip: 'View Calendar',
+            ),
+          if (season != null) const Gap(8),
+          // New Season button
+          if (season == null)
+            _glassIconButton(
+              icon: LucideIcons.plus,
+              onTap: () => _showCreateSeasonSheet(context),
+              tooltip: 'New Season',
+            ),
+        ],
       ),
-    ]).centered().animate().fadeIn();
+    );
+  }
+
+  Widget _glassIconButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    String? tooltip,
+  }) {
+    final button = GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.05),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(
+              child: Icon(icon, size: 18, color: Colors.white.withValues(alpha: 0.7)),
+            ),
+          ),
+        ),
+      ),
+    );
+    if (tooltip != null) {
+      return Tooltip(message: tooltip, child: button);
+    }
+    return button;
+  }
+
+  Widget _buildNoSeasonState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  AppColors.primary.withValues(alpha: 0.2),
+                  AppColors.primary.withValues(alpha: 0.0),
+                ],
+              ),
+            ),
+            child: Icon(LucideIcons.moon, size: 40, color: Colors.white.withValues(alpha: 0.3)),
+          )
+              .animate(onPlay: (c) => c.repeat(reverse: true))
+              .scaleXY(begin: 0.9, end: 1.1, duration: 3000.ms, curve: Curves.easeInOut),
+          const Gap(16),
+          Text(
+            'No Active Ramadan Season',
+            textAlign: TextAlign.center,
+            style: AppTypography.titleLarge.copyWith(color: Colors.white.withValues(alpha: 0.9)),
+          ),
+          const Gap(8),
+          Text(
+            'Create a new season to start tracking',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+          ),
+          const Gap(24),
+          AppPrimaryButton(
+            text: 'Create Season',
+            icon: LucideIcons.plus,
+            onPressed: () => _showCreateSeasonSheet(context),
+          ),
+        ],
+      ),
+    ).animate().fadeIn();
   }
 
   Widget _buildSeasonCard(RamadanSeason season, double mealRate) {
@@ -151,52 +343,86 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
     final totalDays = season.endDate.difference(season.startDate).inDays;
     final progress = 1 - (daysLeft / totalDays);
 
-    return GFCard(
-      margin: EdgeInsets.zero,
-      padding: const EdgeInsets.all(AppSpacing.lg),
+    return ClipRRect(
       borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-      gradient: LinearGradient(
-        colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.7)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-      content: VStack(crossAlignment: CrossAxisAlignment.start, [
-        HStack([
-          const Icon(LucideIcons.moon, color: Colors.white, size: 24),
-          8.widthBox,
-          'Ramadan ${season.year}'.text.xl.white.bold.make().expand(),
-          GFBadge(
-            text: '$daysLeft days left',
-            color: Colors.white.withValues(alpha: 0.2),
-            textColor: Colors.white,
-            size: GFSize.SMALL,
-            shape: GFBadgeShape.pills,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            gradient: LinearGradient(
+              colors: [
+                AppColors.primary.withValues(alpha: 0.25),
+                AppColors.primary.withValues(alpha: 0.1),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
           ),
-        ]),
-        12.heightBox,
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: progress.clamp(0, 1).toDouble(),
-            backgroundColor: Colors.white.withValues(alpha: 0.3),
-            valueColor: const AlwaysStoppedAnimation(Colors.white),
-            minHeight: 6,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                const Icon(LucideIcons.moon, color: Colors.white, size: 24),
+                const Gap(8),
+                Expanded(
+                  child: Text(
+                    'Ramadan ${season.year}',
+                    style: AppTypography.titleLarge.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                AppBadge(
+                  text: '$daysLeft days left',
+                  color: Colors.white.withValues(alpha: 0.15),
+                  textColor: Colors.white,
+                ),
+              ]),
+              const Gap(12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: progress.clamp(0, 1).toDouble(),
+                  backgroundColor: Colors.white.withValues(alpha: 0.15),
+                  valueColor: AlwaysStoppedAnimation(Colors.white.withValues(alpha: 0.8)),
+                  minHeight: 6,
+                ),
+              ),
+              const Gap(12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _statItem('Members', '${season.optedInMemberIds.length}'),
+                  _statItem('Meal Rate', '${mealRate.toStringAsFixed(1)}'),
+                  _statItem('Progress', '${(progress * 100).toInt()}%'),
+                ],
+              ),
+            ],
           ),
         ),
-        12.heightBox,
-        HStack(alignment: MainAxisAlignment.spaceAround, [
-          _statItem('Members', '${season.optedInMemberIds.length}'),
-          _statItem('Meal Rate', '৳${mealRate.toStringAsFixed(1)}'),
-          _statItem('Progress', '${(progress * 100).toInt()}%'),
-        ]),
-      ]),
+      ),
     );
   }
 
   Widget _statItem(String label, String value) {
-    return VStack([
-      value.text.lg.white.bold.make(),
-      label.text.xs.color(Colors.white.withValues(alpha: 0.8)).make(),
+    return Column(children: [
+      Text(
+        value,
+        style: AppTypography.titleMedium.copyWith(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      Text(
+        label,
+        style: AppTypography.labelSmall.copyWith(
+          color: Colors.white.withValues(alpha: 0.6),
+        ),
+      ),
     ]);
   }
 
@@ -244,124 +470,214 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
       countdownText = '${diff.inHours}h ${diff.inMinutes % 60}m to Iftar';
       isCountingToIftar = true;
     } else {
-      countdownText = 'Iftar complete • Fast tomorrow';
+      countdownText = 'Iftar complete \u2022 Fast tomorrow';
       isCountingToIftar = false;
     }
 
-    return GFAppCard(
-      borderColor: AppColors.primary.withValues(alpha: 0.3),
-      child: VStack(crossAlignment: CrossAxisAlignment.start, [
-        // Header with district selector
-        HStack([
-          const Icon(LucideIcons.clock, color: AppColors.primary, size: 18),
-          8.widthBox,
-          "Today's Times".text.bold.color(AppColors.textPrimaryDark).make(),
-          const Spacer(),
-          // District dropdown
-          _isLoadingTimes
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : PopupMenuButton<String>(
-                  initialValue: _selectedDistrict,
-                  onSelected: (district) {
-                    setState(() => _selectedDistrict = district);
-                    _loadPrayerTimes();
-                  },
-                  itemBuilder: (context) {
-                    return PrayerTimesService.getAvailableDistricts()
-                        .map((d) => PopupMenuItem(value: d, child: Text(d)))
-                        .toList();
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.03),
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header with district selector
+                Row(children: [
+                  const Icon(LucideIcons.clock, color: AppColors.primary, size: 18),
+                  const Gap(8),
+                  Text(
+                    "Today's Times",
+                    style: AppTypography.titleSmall.copyWith(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      fontWeight: FontWeight.bold,
                     ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: HStack([
-                      _selectedDistrict.text.sm.color(AppColors.primary).make(),
-                      4.widthBox,
-                      const Icon(
-                        LucideIcons.chevronDown,
-                        size: 14,
-                        color: AppColors.primary,
+                  ),
+                  const Spacer(),
+                  // District dropdown
+                  _isLoadingTimes
+                      ? SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.primary.withValues(alpha: 0.6),
+                          ),
+                        )
+                      : PopupMenuButton<String>(
+                          initialValue: _selectedDistrict,
+                          onSelected: (district) {
+                            setState(() => _selectedDistrict = district);
+                            _loadPrayerTimes();
+                          },
+                          color: const Color(0xFF141B2D),
+                          itemBuilder: (context) {
+                            return PrayerTimesService.getAvailableDistricts()
+                                .map((d) => PopupMenuItem(
+                                      value: d,
+                                      child: Text(d, style: TextStyle(color: Colors.white.withValues(alpha: 0.8))),
+                                    ))
+                                .toList();
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                            ),
+                            child: Row(children: [
+                              Text(
+                                _selectedDistrict,
+                                style: AppTypography.bodySmall.copyWith(color: AppColors.primary),
+                              ),
+                              const Gap(4),
+                              const Icon(LucideIcons.chevronDown, size: 14, color: AppColors.primary),
+                            ]),
+                          ),
+                        ),
+                ]),
+                const Gap(12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    // Sehri
+                    Column(children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              AppColors.info.withValues(alpha: 0.2),
+                              AppColors.info.withValues(alpha: 0.0),
+                            ],
+                          ),
+                        ),
+                        child: const Center(
+                          child: Icon(LucideIcons.sunrise, color: AppColors.info, size: 24),
+                        ),
+                      ),
+                      const Gap(4),
+                      Text('Sehri', style: AppTypography.bodySmall.copyWith(color: Colors.white.withValues(alpha: 0.5))),
+                      Text(
+                        '$sehriTime AM',
+                        style: AppTypography.titleMedium.copyWith(color: AppColors.info, fontWeight: FontWeight.bold),
                       ),
                     ]),
+                    Container(
+                      width: 1,
+                      height: 50,
+                      color: Colors.white.withValues(alpha: 0.06),
+                    ),
+                    // Iftar
+                    Column(children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              AppColors.warning.withValues(alpha: 0.2),
+                              AppColors.warning.withValues(alpha: 0.0),
+                            ],
+                          ),
+                        ),
+                        child: const Center(
+                          child: Icon(LucideIcons.sunset, color: AppColors.warning, size: 24),
+                        ),
+                      ),
+                      const Gap(4),
+                      Text('Iftar', style: AppTypography.bodySmall.copyWith(color: Colors.white.withValues(alpha: 0.5))),
+                      Text(
+                        '$iftarTime PM',
+                        style: AppTypography.titleMedium.copyWith(color: AppColors.warning, fontWeight: FontWeight.bold),
+                      ),
+                    ]),
+                  ],
+                ),
+                const Gap(12),
+                // Countdown Banner
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(AppSpacing.sm),
+                      decoration: BoxDecoration(
+                        color: (isCountingToIftar ? AppColors.warning : AppColors.info).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                        border: Border.all(
+                          color: (isCountingToIftar ? AppColors.warning : AppColors.info).withValues(alpha: 0.15),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            isCountingToIftar ? LucideIcons.sunset : LucideIcons.sunrise,
+                            size: 16,
+                            color: isCountingToIftar ? AppColors.warning : AppColors.info,
+                          ),
+                          const Gap(8),
+                          Text(
+                            countdownText,
+                            style: AppTypography.bodySmall.copyWith(
+                              color: isCountingToIftar ? AppColors.warning : AppColors.info,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-        ]),
-        12.heightBox,
-        HStack(alignment: MainAxisAlignment.spaceEvenly, [
-          // Sehri
-          VStack([
-            const Icon(LucideIcons.sunrise, color: AppColors.info, size: 28),
-            4.heightBox,
-            'Sehri'.text.sm.color(AppColors.textSecondaryDark).make(),
-            '$sehriTime AM'.text.lg.bold.color(AppColors.info).make(),
-          ]),
-          Container(width: 1, height: 50, color: AppColors.borderDark),
-          // Iftar
-          VStack([
-            const Icon(LucideIcons.sunset, color: AppColors.warning, size: 28),
-            4.heightBox,
-            'Iftar'.text.sm.color(AppColors.textSecondaryDark).make(),
-            '$iftarTime PM'.text.lg.bold.color(AppColors.warning).make(),
-          ]),
-        ]),
-        12.heightBox,
-        // Countdown Banner
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(AppSpacing.sm),
-          decoration: BoxDecoration(
-            color: (isCountingToIftar ? AppColors.warning : AppColors.info)
-                .withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-          ),
-          child: HStack(alignment: MainAxisAlignment.center, [
-            Icon(
-              isCountingToIftar ? LucideIcons.sunset : LucideIcons.sunrise,
-              size: 16,
-              color: isCountingToIftar ? AppColors.warning : AppColors.info,
+              ],
             ),
-            8.widthBox,
-            countdownText.text.sm.bold
-                .color(isCountingToIftar ? AppColors.warning : AppColors.info)
-                .make(),
-          ]),
+          ),
         ),
-      ]).p12(),
+      ),
     ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.05);
   }
 
   Widget _buildQuickActions(RamadanSeason season) {
-    return HStack([
-      _actionCard(
-        icon: LucideIcons.sunrise,
-        label: 'Sehri',
-        color: AppColors.info,
-        onTap: () => _quickAddMeal(season, RamadanMealType.sehri),
-      ).expand(),
-      8.widthBox,
-      _actionCard(
-        icon: LucideIcons.sunset,
-        label: 'Iftar',
-        color: AppColors.warning,
-        onTap: () => _quickAddMeal(season, RamadanMealType.iftar),
-      ).expand(),
-      8.widthBox,
-      _actionCard(
-        icon: LucideIcons.shoppingCart,
-        label: 'Bazar',
-        color: AppColors.bazarColor,
-        onTap: () => _showAddBazarSheet(context, season),
-      ).expand(),
+    return Row(children: [
+      Expanded(
+        child: _actionCard(
+          icon: LucideIcons.sunrise,
+          label: 'Sehri',
+          color: AppColors.info,
+          onTap: () => _quickAddMeal(season, RamadanMealType.sehri),
+        ),
+      ),
+      const Gap(8),
+      Expanded(
+        child: _actionCard(
+          icon: LucideIcons.sunset,
+          label: 'Iftar',
+          color: AppColors.warning,
+          onTap: () => _quickAddMeal(season, RamadanMealType.iftar),
+        ),
+      ),
+      const Gap(8),
+      Expanded(
+        child: _actionCard(
+          icon: LucideIcons.shoppingCart,
+          label: 'Bazar',
+          color: AppColors.bazarColor,
+          onTap: () => _showAddBazarSheet(context, season),
+        ),
+      ),
     ]).animate(delay: 100.ms).fadeIn().slideY(begin: 0.05);
   }
 
@@ -371,15 +687,44 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
     required Color color,
     required VoidCallback onTap,
   }) {
-    return GFAppCard(
-      color: color.withValues(alpha: 0.15),
-      borderColor: color.withValues(alpha: 0.3),
+    return GestureDetector(
       onTap: onTap,
-      child: VStack([
-        Icon(icon, color: color, size: 24),
-        8.heightBox,
-        label.text.sm.color(color).center.make(),
-      ]).p8(),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.03),
+              border: Border.all(color: color.withValues(alpha: 0.15)),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            ),
+            child: Column(children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      color.withValues(alpha: 0.25),
+                      color.withValues(alpha: 0.0),
+                    ],
+                  ),
+                ),
+                child: Center(child: Icon(icon, color: color, size: 22)),
+              ),
+              const Gap(8),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: AppTypography.bodySmall.copyWith(color: color),
+              ),
+            ]),
+          ),
+        ),
+      ),
     );
   }
 
@@ -390,26 +735,37 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
     final hasSehri = todayMeals.any((m) => m.type == RamadanMealType.sehri);
     final hasIftar = todayMeals.any((m) => m.type == RamadanMealType.iftar);
 
-    return GFAppCard(
-      child: VStack(crossAlignment: CrossAxisAlignment.start, [
-        "Today's Status".text.bold.color(AppColors.textPrimaryDark).make(),
-        8.heightBox,
-        HStack([
-          _mealStatus(
-            'Sehri',
-            LucideIcons.sunrise,
-            hasSehri,
-            AppColors.info,
-          ).expand(),
-          8.widthBox,
-          _mealStatus(
-            'Iftar',
-            LucideIcons.sunset,
-            hasIftar,
-            AppColors.warning,
-          ).expand(),
-        ]),
-      ]),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.03),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Today's Status",
+                style: AppTypography.titleSmall.copyWith(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const Gap(8),
+              Row(children: [
+                Expanded(child: _mealStatus('Sehri', LucideIcons.sunrise, hasSehri, AppColors.info)),
+                const Gap(8),
+                Expanded(child: _mealStatus('Iftar', LucideIcons.sunset, hasIftar, AppColors.warning)),
+              ]),
+            ],
+          ),
+        ),
+      ),
     ).animate(delay: 200.ms).fadeIn();
   }
 
@@ -417,19 +773,58 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        color: done ? color.withValues(alpha: 0.2) : AppColors.surfaceDark,
+        color: done ? color.withValues(alpha: 0.12) : Colors.white.withValues(alpha: 0.02),
         borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-        border: Border.all(color: done ? color : AppColors.borderDark),
-      ),
-      child: HStack(alignment: MainAxisAlignment.center, [
-        Icon(
-          done ? LucideIcons.checkCircle : icon,
-          color: done ? color : AppColors.textMutedDark,
-          size: 18,
+        border: Border.all(
+          color: done ? color.withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.06),
         ),
-        4.widthBox,
-        label.text.sm.color(done ? color : AppColors.textMutedDark).make(),
-      ]),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            done ? LucideIcons.checkCircle : icon,
+            color: done ? color : Colors.white.withValues(alpha: 0.3),
+            size: 18,
+          ),
+          const Gap(4),
+          Text(
+            label,
+            style: AppTypography.bodySmall.copyWith(
+              color: done ? color : Colors.white.withValues(alpha: 0.3),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionLabel(String text) {
+    return Row(
+      children: [
+        Container(
+          width: 3,
+          height: 16,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(2),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.3)],
+            ),
+          ),
+        ),
+        const Gap(8),
+        Text(
+          text,
+          style: AppTypography.titleLarge.copyWith(
+            color: Colors.white.withValues(alpha: 0.9),
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.2,
+            fontSize: 13,
+          ),
+        ),
+      ],
     );
   }
 
@@ -442,28 +837,49 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
 
     final isPositive = balance.balance >= 0;
 
-    return GFAppCard(
-      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: HStack([
-        GFMemberAvatar(
-          name: member.name,
-          size: 36,
-          backgroundColor: AppColors.primary.withValues(alpha: 0.2),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.03),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            ),
+            child: Row(children: [
+              AppMemberAvatar(
+                name: member.name,
+                size: 36,
+                backgroundColor: AppColors.primary.withValues(alpha: 0.2),
+              ),
+              const Gap(8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(member.name, style: TextStyle(color: Colors.white.withValues(alpha: 0.9))),
+                    Text(
+                      '${balance.totalMeals} meals \u2022 \u09F3${balance.totalBazar.toStringAsFixed(0)} bazar',
+                      style: AppTypography.labelSmall.copyWith(color: Colors.white.withValues(alpha: 0.3)),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                '${isPositive ? '+' : ''}\u09F3${balance.balance.toStringAsFixed(0)}',
+                style: AppTypography.titleMedium.copyWith(
+                  color: isPositive ? AppColors.success : AppColors.error,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ]),
+          ),
         ),
-        8.widthBox,
-        VStack(crossAlignment: CrossAxisAlignment.start, [
-          member.name.text.color(AppColors.textPrimaryDark).make(),
-          '${balance.totalMeals} meals • ৳${balance.totalBazar.toStringAsFixed(0)} bazar'
-              .text
-              .xs
-              .color(AppColors.textMutedDark)
-              .make(),
-        ]).expand(),
-        '${isPositive ? '+' : ''}৳${balance.balance.toStringAsFixed(0)}'.text.lg
-            .color(isPositive ? AppColors.success : AppColors.error)
-            .bold
-            .make(),
-      ]),
+      ),
     ).animate(delay: (60 * index).ms).fadeIn().slideX(begin: 0.02);
   }
 
@@ -475,34 +891,48 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
         ref.watch(ramadanSeasonNeedingSettlementProvider);
 
     if (creditDebts.isEmpty && isSettled) {
-      return GFAppCard(
-        color: AppColors.success.withValues(alpha: 0.1),
-        borderColor: AppColors.success.withValues(alpha: 0.3),
-        child: HStack([
-          const Icon(
-            LucideIcons.checkCircle,
-            color: AppColors.success,
-            size: 20,
-          ),
-          8.widthBox,
-          'All balances settled!'.text.color(AppColors.success).make().expand(),
-          if (season != null && !season.isSettled)
-            GFSecondaryButton(
-              text: 'Close Season',
-              color: AppColors.success,
-              onPressed: () => _markSettled(season.id),
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: AppColors.success.withValues(alpha: 0.06),
+              border: Border.all(color: AppColors.success.withValues(alpha: 0.2)),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
             ),
-        ]),
+            child: Row(children: [
+              const Icon(LucideIcons.checkCircle, color: AppColors.success, size: 20),
+              const Gap(8),
+              Expanded(
+                child: Text(
+                  'All balances settled!',
+                  style: TextStyle(color: AppColors.success),
+                ),
+              ),
+              if (season != null && !season.isSettled)
+                AppSecondaryButton(
+                  text: 'Close Season',
+                  color: AppColors.success,
+                  onPressed: () => _markSettled(season.id),
+                ),
+            ]),
+          ),
+        ),
       );
     }
 
-    return VStack(crossAlignment: CrossAxisAlignment.start, [
-      'Who Owes Whom'.text.xl.bold.color(AppColors.textPrimaryDark).make(),
-      8.heightBox,
-      ...creditDebts.asMap().entries.map(
-        (e) => _buildCreditDebtRow(e.value, members, e.key),
-      ),
-    ]);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionLabel('WHO OWES WHOM'),
+        const Gap(8),
+        ...creditDebts.asMap().entries.map(
+          (e) => _buildCreditDebtRow(e.value, members, e.key),
+        ),
+      ],
+    );
   }
 
   Widget _buildCreditDebtRow(RamadanCreditDebt cd, List members, int index) {
@@ -516,40 +946,75 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
     );
     if (from == null || to == null) return const SizedBox.shrink();
 
-    return GFAppCard(
-      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: HStack([
-        GFMemberAvatar(
-          name: from.name,
-          size: 32,
-          backgroundColor: AppColors.error.withValues(alpha: 0.2),
-        ),
-        8.widthBox,
-        VStack(crossAlignment: CrossAxisAlignment.start, [
-          '${from.name} → ${to.name}'.text
-              .color(AppColors.textPrimaryDark)
-              .make(),
-          '৳${cd.amount.toStringAsFixed(0)}'.text.sm
-              .color(AppColors.warning)
-              .bold
-              .make(),
-        ]).expand(),
-        GFIconButton(
-          icon: const Icon(
-            LucideIcons.checkCircle,
-            color: AppColors.success,
-            size: 20,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.03),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            ),
+            child: Row(children: [
+              AppMemberAvatar(
+                name: from.name,
+                size: 32,
+                backgroundColor: AppColors.error.withValues(alpha: 0.2),
+              ),
+              const Gap(8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(from.name, style: TextStyle(color: Colors.white.withValues(alpha: 0.9))),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          child: Icon(LucideIcons.arrowRight, size: 14, color: AppColors.warning.withValues(alpha: 0.7)),
+                        ),
+                        Text(to.name, style: TextStyle(color: Colors.white.withValues(alpha: 0.9))),
+                      ],
+                    ),
+                    Text(
+                      '\u09F3${cd.amount.toStringAsFixed(0)}',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.warning,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              GestureDetector(
+                onTap: () => _markRamadanPayment(cd),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.success.withValues(alpha: 0.1),
+                    border: Border.all(color: AppColors.success.withValues(alpha: 0.2)),
+                  ),
+                  child: const Center(
+                    child: Icon(LucideIcons.checkCircle, color: AppColors.success, size: 18),
+                  ),
+                ),
+              ),
+            ]),
           ),
-          type: GFButtonType.transparent,
-          onPressed: () => _markRamadanPayment(cd),
         ),
-      ]),
+      ),
     ).animate(delay: (60 * index).ms).fadeIn().slideX(begin: 0.02);
   }
 
   void _markSettled(String seasonId) {
     ref.read(ramadanSeasonsProvider.notifier).markSeasonSettled(seasonId);
-    showSuccessToast(context, 'Ramadan season closed ✓');
+    showSuccessToast(context, 'Ramadan season closed \u2713');
   }
 
   void _markRamadanPayment(RamadanCreditDebt cd) {
@@ -580,7 +1045,7 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
     ref.read(moneyTransactionsProvider.notifier).addTransaction(transaction);
     showSuccessToast(
       context,
-      'Payment of ৳${cd.amount.toStringAsFixed(0)} recorded ✓',
+      'Payment of \u09F3${cd.amount.toStringAsFixed(0)} recorded \u2713',
     );
   }
 
@@ -599,7 +1064,7 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
 
     showSuccessToast(
       context,
-      '${type == RamadanMealType.sehri ? 'Sehri' : 'Iftar'} added ✓',
+      '${type == RamadanMealType.sehri ? 'Sehri' : 'Iftar'} added \u2713',
     );
   }
 
@@ -669,111 +1134,150 @@ class _AddRamadanMealSheetState extends ConsumerState<_AddRamadanMealSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
       ),
       decoration: const BoxDecoration(
-        color: AppColors.surfaceDark,
+        color: Color(0xFF0D1520),
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppSpacing.radiusLg),
         ),
       ),
-      child: VStack(crossAlignment: CrossAxisAlignment.start, [
-        Center(
-          child: Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppColors.borderDark,
-              borderRadius: BorderRadius.circular(2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Gradient handle bar
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(2),
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primary.withValues(alpha: 0.6),
+                    AppColors.secondary.withValues(alpha: 0.4),
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
-        16.heightBox,
-        'Add Ramadan Meal'.text.xl2.bold
-            .color(AppColors.textPrimaryDark)
-            .make(),
-        16.heightBox,
+          const Gap(16),
+          Text(
+            'Add Ramadan Meal',
+            style: AppTypography.headlineSmall.copyWith(
+              color: Colors.white.withValues(alpha: 0.9),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const Gap(16),
 
-        // Member Selector
-        'Member'.text.sm.color(AppColors.textMutedDark).make(),
-        8.heightBox,
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: members
-              .map(
-                (m) => ChoiceChip(
-                  label: m.name.text.make(),
-                  selected: _selectedMemberId == m.id,
-                  onSelected: (_) => setState(() => _selectedMemberId = m.id),
+          // Member Selector
+          Text('Member', style: AppTypography.bodySmall.copyWith(color: Colors.white.withValues(alpha: 0.3))),
+          const Gap(8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: members
+                .map(
+                  (m) => ChoiceChip(
+                    label: Text(m.name),
+                    selected: _selectedMemberId == m.id,
+                    onSelected: (_) => setState(() => _selectedMemberId = m.id),
+                  ),
+                )
+                .toList(),
+          ),
+          const Gap(16),
+
+          // Meal Type
+          Text('Meal Type', style: AppTypography.bodySmall.copyWith(color: Colors.white.withValues(alpha: 0.3))),
+          const Gap(8),
+          Row(children: [
+            _mealTypeChip(RamadanMealType.sehri, LucideIcons.sunrise),
+            const Gap(8),
+            _mealTypeChip(RamadanMealType.iftar, LucideIcons.sunset),
+          ]),
+          const Gap(16),
+
+          // Portions
+          Row(children: [
+            Expanded(
+              child: Text('Portions', style: TextStyle(color: Colors.white.withValues(alpha: 0.5))),
+            ),
+            _cosmicStepperButton(
+              icon: LucideIcons.minus,
+              onTap: () {
+                if (_portions > 0.5) setState(() => _portions -= 0.5);
+              },
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                '${_portions}x',
+                style: AppTypography.titleMedium.copyWith(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  fontWeight: FontWeight.bold,
                 ),
-              )
-              .toList(),
+              ),
+            ),
+            _cosmicStepperButton(
+              icon: LucideIcons.plus,
+              onTap: () => setState(() => _portions += 0.5),
+            ),
+          ]),
+          const Gap(12),
+
+          // Guests
+          Row(children: [
+            Expanded(
+              child: Text('Guests', style: TextStyle(color: Colors.white.withValues(alpha: 0.5))),
+            ),
+            _cosmicStepperButton(
+              icon: LucideIcons.minus,
+              onTap: () {
+                if (_guests > 0) setState(() => _guests--);
+              },
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                '$_guests',
+                style: AppTypography.titleMedium.copyWith(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            _cosmicStepperButton(
+              icon: LucideIcons.plus,
+              onTap: () => setState(() => _guests++),
+            ),
+          ]),
+          const Gap(24),
+
+          AppPrimaryButton(
+            text: 'Add Meal',
+            icon: LucideIcons.check,
+            onPressed: _submit,
+          ),
+          const Gap(16),
+        ],
+      ),
+    );
+  }
+
+  Widget _cosmicStepperButton({required IconData icon, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          color: Colors.white.withValues(alpha: 0.05),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
         ),
-        16.heightBox,
-
-        // Meal Type
-        'Meal Type'.text.sm.color(AppColors.textMutedDark).make(),
-        8.heightBox,
-        HStack([
-          _mealTypeChip(RamadanMealType.sehri, LucideIcons.sunrise),
-          8.widthBox,
-          _mealTypeChip(RamadanMealType.iftar, LucideIcons.sunset),
-        ]),
-        16.heightBox,
-
-        // Portions
-        HStack([
-          'Portions'.text.color(AppColors.textSecondaryDark).make().expand(),
-          GFIconButton(
-            icon: const Icon(LucideIcons.minus, size: 16),
-            size: GFSize.SMALL,
-            type: GFButtonType.outline,
-            onPressed: () {
-              if (_portions > 0.5) setState(() => _portions -= 0.5);
-            },
-          ),
-          '${_portions}x'.text.lg.bold
-              .color(AppColors.textPrimaryDark)
-              .make()
-              .pSymmetric(h: 12),
-          GFIconButton(
-            icon: const Icon(LucideIcons.plus, size: 16),
-            size: GFSize.SMALL,
-            type: GFButtonType.outline,
-            onPressed: () => setState(() => _portions += 0.5),
-          ),
-        ]),
-        12.heightBox,
-
-        // Guests
-        HStack([
-          'Guests'.text.color(AppColors.textSecondaryDark).make().expand(),
-          GFIconButton(
-            icon: const Icon(LucideIcons.minus, size: 16),
-            size: GFSize.SMALL,
-            type: GFButtonType.outline,
-            onPressed: () {
-              if (_guests > 0) setState(() => _guests--);
-            },
-          ),
-          '$_guests'.text.lg.bold
-              .color(AppColors.textPrimaryDark)
-              .make()
-              .pSymmetric(h: 12),
-          GFIconButton(
-            icon: const Icon(LucideIcons.plus, size: 16),
-            size: GFSize.SMALL,
-            type: GFButtonType.outline,
-            onPressed: () => setState(() => _guests++),
-          ),
-        ]),
-        24.heightBox,
-
-        GFPrimaryButton(
-          text: 'Add Meal',
-          icon: LucideIcons.check,
-          onPressed: _submit,
+        child: Center(
+          child: Icon(icon, size: 16, color: Colors.white.withValues(alpha: 0.6)),
         ),
-        16.heightBox,
-      ]),
+      ),
     );
   }
 
@@ -781,16 +1285,17 @@ class _AddRamadanMealSheetState extends ConsumerState<_AddRamadanMealSheet> {
     final isSelected = _mealType == type;
     final label = type == RamadanMealType.sehri ? 'Sehri' : 'Iftar';
     return ChoiceChip(
-      label: HStack([
+      label: Row(children: [
         Icon(
           icon,
           size: 16,
-          color: isSelected ? Colors.white : AppColors.textPrimaryDark,
+          color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.9),
         ),
-        6.widthBox,
-        label.text
-            .color(isSelected ? Colors.white : AppColors.textPrimaryDark)
-            .make(),
+        const Gap(6),
+        Text(
+          label,
+          style: TextStyle(color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.9)),
+        ),
       ]),
       selected: isSelected,
       onSelected: (_) => setState(() => _mealType = type),
@@ -819,7 +1324,7 @@ class _AddRamadanMealSheetState extends ConsumerState<_AddRamadanMealSheet> {
     Navigator.pop(context);
     showSuccessToast(
       context,
-      '${_mealType == RamadanMealType.sehri ? "Sehri" : "Iftar"} meal added ✓',
+      '${_mealType == RamadanMealType.sehri ? "Sehri" : "Iftar"} meal added \u2713',
     );
   }
 }
@@ -848,6 +1353,13 @@ class _AddRamadanBazarSheetState extends ConsumerState<_AddRamadanBazarSheet> {
   }
 
   @override
+  void dispose() {
+    _itemController.dispose();
+    _amountController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final members = ref.watch(membersProvider);
 
@@ -859,76 +1371,111 @@ class _AddRamadanBazarSheetState extends ConsumerState<_AddRamadanBazarSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
       ),
       decoration: const BoxDecoration(
-        color: AppColors.surfaceDark,
+        color: Color(0xFF0D1520),
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppSpacing.radiusLg),
         ),
       ),
-      child: VStack(crossAlignment: CrossAxisAlignment.start, [
-        Center(
-          child: Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppColors.borderDark,
-              borderRadius: BorderRadius.circular(2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Gradient handle bar
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(2),
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primary.withValues(alpha: 0.6),
+                    AppColors.secondary.withValues(alpha: 0.4),
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
-        16.heightBox,
-        'Add Ramadan Bazar'.text.xl2.bold
-            .color(AppColors.textPrimaryDark)
-            .make(),
-        16.heightBox,
-
-        // Member Selector
-        'Paid By'.text.sm.color(AppColors.textMutedDark).make(),
-        8.heightBox,
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: members
-              .map(
-                (m) => ChoiceChip(
-                  label: m.name.text.make(),
-                  selected: _selectedMemberId == m.id,
-                  onSelected: (_) => setState(() => _selectedMemberId = m.id),
-                ),
-              )
-              .toList(),
-        ),
-        16.heightBox,
-
-        // Item Description
-        TextField(
-          controller: _itemController,
-          decoration: const InputDecoration(
-            labelText: 'Item Description',
-            hintText: 'e.g., Dates, Fruits, Iftar items',
-            prefixIcon: Icon(LucideIcons.shoppingBag, size: 18),
+          const Gap(16),
+          Text(
+            'Add Ramadan Bazar',
+            style: AppTypography.headlineSmall.copyWith(
+              color: Colors.white.withValues(alpha: 0.9),
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ),
-        12.heightBox,
+          const Gap(16),
 
-        // Amount
-        TextField(
-          controller: _amountController,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'Amount (৳)',
-            hintText: '0',
-            prefixIcon: Icon(LucideIcons.banknote, size: 18),
+          // Member Selector
+          Text('Paid By', style: AppTypography.bodySmall.copyWith(color: Colors.white.withValues(alpha: 0.3))),
+          const Gap(8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: members
+                .map(
+                  (m) => ChoiceChip(
+                    label: Text(m.name),
+                    selected: _selectedMemberId == m.id,
+                    onSelected: (_) => setState(() => _selectedMemberId = m.id),
+                  ),
+                )
+                .toList(),
           ),
-        ),
-        24.heightBox,
+          const Gap(16),
 
-        GFPrimaryButton(
-          text: 'Add Bazar Entry',
-          icon: LucideIcons.check,
-          onPressed: _submit,
-        ),
-        16.heightBox,
-      ]),
+          // Item Description
+          TextField(
+            controller: _itemController,
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.9)),
+            decoration: InputDecoration(
+              labelText: 'Item Description',
+              labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
+              hintText: 'e.g., Dates, Fruits, Iftar items',
+              hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
+              prefixIcon: Icon(LucideIcons.shoppingBag, size: 18, color: Colors.white.withValues(alpha: 0.3)),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                borderSide: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
+              ),
+            ),
+          ),
+          const Gap(12),
+
+          // Amount
+          TextField(
+            controller: _amountController,
+            keyboardType: TextInputType.number,
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.9)),
+            decoration: InputDecoration(
+              labelText: 'Amount (\u09F3)',
+              labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
+              hintText: '0',
+              hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
+              prefixIcon: Icon(LucideIcons.banknote, size: 18, color: Colors.white.withValues(alpha: 0.3)),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                borderSide: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
+              ),
+            ),
+          ),
+          const Gap(24),
+
+          AppPrimaryButton(
+            text: 'Add Bazar Entry',
+            icon: LucideIcons.check,
+            onPressed: _submit,
+          ),
+          const Gap(16),
+        ],
+      ),
     );
   }
 
@@ -958,7 +1505,7 @@ class _AddRamadanBazarSheetState extends ConsumerState<_AddRamadanBazarSheet> {
         );
 
     Navigator.pop(context);
-    showSuccessToast(context, 'Bazar entry added ✓');
+    showSuccessToast(context, 'Bazar entry added \u2713');
   }
 }
 
@@ -987,94 +1534,129 @@ class _CreateSeasonSheetState extends ConsumerState<_CreateSeasonSheet> {
   }
 
   @override
+  void dispose() {
+    _yearController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final members = ref.watch(membersProvider);
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: const BoxDecoration(
-        color: AppColors.surfaceDark,
+        color: Color(0xFF0D1520),
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppSpacing.radiusLg),
         ),
       ),
-      child: VStack(crossAlignment: CrossAxisAlignment.start, [
-        Center(
-          child: Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppColors.borderDark,
-              borderRadius: BorderRadius.circular(2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Gradient handle bar
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(2),
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primary.withValues(alpha: 0.6),
+                    AppColors.secondary.withValues(alpha: 0.4),
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
-        16.heightBox,
-        'Create Ramadan Season'.text.xl2
-            .color(AppColors.textPrimaryDark)
-            .make(),
-        16.heightBox,
-
-        // Hijri Year
-        TextField(
-          controller: _yearController,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'Hijri Year',
-            prefixIcon: Icon(LucideIcons.calendar, size: 18),
+          const Gap(16),
+          Text(
+            'Create Ramadan Season',
+            style: AppTypography.headlineSmall.copyWith(
+              color: Colors.white.withValues(alpha: 0.9),
+            ),
           ),
-        ),
-        12.heightBox,
+          const Gap(16),
 
-        // Date Range
-        HStack([
-          _datePicker(
-            'Start',
-            _startDate,
-            (d) => setState(() => _startDate = d),
-          ).expand(),
-          8.widthBox,
-          _datePicker(
-            'End',
-            _endDate,
-            (d) => setState(() => _endDate = d),
-          ).expand(),
-        ]),
-        16.heightBox,
+          // Hijri Year
+          TextField(
+            controller: _yearController,
+            keyboardType: TextInputType.number,
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.9)),
+            decoration: InputDecoration(
+              labelText: 'Hijri Year',
+              labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
+              prefixIcon: Icon(LucideIcons.calendar, size: 18, color: Colors.white.withValues(alpha: 0.3)),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                borderSide: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
+              ),
+            ),
+          ),
+          const Gap(12),
 
-        // Opt-in Members
-        'Opt-in Members'.text.sm.color(AppColors.textSecondaryDark).make(),
-        8.heightBox,
-        Wrap(
-          spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.sm,
-          children: members.map((m) {
-            final selected = _selectedMembers.contains(m.id);
-            return FilterChip(
-              selected: selected,
-              label: m.name.text.make(),
-              onSelected: (s) {
-                HapticService.selectionTick();
-                setState(() {
-                  if (s) {
-                    _selectedMembers.add(m.id);
-                  } else {
-                    _selectedMembers.remove(m.id);
-                  }
-                });
-              },
-            );
-          }).toList(),
-        ),
-        24.heightBox,
+          // Date Range
+          Row(children: [
+            Expanded(
+              child: _datePicker(
+                'Start',
+                _startDate,
+                (d) => setState(() => _startDate = d),
+              ),
+            ),
+            const Gap(8),
+            Expanded(
+              child: _datePicker(
+                'End',
+                _endDate,
+                (d) => setState(() => _endDate = d),
+              ),
+            ),
+          ]),
+          const Gap(16),
 
-        GFPrimaryButton(
-          text: 'Create Season',
-          icon: LucideIcons.check,
-          onPressed: _create,
-        ),
-        16.heightBox,
-      ]),
+          // Opt-in Members
+          Text(
+            'Opt-in Members',
+            style: AppTypography.bodySmall.copyWith(color: Colors.white.withValues(alpha: 0.5)),
+          ),
+          const Gap(8),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: members.map((m) {
+              final selected = _selectedMembers.contains(m.id);
+              return FilterChip(
+                selected: selected,
+                label: Text(m.name),
+                onSelected: (s) {
+                  HapticService.selectionTick();
+                  setState(() {
+                    if (s) {
+                      _selectedMembers.add(m.id);
+                    } else {
+                      _selectedMembers.remove(m.id);
+                    }
+                  });
+                },
+              );
+            }).toList(),
+          ),
+          const Gap(24),
+
+          AppPrimaryButton(
+            text: 'Create Season',
+            icon: LucideIcons.check,
+            onPressed: _create,
+          ),
+          const Gap(16),
+        ],
+      ),
     );
   }
 
@@ -1094,14 +1676,33 @@ class _CreateSeasonSheetState extends ConsumerState<_CreateSeasonSheet> {
         );
         if (picked != null) onChanged(picked);
       },
-      child: GFAppCard(
-        child: VStack(crossAlignment: CrossAxisAlignment.start, [
-          label.text.xs.color(AppColors.textMutedDark).make(),
-          4.heightBox,
-          '${date.day}/${date.month}/${date.year}'.text
-              .color(AppColors.textPrimaryDark)
-              .make(),
-        ]),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.03),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: AppTypography.labelSmall.copyWith(color: Colors.white.withValues(alpha: 0.3)),
+                ),
+                const Gap(4),
+                Text(
+                  '${date.day}/${date.month}/${date.year}',
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.9)),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -1123,6 +1724,6 @@ class _CreateSeasonSheetState extends ConsumerState<_CreateSeasonSheet> {
         );
 
     Navigator.of(context).pop();
-    showSuccessToast(context, 'Ramadan season created ✓');
+    showSuccessToast(context, 'Ramadan season created \u2713');
   }
 }

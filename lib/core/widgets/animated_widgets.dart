@@ -1,19 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:velocity_x/velocity_x.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lottie/lottie.dart';
-import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:gap/gap.dart';
+
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
-
-/// VelocityX Widget Extensions
-/// Custom extensions to make VelocityX work seamlessly with app theme
 
 // ═══════════════════════════════════════════════════════════════════════════
 // LOTTIE ANIMATIONS (Success, Error, Loading)
 // ═══════════════════════════════════════════════════════════════════════════
 
-/// Success animation with Lottie (checkmark)
 class LottieSuccessAnimation extends StatelessWidget {
   final double size;
   final bool repeat;
@@ -46,12 +42,15 @@ class LottieSuccessAnimation extends StatelessWidget {
   }
 }
 
-/// Error animation with Lottie (X or warning)
 class LottieErrorAnimation extends StatelessWidget {
   final double size;
   final bool repeat;
 
-  const LottieErrorAnimation({super.key, this.size = 120, this.repeat = false});
+  const LottieErrorAnimation({
+    super.key,
+    this.size = 120,
+    this.repeat = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +69,6 @@ class LottieErrorAnimation extends StatelessWidget {
   }
 }
 
-/// Loading animation with Lottie (spinner/dots)
 class LottieLoadingAnimation extends StatelessWidget {
   final double size;
   final Color? color;
@@ -86,7 +84,8 @@ class LottieLoadingAnimation extends StatelessWidget {
         'https://lottie.host/loading-animation-placeholder/loading.json',
         fit: BoxFit.contain,
         repeat: true,
-        errorBuilder: (context, error, stackTrace) => CircularProgressIndicator(
+        errorBuilder: (context, error, stackTrace) =>
+            CircularProgressIndicator(
           color: color ?? AppColors.primary,
           strokeWidth: 3,
         ),
@@ -95,7 +94,6 @@ class LottieLoadingAnimation extends StatelessWidget {
   }
 }
 
-/// Celebrate animation with confetti
 class LottieCelebrateAnimation extends StatelessWidget {
   final double size;
 
@@ -117,10 +115,9 @@ class LottieCelebrateAnimation extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// EMPTY STATES with Lottie
+// EMPTY STATES
 // ═══════════════════════════════════════════════════════════════════════════
 
-/// Empty state widget with optional Lottie animation
 class EmptyStateWidget extends StatelessWidget {
   final String title;
   final String? subtitle;
@@ -139,7 +136,6 @@ class EmptyStateWidget extends StatelessWidget {
     this.action,
   });
 
-  /// No data empty state
   factory EmptyStateWidget.noData({
     String title = 'No Data Yet',
     String? subtitle,
@@ -153,7 +149,6 @@ class EmptyStateWidget extends StatelessWidget {
     );
   }
 
-  /// No meals empty state
   factory EmptyStateWidget.noMeals({Widget? action}) {
     return EmptyStateWidget(
       title: 'No Meals Today',
@@ -163,7 +158,6 @@ class EmptyStateWidget extends StatelessWidget {
     );
   }
 
-  /// No bazar entries
   factory EmptyStateWidget.noBazar({Widget? action}) {
     return EmptyStateWidget(
       title: 'No Bazar Entries',
@@ -173,7 +167,6 @@ class EmptyStateWidget extends StatelessWidget {
     );
   }
 
-  /// Error state
   factory EmptyStateWidget.error({
     String title = 'Something Went Wrong',
     String? subtitle,
@@ -201,7 +194,6 @@ class EmptyStateWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Lottie or Icon
             if (lottieAsset != null || lottieUrl != null)
               SizedBox(
                 height: 150,
@@ -219,31 +211,26 @@ class EmptyStateWidget extends StatelessWidget {
                 ),
                 child: Icon(icon, size: 48, color: AppColors.primary),
               ).animate().scale(duration: 400.ms, curve: Curves.easeOut),
-
-            const SizedBox(height: AppSpacing.lg),
-
-            // Title
+            const Gap(AppSpacing.lg),
             Text(
               title,
               style: AppTypography.headlineSmall.copyWith(
-                color: AppColors.textPrimaryDark,
+                color: context.textPrimary,
               ),
               textAlign: TextAlign.center,
             ).animate().fadeIn(delay: 100.ms),
-
             if (subtitle != null) ...[
-              const SizedBox(height: AppSpacing.sm),
+              const Gap(AppSpacing.sm),
               Text(
                 subtitle!,
                 style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.textMutedDark,
+                  color: context.textMuted,
                 ),
                 textAlign: TextAlign.center,
               ).animate().fadeIn(delay: 200.ms),
             ],
-
             if (action != null) ...[
-              const SizedBox(height: AppSpacing.lg),
+              const Gap(AppSpacing.lg),
               action!
                   .animate()
                   .fadeIn(delay: 300.ms)
@@ -257,10 +244,10 @@ class EmptyStateWidget extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// ANIMATED TEXT WIDGETS
+// ANIMATED TEXT (flutter_animate based — replaces animated_text_kit)
 // ═══════════════════════════════════════════════════════════════════════════
 
-/// Welcome text with typewriter effect
+/// Welcome text with fade-in animation (replaces AnimatedTextKit typewriter)
 class AnimatedWelcomeText extends StatelessWidget {
   final String greeting;
   final String name;
@@ -279,136 +266,25 @@ class AnimatedWelcomeText extends StatelessWidget {
         Text(
           greeting,
           style: AppTypography.bodyMedium.copyWith(
-            color: AppColors.textSecondaryDark,
+            color: context.textSecondary,
           ),
-        ),
-        AnimatedTextKit(
-          animatedTexts: [
-            TypewriterAnimatedText(
-              name,
-              textStyle: AppTypography.headlineLarge.copyWith(
-                color: AppColors.textPrimaryDark,
-                fontWeight: FontWeight.bold,
-              ),
-              speed: const Duration(milliseconds: 80),
-            ),
-          ],
-          isRepeatingAnimation: false,
-          totalRepeatCount: 1,
-        ),
-      ],
-    );
-  }
-}
-
-/// Fade-in text for headlines
-class AnimatedHeadline extends StatelessWidget {
-  final String text;
-  final TextStyle? style;
-
-  const AnimatedHeadline({super.key, required this.text, this.style});
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedTextKit(
-      animatedTexts: [
-        FadeAnimatedText(
-          text,
-          textStyle:
-              style ??
-              AppTypography.headlineMedium.copyWith(
-                color: AppColors.textPrimaryDark,
-              ),
-          duration: const Duration(milliseconds: 1500),
-        ),
-      ],
-      isRepeatingAnimation: false,
-      totalRepeatCount: 1,
-    );
-  }
-}
-
-/// Colorized animated text for stats
-class AnimatedStatText extends StatelessWidget {
-  final String value;
-  final String label;
-  final Color? valueColor;
-
-  const AnimatedStatText({
-    super.key,
-    required this.value,
-    required this.label,
-    this.valueColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        AnimatedTextKit(
-          animatedTexts: [
-            ColorizeAnimatedText(
-              value,
-              textStyle: AppTypography.displaySmall.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-              colors: [
-                valueColor ?? AppColors.primary,
-                AppColors.secondary,
-                valueColor ?? AppColors.primary,
-              ],
-              speed: const Duration(milliseconds: 500),
-            ),
-          ],
-          isRepeatingAnimation: true,
-          pause: const Duration(seconds: 3),
         ),
         Text(
-          label,
-          style: AppTypography.labelMedium.copyWith(
-            color: AppColors.textMutedDark,
+          name,
+          style: AppTypography.headlineLarge.copyWith(
+            color: context.textPrimary,
+            fontWeight: FontWeight.bold,
           ),
-        ),
+        ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.05),
       ],
     );
   }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// VELOCITYX HELPERS
+// MONEY TEXT
 // ═══════════════════════════════════════════════════════════════════════════
 
-/// Extension for VelocityX with app colors
-extension VxAppColors on BuildContext {
-  Color get vxPrimary => AppColors.primary;
-  Color get vxSecondary => AppColors.secondary;
-  Color get vxAccent => AppColors.accent;
-  Color get vxError => AppColors.error;
-  Color get vxSuccess => AppColors.moneyPositive;
-  Color get vxWarning => AppColors.warning;
-  Color get vxCard => AppColors.cardDark;
-  Color get vxSurface => AppColors.surfaceDark;
-  Color get vxBackground => AppColors.backgroundDark;
-  Color get vxTextPrimary => AppColors.textPrimaryDark;
-  Color get vxTextSecondary => AppColors.textSecondaryDark;
-  Color get vxTextMuted => AppColors.textMutedDark;
-}
-
-/// Quick VelocityX card with app theme
-Widget vxCard({
-  required Widget child,
-  EdgeInsets? padding,
-  VoidCallback? onTap,
-}) {
-  return VxBox(child: child).p16
-      .color(AppColors.cardDark)
-      .roundedLg
-      .border(color: AppColors.borderDark.withValues(alpha: 0.5))
-      .make()
-      .onTap(onTap ?? () {});
-}
-
-/// Money text with proper formatting
 class MoneyText extends StatelessWidget {
   final double amount;
   final bool useSign;
@@ -426,16 +302,18 @@ class MoneyText extends StatelessWidget {
     final isPositive = amount >= 0;
     final color = useSign
         ? (isPositive ? AppColors.moneyPositive : AppColors.moneyNegative)
-        : AppColors.textPrimaryDark;
+        : context.textPrimary;
 
     final sign = useSign && isPositive ? '+' : '';
     final text = '$sign৳${amount.abs().toStringAsFixed(0)}';
 
-    return text.text
-        .textStyle(style ?? AppTypography.titleMedium)
-        .color(color)
-        .fontWeight(FontWeight.w600)
-        .make();
+    return Text(
+      text,
+      style: (style ?? AppTypography.titleMedium).copyWith(
+        color: color,
+        fontWeight: FontWeight.w600,
+      ),
+    );
   }
 }
 
@@ -443,7 +321,6 @@ class MoneyText extends StatelessWidget {
 // SHIMMER CTA BUTTON
 // ═══════════════════════════════════════════════════════════════════════════
 
-/// CTA Button with optional shimmer animation
 class ShimmerCTAButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
@@ -483,20 +360,6 @@ class ShimmerCTAButton extends StatelessWidget {
           .shimmer(
             duration: 2.seconds,
             color: Colors.white.withValues(alpha: 0.2),
-          )
-          .animate()
-          .scale(
-            begin: const Offset(1, 1),
-            end: const Offset(1.02, 1.02),
-            duration: 1.seconds,
-            curve: Curves.easeInOut,
-          )
-          .then()
-          .scale(
-            begin: const Offset(1.02, 1.02),
-            end: const Offset(1, 1),
-            duration: 1.seconds,
-            curve: Curves.easeInOut,
           );
     }
 

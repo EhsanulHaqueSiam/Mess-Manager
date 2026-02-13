@@ -32,6 +32,8 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
+CLAUDE.md
+.claude/
 
 # Symbolication related
 app.*.symbols
@@ -51,3 +53,12 @@ ios/Runner/GoogleService-Info.plist
 macos/Runner/GoogleService-Info.plist
 .firebaserc
 firebase.json
+
+# Environment & Secrets
+.env
+.env.*
+*.keystore
+*.jks
+key.properties
+credentials.json
+service-account*.json

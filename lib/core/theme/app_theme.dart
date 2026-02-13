@@ -2,6 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 
+// ═══════════════════════════════════════════════════════════════════════════
+// THEME-AWARE CONTEXT EXTENSIONS
+// Use these instead of hardcoded AppColors.textPrimaryDark etc.
+// ═══════════════════════════════════════════════════════════════════════════
+
+extension AppColorsX on BuildContext {
+  ThemeData get theme => Theme.of(this);
+  ColorScheme get colors => Theme.of(this).colorScheme;
+  TextTheme get textTheme => Theme.of(this).textTheme;
+  bool get isDark => Theme.of(this).brightness == Brightness.dark;
+
+  // Semantic color accessors (theme-aware)
+  Color get background => colors.surface;
+  Color get cardColor => isDark ? AppColors.cardDark : AppColors.cardLight;
+  Color get borderColor => isDark ? AppColors.borderDark : AppColors.borderLight;
+  Color get surfaceColor => isDark ? AppColors.surfaceDark : AppColors.surfaceLight;
+  Color get textPrimary =>
+      isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+  Color get textSecondary =>
+      isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+  Color get textMuted =>
+      isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+}
+
 /// 2025-2026 Trendy Color Palette
 /// Inspired by: Electric Bioluminescence, Cosmic Blue, Deep Teal, Thermal Glow
 class AppColors {
@@ -39,6 +63,7 @@ class AppColors {
   static const textMutedDark = Color(0xFF64748B);
   static const textPrimaryLight = Color(0xFF0F172A);
   static const textSecondaryLight = Color(0xFF475569);
+  static const textMutedLight = Color(0xFF94A3B8);
 
   // === Status Colors (Vibrant, Modern) ===
   static const success = Color(0xFF10B981); // Emerald
@@ -629,6 +654,25 @@ class AppTheme {
         backgroundColor: AppColors.surfaceLight,
         indicatorColor: colorScheme.primary.withValues(alpha: 0.15),
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AppTypography.labelMedium.copyWith(
+              color: colorScheme.primary,
+            );
+          }
+          return AppTypography.labelMedium.copyWith(
+            color: AppColors.textSecondaryLight,
+          );
+        }),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return IconThemeData(color: colorScheme.primary, size: 24);
+          }
+          return const IconThemeData(
+            color: AppColors.textSecondaryLight,
+            size: 24,
+          );
+        }),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: colorScheme.primary,
@@ -636,6 +680,29 @@ class AppTheme {
         elevation: 8,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColors.surfaceLight,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+          borderSide: const BorderSide(color: AppColors.borderLight),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+          borderSide: const BorderSide(color: AppColors.borderLight),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+          borderSide: BorderSide(color: colorScheme.primary, width: 2),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm + 4,
+        ),
+        hintStyle: AppTypography.bodyMedium.copyWith(
+          color: AppColors.textMutedLight,
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -652,6 +719,51 @@ class AppTheme {
           ),
           textStyle: AppTypography.labelLarge,
         ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: colorScheme.primary,
+          side: BorderSide(color: colorScheme.primary),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+          ),
+          textStyle: AppTypography.labelLarge,
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: colorScheme.primary,
+          textStyle: AppTypography.labelLarge,
+        ),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: AppColors.surfaceLight,
+        selectedColor: colorScheme.primary.withValues(alpha: 0.15),
+        labelStyle: AppTypography.labelMedium.copyWith(
+          color: AppColors.textPrimaryLight,
+        ),
+        side: const BorderSide(color: AppColors.borderLight),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+        ),
+      ),
+      dividerTheme: const DividerThemeData(
+        color: AppColors.borderLight,
+        thickness: 1,
+      ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: AppColors.textPrimaryLight,
+        contentTextStyle: AppTypography.bodyMedium.copyWith(
+          color: AppColors.surfaceLight,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+        ),
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }

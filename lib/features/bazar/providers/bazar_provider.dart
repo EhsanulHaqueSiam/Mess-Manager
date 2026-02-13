@@ -8,7 +8,7 @@ List<BazarEntry> _generateSampleBazarEntries() {
   return [
     BazarEntry(
       id: 'bazar_1',
-      memberId: '1', // Siam
+      memberId: 'member_1', // Siam
       date: now.subtract(const Duration(days: 2)),
       amount: 1200,
       description: 'Weekly groceries',
@@ -23,7 +23,7 @@ List<BazarEntry> _generateSampleBazarEntries() {
     ),
     BazarEntry(
       id: 'bazar_2',
-      memberId: '2', // Tanmoy
+      memberId: 'member_2', // Tanmoy
       date: now.subtract(const Duration(days: 4)),
       amount: 850,
       description: 'Fish and meat',
@@ -36,7 +36,7 @@ List<BazarEntry> _generateSampleBazarEntries() {
     ),
     BazarEntry(
       id: 'bazar_3',
-      memberId: '3', // Sarkar
+      memberId: 'member_3', // Sarkar
       date: now.subtract(const Duration(days: 1)),
       amount: 500,
       description: 'Fruits and snacks',
@@ -45,7 +45,7 @@ List<BazarEntry> _generateSampleBazarEntries() {
     ),
     BazarEntry(
       id: 'bazar_4',
-      memberId: '1', // Siam
+      memberId: 'member_1', // Siam
       date: now.subtract(const Duration(days: 6)),
       amount: 2000,
       description: 'Monthly stock',

@@ -2,8 +2,8 @@
 /// Exports all reusable widgets and components
 library core_widgets;
 
-// GetWidget themed components
-export 'gf_components.dart';
+// Custom app components (buttons, cards, sheets)
+export 'app_components.dart';
 
 // Animated widgets with Lottie, AnimatedTextKit
 export 'animated_widgets.dart';

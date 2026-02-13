@@ -58,7 +58,7 @@ class AppSheet extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
+        color: isDark ? context.surfaceColor : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: content,
@@ -89,7 +89,7 @@ class AppSheet extends StatelessWidget {
         style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
-          color: isDark ? AppColors.textPrimaryDark : Colors.grey.shade900,
+          color: isDark ? context.textPrimary : Colors.grey.shade900,
         ),
         textAlign: TextAlign.center,
       ),
@@ -163,7 +163,7 @@ Future<bool?> showConfirmSheet({
         Text(
           message,
           style: TextStyle(
-            color: isDark ? AppColors.textSecondaryDark : Colors.grey.shade600,
+            color: isDark ? context.textSecondary : Colors.grey.shade600,
           ),
           textAlign: TextAlign.center,
         ),

@@ -51,7 +51,7 @@ class BalanceDonutChart extends StatelessWidget {
               Text(
                 isCredit ? 'CREDIT' : 'DEBT',
                 style: AppTypography.labelSmall.copyWith(
-                  color: AppColors.textSecondaryDark,
+                  color: context.textSecondary,
                 ),
               ),
               Text(
@@ -95,7 +95,7 @@ class SpendingTrendChart extends StatelessWidget {
             drawVerticalLine: false,
             horizontalInterval: maxY / 4,
             getDrawingHorizontalLine: (value) =>
-                FlLine(color: AppColors.borderDark, strokeWidth: 1),
+                FlLine(color: context.borderColor, strokeWidth: 1),
           ),
           titlesData: FlTitlesData(
             topTitles: const AxisTitles(
@@ -113,7 +113,7 @@ class SpendingTrendChart extends StatelessWidget {
                     return Text(
                       monthLabels[idx],
                       style: AppTypography.labelSmall.copyWith(
-                        color: AppColors.textSecondaryDark,
+                        color: context.textSecondary,
                       ),
                     );
                   }
@@ -128,7 +128,7 @@ class SpendingTrendChart extends StatelessWidget {
                 getTitlesWidget: (value, meta) => Text(
                   '৳${(value / 1000).toStringAsFixed(0)}k',
                   style: AppTypography.labelSmall.copyWith(
-                    color: AppColors.textSecondaryDark,
+                    color: context.textSecondary,
                   ),
                 ),
               ),
@@ -150,7 +150,7 @@ class SpendingTrendChart extends StatelessWidget {
                     radius: 4,
                     color: AppColors.primary,
                     strokeWidth: 2,
-                    strokeColor: AppColors.surfaceDark,
+                    strokeColor: context.surfaceColor,
                   );
                 },
               ),
@@ -215,7 +215,7 @@ class MealComparisonChart extends StatelessWidget {
                     return Text(
                       entries[idx].key.substring(0, 2),
                       style: AppTypography.labelSmall.copyWith(
-                        color: AppColors.textSecondaryDark,
+                        color: context.textSecondary,
                       ),
                     );
                   }

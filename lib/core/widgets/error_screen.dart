@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:velocity_x/velocity_x.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:getwidget/getwidget.dart';
 
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/router/app_router.dart';
@@ -17,7 +15,7 @@ class ErrorScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: context.background,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -33,10 +31,15 @@ class ErrorScreen extends StatelessWidget {
                 const SizedBox(height: AppSpacing.xl),
 
                 // Error Code
-                '404'.text.xl3.bold
-                    .color(AppColors.error)
-                    .letterSpacing(8)
-                    .make()
+                Text(
+                  '404',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.error,
+                    letterSpacing: 8,
+                  ),
+                )
                     .animate()
                     .fadeIn(delay: 200.ms)
                     .slideY(begin: 0.2),
@@ -44,20 +47,27 @@ class ErrorScreen extends StatelessWidget {
                 const SizedBox(height: AppSpacing.sm),
 
                 // Title
-                'Page Not Found'.text.xl.bold
-                    .color(AppColors.textPrimaryDark)
-                    .make()
+                Text(
+                  'Page Not Found',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: context.textPrimary,
+                  ),
+                )
                     .animate()
                     .fadeIn(delay: 300.ms),
 
                 const SizedBox(height: AppSpacing.md),
 
                 // Description
-                'The page you\'re looking for doesn\'t exist or has been moved.'
-                    .text
-                    .center
-                    .color(AppColors.textSecondaryDark)
-                    .make()
+                Text(
+                  'The page you\'re looking for doesn\'t exist or has been moved.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: context.textSecondary,
+                  ),
+                )
                     .animate()
                     .fadeIn(delay: 400.ms),
 
@@ -72,12 +82,13 @@ class ErrorScreen extends StatelessWidget {
                         color: AppColors.error.withValues(alpha: 0.3),
                       ),
                     ),
-                    child: error
-                        .toString()
-                        .text
-                        .xs
-                        .color(AppColors.error)
-                        .make(),
+                    child: Text(
+                      error.toString(),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.error,
+                      ),
+                    ),
                   ).animate().fadeIn(delay: 500.ms),
                 ],
 
@@ -87,19 +98,16 @@ class ErrorScreen extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    GFButton(
+                    FilledButton.icon(
                       onPressed: () => context.go(AppRoutes.dashboard),
-                      text: 'Go Home',
-                      icon: const Icon(
-                        LucideIcons.home,
-                        color: Colors.white,
-                        size: 18,
+                      icon: const Icon(LucideIcons.home, size: 18),
+                      label: const Text('Go Home'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.primary,
                       ),
-                      color: AppColors.primary,
-                      size: GFSize.LARGE,
                     ),
                     const SizedBox(width: AppSpacing.md),
-                    GFButton(
+                    OutlinedButton.icon(
                       onPressed: () {
                         if (context.canPop()) {
                           context.pop();
@@ -107,11 +115,11 @@ class ErrorScreen extends StatelessWidget {
                           context.go(AppRoutes.dashboard);
                         }
                       },
-                      text: 'Go Back',
-                      icon: const Icon(LucideIcons.arrowLeft, size: 18),
-                      type: GFButtonType.outline,
-                      color: AppColors.textSecondaryDark,
-                      size: GFSize.LARGE,
+                      icon: Icon(LucideIcons.arrowLeft, size: 18, color: context.textSecondary),
+                      label: Text('Go Back', style: TextStyle(color: context.textSecondary)),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: context.textSecondary),
+                      ),
                     ),
                   ],
                 ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.2),
@@ -119,9 +127,14 @@ class ErrorScreen extends StatelessWidget {
                 const SizedBox(height: AppSpacing.xl),
 
                 // Helpful links
-                'Quick Links'.text.sm.bold
-                    .color(AppColors.textMutedDark)
-                    .make(),
+                Text(
+                  'Quick Links',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: context.textMuted,
+                  ),
+                ),
                 const SizedBox(height: AppSpacing.sm),
                 Wrap(
                   spacing: AppSpacing.sm,
@@ -188,13 +201,10 @@ class ErrorScreen extends StatelessWidget {
     String route,
     IconData icon,
   ) {
-    return GFButton(
+    return TextButton.icon(
       onPressed: () => context.go(route),
-      text: label,
-      icon: Icon(icon, size: 14, color: AppColors.textSecondaryDark),
-      type: GFButtonType.transparent,
-      textColor: AppColors.textSecondaryDark,
-      size: GFSize.SMALL,
+      icon: Icon(icon, size: 14, color: context.textSecondary),
+      label: Text(label, style: TextStyle(color: context.textSecondary)),
     );
   }
 }

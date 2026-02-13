@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:velocity_x/velocity_x.dart';
 
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
@@ -115,7 +114,7 @@ class _SpeedDialFABState extends State<SpeedDialFAB>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.surfaceDark,
+                color: context.surfaceColor,
                 borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                 boxShadow: [
                   BoxShadow(
@@ -125,7 +124,13 @@ class _SpeedDialFABState extends State<SpeedDialFAB>
                   ),
                 ],
               ),
-              child: item.label.text.sm.color(AppColors.textPrimaryDark).make(),
+              child: Text(
+                item.label,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: context.textPrimary,
+                ),
+              ),
             ),
             const SizedBox(width: 12),
             // Mini FAB

@@ -101,6 +101,13 @@ jobs:
       - name: 📦 Get dependencies
         run: flutter pub get
 
+      # === FIREBASE CONFIG FROM SECRETS ===
+      - name: 🔥 Create google-services.json from secret
+        run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 --decode > android/app/google-services.json
+
+      - name: 🔥 Create firebase_options.dart from secret
+        run: echo "${{ secrets.FIREBASE_OPTIONS_DART }}" | base64 --decode > lib/firebase_options.dart
+
       - name: 🔨 Build APK (Release)
         run: |
           flutter build apk --release \
@@ -145,6 +152,13 @@ jobs:
 
       - name: 📦 Get dependencies
         run: flutter pub get
+
+      # === FIREBASE CONFIG FROM SECRETS ===
+      - name: 🔥 Create GoogleService-Info.plist from secret
+        run: echo "${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}" | base64 --decode > ios/Runner/GoogleService-Info.plist
+
+      - name: 🔥 Create firebase_options.dart from secret
+        run: echo "${{ secrets.FIREBASE_OPTIONS_DART }}" | base64 --decode > lib/firebase_options.dart
 
       - name: 🍫 Setup CocoaPods cache
         uses: actions/cache@v4

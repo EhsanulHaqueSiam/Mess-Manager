@@ -46,6 +46,9 @@ class MockDataService {
 
   // ============ MEMBERS ============
 
+  /// Expose mock members for direct access in dev mode
+  static List<Member> get mockMembers => _mockMembers;
+
   static final List<Member> _mockMembers = [
     Member(
       id: 'member_1',

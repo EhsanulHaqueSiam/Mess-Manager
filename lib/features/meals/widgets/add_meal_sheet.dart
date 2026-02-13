@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:gap/gap.dart';
-import 'package:velocity_x/velocity_x.dart';
 
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/models/meal.dart';
@@ -126,7 +125,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
         maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
+        color: context.surfaceColor,
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(AppSpacing.radiusLg),
         ),
@@ -142,7 +141,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.borderDark,
+                  color: context.borderColor,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -162,7 +161,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
                   child: Text(
                     'Add Meal',
                     style: AppTypography.headlineMedium.copyWith(
-                      color: AppColors.textPrimaryDark,
+                      color: context.textPrimary,
                     ),
                   ),
                 ),
@@ -189,7 +188,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
                           ? 'Standard: 3 meals (B+L+D). Above 3 = Guests.'
                           : 'Standard: 2 meals (L+D). Above 2 = Guests.',
                       style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textSecondaryDark,
+                        color: context.textSecondary,
                       ),
                     ),
                   ),
@@ -205,7 +204,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.cardDark,
+                        color: context.cardColor,
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -241,9 +240,13 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
                     ),
                     const Gap(AppSpacing.sm),
                     Expanded(
-                      child: _timeLockWarning!.text.xs
-                          .color(AppColors.warning)
-                          .make(),
+                      child: Text(
+                        _timeLockWarning!,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: AppColors.warning,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -298,7 +301,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
   Widget _buildModeToggle() {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.cardDark,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
       ),
       child: Row(
@@ -330,7 +333,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
         child: Text(
           label,
           style: AppTypography.labelSmall.copyWith(
-            color: isSelected ? Colors.white : AppColors.textSecondaryDark,
+            color: isSelected ? Colors.white : context.textSecondary,
           ),
         ),
       ),
@@ -345,7 +348,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
         Text(
           'Total meals today',
           style: AppTypography.labelMedium.copyWith(
-            color: AppColors.textSecondaryDark,
+            color: context.textSecondary,
           ),
         ),
         const Gap(AppSpacing.md),
@@ -367,7 +370,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
                 width: 100,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: AppColors.cardDark,
+                  color: context.cardColor,
                   borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
                   border: Border.all(
                     color: AppColors.mealColor.withValues(alpha: 0.5),
@@ -386,7 +389,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
                     Text(
                       'tap to edit',
                       style: AppTypography.labelSmall.copyWith(
-                        color: AppColors.textMutedDark,
+                        color: context.textMuted,
                       ),
                     ),
                   ],
@@ -424,7 +427,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? AppColors.mealColor
-                        : AppColors.cardDark,
+                        : context.cardColor,
                     borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                     border: isDefault && !isSelected
                         ? Border.all(color: AppColors.mealColor)
@@ -435,7 +438,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
                     style: TextStyle(
                       color: isSelected
                           ? Colors.white
-                          : AppColors.textPrimaryDark,
+                          : context.textPrimary,
                       fontWeight: isDefault
                           ? FontWeight.w600
                           : FontWeight.normal,
@@ -460,9 +463,9 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
         width: 56,
         height: 56,
         decoration: BoxDecoration(
-          color: AppColors.cardDark,
+          color: context.cardColor,
           shape: BoxShape.circle,
-          border: Border.all(color: AppColors.borderDark),
+          border: Border.all(color: context.borderColor),
         ),
         child: Icon(icon, color: AppColors.mealColor, size: 24),
       ),
@@ -477,7 +480,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
         Text(
           'Meals per type',
           style: AppTypography.labelMedium.copyWith(
-            color: AppColors.textSecondaryDark,
+            color: context.textSecondary,
           ),
         ),
         const Gap(AppSpacing.md),
@@ -521,12 +524,12 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
     required Color color,
     bool isLocked = false,
   }) {
-    final effectiveColor = isLocked ? AppColors.textMutedDark : color;
+    final effectiveColor = isLocked ? context.textMuted : color;
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.cardDark,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
       ),
       child: Row(
@@ -537,14 +540,14 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
             child: Text(
               label,
               style: AppTypography.titleSmall.copyWith(
-                color: AppColors.textPrimaryDark,
+                color: context.textPrimary,
               ),
             ),
           ),
           // Stepper
           Container(
             decoration: BoxDecoration(
-              color: AppColors.surfaceDark,
+              color: context.surfaceColor,
               borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
             ),
             child: Row(
@@ -600,7 +603,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
               child: Icon(
                 LucideIcons.lock,
                 size: 14,
-                color: AppColors.textMutedDark,
+                color: context.textMuted,
               ),
             ),
         ],
@@ -615,9 +618,9 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.cardDark,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: AppColors.borderDark.withValues(alpha: 0.5)),
+        border: Border.all(color: context.borderColor.withValues(alpha: 0.5)),
       ),
       child: Column(
         children: [
@@ -627,13 +630,13 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
               Text(
                 'Your meals',
                 style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.textSecondaryDark,
+                  color: context.textSecondary,
                 ),
               ),
               Text(
                 '$ownMeals',
                 style: AppTypography.titleMedium.copyWith(
-                  color: AppColors.textPrimaryDark,
+                  color: context.textPrimary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -677,7 +680,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
               Text(
                 'Total',
                 style: AppTypography.titleSmall.copyWith(
-                  color: AppColors.textPrimaryDark,
+                  color: context.textPrimary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -702,7 +705,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
         Text(
           'Date',
           style: AppTypography.labelMedium.copyWith(
-            color: AppColors.textSecondaryDark,
+            color: context.textSecondary,
           ),
         ),
         const Gap(AppSpacing.sm),
@@ -711,7 +714,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
           child: Container(
             padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
-              color: AppColors.cardDark,
+              color: context.cardColor,
               borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
             ),
             child: Row(
@@ -725,13 +728,13 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
                 Text(
                   _formatDate(_selectedDate),
                   style: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.textPrimaryDark,
+                    color: context.textPrimary,
                   ),
                 ),
                 const Spacer(),
-                const Icon(
+                Icon(
                   LucideIcons.chevronRight,
-                  color: AppColors.textMutedDark,
+                  color: context.textMuted,
                   size: 18,
                 ),
               ],
@@ -749,7 +752,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surfaceDark,
+        backgroundColor: context.surfaceColor,
         title: const Text('Enter meal count'),
         content: TextField(
           controller: controller,
@@ -803,11 +806,11 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
       initialDate: _selectedDate,
       firstDate: DateTime.now().subtract(const Duration(days: 7)),
       lastDate: DateTime.now().add(const Duration(days: 7)),
-      builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.dark(
+      builder: (pickerContext, child) => Theme(
+        data: Theme.of(pickerContext).copyWith(
+          colorScheme: ColorScheme.dark(
             primary: AppColors.mealColor,
-            surface: AppColors.surfaceDark,
+            surface: pickerContext.surfaceColor,
           ),
         ),
         child: child!,

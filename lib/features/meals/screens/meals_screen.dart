@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -5,15 +6,13 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
-import 'package:velocity_x/velocity_x.dart';
-import 'package:getwidget/getwidget.dart';
 
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/models/meal.dart';
 import 'package:mess_manager/core/router/app_router.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
-import 'package:mess_manager/core/widgets/gf_components.dart';
+import 'package:mess_manager/core/widgets/app_components.dart';
 import 'package:mess_manager/core/widgets/animated_widgets.dart';
 import 'package:mess_manager/features/meals/providers/meals_provider.dart';
 import 'package:mess_manager/features/meals/widgets/add_meal_sheet.dart';
@@ -22,7 +21,7 @@ import 'package:mess_manager/features/meals/widgets/meal_schedule_tab.dart';
 import 'package:mess_manager/features/balance/providers/balance_provider.dart';
 import 'package:mess_manager/core/providers/role_provider.dart';
 
-/// Meals Screen - Uses GetWidget + VelocityX + flutter_animate
+/// Meals Screen — Cosmic Bioluminescence Design
 class MealsScreen extends ConsumerStatefulWidget {
   const MealsScreen({super.key});
 
@@ -49,85 +48,285 @@ class _MealsScreenState extends ConsumerState<MealsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: [
-          const Icon(
-            LucideIcons.utensils,
-            color: AppColors.mealColor,
-            size: 22,
-          ),
-          const Gap(AppSpacing.sm),
-          'Meals'.text.make(),
-        ].hStack(),
-        actions: [
-          IconButton(
-            onPressed: () {
-              HapticService.lightTap();
-              context.push(AppRoutes.vacation);
-            },
-            icon: const Icon(LucideIcons.calendarX, size: 20),
-            tooltip: 'Cancel Meals',
-          ),
-          GFButton(
-            onPressed: () {
-              HapticService.buttonPress();
-              _showBulkMealSheet(context);
-            },
-            icon: const Icon(
-              LucideIcons.calendarDays,
-              size: 18,
-              color: AppColors.mealColor,
-            ),
-            text: 'Bulk',
-            type: GFButtonType.transparent,
-            textColor: AppColors.mealColor,
-            size: GFSize.SMALL,
-          ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(icon: Icon(LucideIcons.list, size: 18), text: 'Entries'),
-            Tab(
-              icon: Icon(LucideIcons.calendarDays, size: 18),
-              text: 'Schedule',
-            ),
-          ],
-          labelColor: AppColors.mealColor,
-          unselectedLabelColor: AppColors.textSecondaryDark,
-          indicatorColor: AppColors.mealColor,
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
+      body: Stack(
         children: [
-          _EntriesTab(ref: ref),
-          const MealScheduleTab(),
+          // ── Subtle aurora background ──
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xFF0D1520),
+                    Color(0xFF0A0E1A),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Meal-themed accent orb
+          Positioned(
+            top: -80,
+            right: -60,
+            child: Container(
+              width: 220,
+              height: 220,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppColors.mealColor.withValues(alpha: 0.12),
+                    AppColors.mealColor.withValues(alpha: 0.03),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            )
+                .animate(onPlay: (c) => c.repeat(reverse: true))
+                .scaleXY(begin: 0.9, end: 1.1, duration: 5.seconds),
+          ),
+
+          // ── Content ──
+          SafeArea(
+            child: NestedScrollView(
+              headerSliverBuilder: (context, innerBoxScrolled) => [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                    child: _buildHeader(context),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                    child: _buildTabBar(),
+                  ),
+                ),
+              ],
+              body: TabBarView(
+                controller: _tabController,
+                children: [
+                  _EntriesTab(ref: ref),
+                  const MealScheduleTab(),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
       floatingActionButton: _buildMealFAB(context),
     );
   }
 
-  Widget _buildMealFAB(BuildContext context) {
-    return FloatingActionButton.extended(
-          onPressed: () {
-            HapticService.buttonPress();
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.transparent,
-              builder: (context) => const AddMealSheet(),
-            );
+  // ────────────────────────────────────────────────────────────────
+  // HEADER
+  // ────────────────────────────────────────────────────────────────
+
+  Widget _buildHeader(BuildContext context) {
+    return Row(
+      children: [
+        // Gradient icon halo
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            gradient: LinearGradient(
+              colors: [
+                AppColors.mealColor.withValues(alpha: 0.25),
+                AppColors.mealColor.withValues(alpha: 0.08),
+              ],
+            ),
+          ),
+          child: const Icon(LucideIcons.utensils, color: AppColors.mealColor, size: 20),
+        ),
+        const Gap(12),
+        Text(
+          'Meals',
+          style: AppTypography.headlineMedium.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const Spacer(),
+        // Vacation button
+        _glassIconButton(
+          icon: LucideIcons.calendarX,
+          onTap: () {
+            HapticService.lightTap();
+            context.push(AppRoutes.vacation);
           },
-          icon: const Icon(LucideIcons.plus, size: 20),
-          label: const Text('Add Meal'),
-          backgroundColor: AppColors.mealColor,
-        )
+        ),
+        const Gap(8),
+        // Bulk button
+        _glassActionChip(
+          icon: LucideIcons.calendarDays,
+          label: 'Bulk',
+          color: AppColors.mealColor,
+          onTap: () {
+            HapticService.buttonPress();
+            _showBulkMealSheet(context);
+          },
+        ),
+      ],
+    ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.05);
+  }
+
+  Widget _glassIconButton({required IconData icon, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: Colors.white.withValues(alpha: 0.06),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            ),
+            child: Icon(icon, size: 18, color: Colors.white.withValues(alpha: 0.6)),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _glassActionChip({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: color.withValues(alpha: 0.12),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: color),
+            const Gap(6),
+            Text(
+              label,
+              style: AppTypography.labelSmall.copyWith(
+                color: color,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // TAB BAR
+  // ────────────────────────────────────────────────────────────────
+
+  Widget _buildTabBar() {
+    return Container(
+      height: 44,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: Colors.white.withValues(alpha: 0.05),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        indicator: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          color: AppColors.mealColor.withValues(alpha: 0.2),
+          border: Border.all(color: AppColors.mealColor.withValues(alpha: 0.3)),
+        ),
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerHeight: 0,
+        labelPadding: EdgeInsets.zero,
+        tabs: [
+          Tab(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(LucideIcons.list, size: 16),
+                const Gap(6),
+                Text('Entries', style: AppTypography.labelMedium),
+              ],
+            ),
+          ),
+          Tab(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(LucideIcons.calendarDays, size: 16),
+                const Gap(6),
+                Text('Schedule', style: AppTypography.labelMedium),
+              ],
+            ),
+          ),
+        ],
+        labelColor: AppColors.mealColor,
+        unselectedLabelColor: Colors.white.withValues(alpha: 0.4),
+      ),
+    ).animate().fadeIn(delay: 100.ms);
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // FAB
+  // ────────────────────────────────────────────────────────────────
+
+  Widget _buildMealFAB(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        gradient: LinearGradient(
+          colors: [
+            AppColors.mealColor,
+            AppColors.mealColor.withValues(alpha: 0.8),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.mealColor.withValues(alpha: 0.4),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: FloatingActionButton.extended(
+        onPressed: () {
+          HapticService.buttonPress();
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (context) => const AddMealSheet(),
+          );
+        },
+        icon: const Icon(LucideIcons.plus, size: 18, color: Colors.white),
+        label: Text(
+          'Add Meal',
+          style: AppTypography.labelMedium.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+    )
         .animate(onPlay: (c) => c.repeat())
         .shimmer(
           duration: 2.seconds,
-          color: Colors.white.withValues(alpha: 0.15),
+          delay: 3.seconds,
+          color: Colors.white.withValues(alpha: 0.12),
         );
   }
 
@@ -141,7 +340,10 @@ class _MealsScreenState extends ConsumerState<MealsScreen>
   }
 }
 
-/// Entries Tab - Uses GetWidget + VelocityX
+// ══════════════════════════════════════════════════════════════════
+// ENTRIES TAB
+// ══════════════════════════════════════════════════════════════════
+
 class _EntriesTab extends StatefulWidget {
   final WidgetRef ref;
 
@@ -174,10 +376,12 @@ class _EntriesTabState extends State<_EntriesTab> {
     final meals = _searchQuery.isEmpty
         ? allMeals
         : allMeals.where((meal) {
-            final member = members.firstWhere(
+            if (members.isEmpty) return false;
+            final member = members.cast<dynamic>().firstWhere(
               (m) => m.id == meal.memberId,
-              orElse: () => members.first,
+              orElse: () => null,
             );
+            if (member == null) return false;
             return member.name.toString().toLowerCase().contains(
               _searchQuery.toLowerCase(),
             );
@@ -212,78 +416,66 @@ class _EntriesTabState extends State<_EntriesTab> {
     return CustomScrollView(
       slivers: [
         SliverToBoxAdapter(
-          child: VStack([
-            // Search Bar
-            TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search by member name...',
-                prefixIcon: const Icon(LucideIcons.search, size: 18),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(LucideIcons.x, size: 16),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() => _searchQuery = '');
-                        },
-                      )
-                    : null,
-                filled: true,
-                fillColor: AppColors.cardDark,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                  borderSide: BorderSide.none,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Search Bar ──
+                _buildSearchBar(),
+                const Gap(16),
+
+                // ── Stat Cards ──
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildGlassStatCard(
+                        icon: LucideIcons.utensils,
+                        label: 'Total Meals',
+                        value: allMeals
+                            .fold(0.0, (sum, m) => sum + m.count)
+                            .toStringAsFixed(1),
+                        color: AppColors.mealColor,
+                        delay: 150,
+                      ),
+                    ),
+                    const Gap(10),
+                    Expanded(
+                      child: _buildGlassStatCard(
+                        icon: LucideIcons.calculator,
+                        label: 'Meal Rate',
+                        value: '৳${mealRate.toStringAsFixed(0)}',
+                        color: AppColors.primary,
+                        delay: 200,
+                      ),
+                    ),
+                  ],
                 ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.sm,
+                const Gap(20),
+
+                // ── Member Summary ──
+                _sectionLabel('THIS MONTH'),
+                const Gap(10),
+                ...members.asMap().entries.map(
+                  (entry) => _buildMemberRow(
+                    context,
+                    entry.value,
+                    mealsByMember[entry.value.id] ?? 0,
+                    mealRate,
+                    entry.key,
+                  ),
                 ),
-              ),
-              onChanged: (value) => setState(() => _searchQuery = value),
+                const Gap(20),
+
+                _sectionLabel('RECENT ENTRIES'),
+              ],
             ),
-            16.heightBox,
-
-            // Stats Row
-            HStack([
-              _buildStatCard(
-                icon: LucideIcons.utensils,
-                label: 'Total Meals',
-                value: allMeals
-                    .fold(0.0, (sum, m) => sum + m.count)
-                    .toStringAsFixed(1),
-                color: AppColors.mealColor,
-              ).expand(),
-              8.widthBox,
-              _buildStatCard(
-                icon: LucideIcons.calculator,
-                label: 'Meal Rate',
-                value: '৳${mealRate.toStringAsFixed(0)}',
-                color: AppColors.primary,
-              ).expand(),
-            ]).animate().fadeIn().slideY(begin: 0.1),
-            16.heightBox,
-
-            // Member Summary
-            'This Month'.text.xl.bold.color(AppColors.textPrimaryDark).make(),
-            8.heightBox,
-            ...members.map(
-              (member) => _buildMemberRow(
-                member,
-                mealsByMember[member.id] ?? 0,
-                mealRate,
-              ),
-            ),
-            16.heightBox,
-
-            'Recent Entries'.text.xl.bold
-                .color(AppColors.textPrimaryDark)
-                .make(),
-          ]).p16(),
+          ),
         ),
 
-        // Meals by Date
+        // ── Meals by Date ──
         SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
           sliver: SliverList(
             delegate: SliverChildBuilderDelegate((context, index) {
               final date = sortedDates[index];
@@ -298,56 +490,229 @@ class _EntriesTabState extends State<_EntriesTab> {
     );
   }
 
-  Widget _buildStatCard({
+  // ────────────────────────────────────────────────────────────────
+  // SEARCH BAR
+  // ────────────────────────────────────────────────────────────────
+
+  Widget _buildSearchBar() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: TextField(
+          controller: _searchController,
+          style: AppTypography.bodyMedium.copyWith(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: 'Search by member name...',
+            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.25)),
+            prefixIcon: Icon(
+              LucideIcons.search,
+              size: 18,
+              color: Colors.white.withValues(alpha: 0.3),
+            ),
+            suffixIcon: _searchQuery.isNotEmpty
+                ? IconButton(
+                    icon: Icon(
+                      LucideIcons.x,
+                      size: 16,
+                      color: Colors.white.withValues(alpha: 0.4),
+                    ),
+                    onPressed: () {
+                      _searchController.clear();
+                      setState(() => _searchQuery = '');
+                    },
+                  )
+                : null,
+            filled: true,
+            fillColor: Colors.white.withValues(alpha: 0.05),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(
+                color: AppColors.mealColor.withValues(alpha: 0.5),
+              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
+          ),
+          onChanged: (value) => setState(() => _searchQuery = value),
+        ),
+      ),
+    ).animate().fadeIn(delay: 100.ms);
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // GLASS STAT CARD
+  // ────────────────────────────────────────────────────────────────
+
+  Widget _buildGlassStatCard({
     required IconData icon,
     required String label,
     required String value,
     required Color color,
+    int delay = 0,
   }) {
-    return GFCard(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      margin: EdgeInsets.zero,
-      color: color.withValues(alpha: 0.1),
-      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-      border: Border.all(color: color.withValues(alpha: 0.2)),
-      content: VStack(crossAlignment: CrossAxisAlignment.start, [
-        Icon(icon, color: color, size: 20),
-        8.heightBox,
-        value.text.xl2.color(color).bold.make(),
-        label.text.sm.color(AppColors.textSecondaryDark).make(),
-      ]),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            color: color.withValues(alpha: 0.08),
+            border: Border.all(color: color.withValues(alpha: 0.15)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  gradient: RadialGradient(
+                    colors: [
+                      color.withValues(alpha: 0.3),
+                      color.withValues(alpha: 0.1),
+                    ],
+                  ),
+                ),
+                child: Icon(icon, color: color, size: 16),
+              ),
+              const Gap(10),
+              Text(
+                value,
+                style: AppTypography.headlineSmall.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                label,
+                style: AppTypography.bodySmall.copyWith(
+                  color: Colors.white.withValues(alpha: 0.4),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).animate().fadeIn(delay: Duration(milliseconds: delay)).slideY(begin: 0.08);
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // SECTION LABEL
+  // ────────────────────────────────────────────────────────────────
+
+  Widget _sectionLabel(String text) {
+    return Row(
+      children: [
+        Container(
+          width: 3,
+          height: 14,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(2),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [AppColors.mealColor, AppColors.mealColor.withValues(alpha: 0.3)],
+            ),
+          ),
+        ),
+        const Gap(8),
+        Text(
+          text,
+          style: AppTypography.labelSmall.copyWith(
+            color: Colors.white.withValues(alpha: 0.35),
+            letterSpacing: 1.5,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildMemberRow(dynamic member, double mealCount, double mealRate) {
+  // ────────────────────────────────────────────────────────────────
+  // MEMBER ROW
+  // ────────────────────────────────────────────────────────────────
+
+  Widget _buildMemberRow(
+    BuildContext context,
+    dynamic member,
+    double mealCount,
+    double mealRate,
+    int index,
+  ) {
     final cost = mealCount * mealRate;
 
-    return GFAppCard(
-      child: HStack([
-        GFMemberAvatar(
-          name: member.name,
-          size: 32,
-          backgroundColor: AppColors.mealColor.withValues(alpha: 0.2),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: Colors.white.withValues(alpha: 0.04),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+            ),
+            child: Row(
+              children: [
+                AppMemberAvatar(
+                  name: member.name,
+                  size: 34,
+                  backgroundColor: AppColors.mealColor.withValues(alpha: 0.2),
+                ),
+                const Gap(10),
+                Expanded(
+                  child: Text(
+                    member.name.toString(),
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: Colors.white.withValues(alpha: 0.85),
+                    ),
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '${mealCount.toStringAsFixed(1)} meals',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.mealColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      '৳${cost.toStringAsFixed(0)}',
+                      style: AppTypography.labelSmall.copyWith(
+                        color: Colors.white.withValues(alpha: 0.35),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
-        8.widthBox,
-        member.name
-            .toString()
-            .text
-            .color(AppColors.textPrimaryDark)
-            .make()
-            .expand(),
-        VStack(crossAlignment: CrossAxisAlignment.end, [
-          '${mealCount.toStringAsFixed(1)} meals'.text.sm
-              .color(AppColors.mealColor)
-              .bold
-              .make(),
-          '৳${cost.toStringAsFixed(0)}'.text.xs
-              .color(AppColors.textSecondaryDark)
-              .make(),
-        ]),
-      ]),
-    ).pOnly(bottom: AppSpacing.sm);
+      ),
+    ).animate().fadeIn(delay: Duration(milliseconds: 250 + index * 40)).slideX(begin: 0.03);
   }
+
+  // ────────────────────────────────────────────────────────────────
+  // DATE SECTION
+  // ────────────────────────────────────────────────────────────────
 
   Widget _buildDateSection(
     BuildContext context,
@@ -357,18 +722,63 @@ class _EntriesTabState extends State<_EntriesTab> {
   ) {
     final dateLabel = _formatDate(date);
 
-    return VStack(crossAlignment: CrossAxisAlignment.start, [
-      dateLabel.text.sm.color(AppColors.textSecondaryDark).make().py8(),
-      ...meals.map((meal) {
-        final member = members.firstWhere(
-          (m) => m.id == meal.memberId,
-          orElse: () => members.first,
-        );
-        return _buildMealRow(context, meal, member);
-      }),
-      8.heightBox,
-    ]);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Row(
+            children: [
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.mealColor.withValues(alpha: 0.5),
+                ),
+              ),
+              const Gap(8),
+              Text(
+                dateLabel,
+                style: AppTypography.labelMedium.copyWith(
+                  color: Colors.white.withValues(alpha: 0.4),
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const Gap(8),
+              Expanded(
+                child: Container(
+                  height: 1,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.white.withValues(alpha: 0.08),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        ...meals.map((meal) {
+          if (members.isEmpty) return const SizedBox.shrink();
+          final member = members.cast<dynamic>().firstWhere(
+            (m) => m.id == meal.memberId,
+            orElse: () => null,
+          );
+          if (member == null) return const SizedBox.shrink();
+          return _buildMealRow(context, meal, member);
+        }),
+        const Gap(4),
+      ],
+    );
   }
+
+  // ────────────────────────────────────────────────────────────────
+  // MEAL ROW
+  // ────────────────────────────────────────────────────────────────
 
   Widget _buildMealRow(BuildContext context, Meal meal, dynamic member) {
     return Slidable(
@@ -391,7 +801,7 @@ class _EntriesTabState extends State<_EntriesTab> {
               foregroundColor: Colors.white,
               icon: LucideIcons.edit2,
               label: 'Edit',
-              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+              borderRadius: BorderRadius.circular(10),
             ),
           SlidableAction(
             onPressed: (_) async {
@@ -399,7 +809,7 @@ class _EntriesTabState extends State<_EntriesTab> {
                   await showDialog<bool>(
                     context: context,
                     builder: (ctx) => AlertDialog(
-                      backgroundColor: AppColors.surfaceDark,
+                      backgroundColor: context.surfaceColor,
                       title: const Text('Delete Meal?'),
                       content: Text(
                         'Remove ${member.name}\'s ${meal.type.name} meal?',
@@ -433,7 +843,7 @@ class _EntriesTabState extends State<_EntriesTab> {
                         ref.read(mealsProvider.notifier).addMeal(deletedMeal);
                       },
                     ),
-                    backgroundColor: AppColors.cardDark,
+                    backgroundColor: context.cardColor,
                     duration: const Duration(seconds: 4),
                   ),
                 );
@@ -443,42 +853,89 @@ class _EntriesTabState extends State<_EntriesTab> {
             foregroundColor: Colors.white,
             icon: LucideIcons.trash2,
             label: 'Delete',
-            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+            borderRadius: BorderRadius.circular(10),
           ),
         ],
       ),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 4),
-        padding: const EdgeInsets.all(AppSpacing.sm),
+        margin: const EdgeInsets.only(bottom: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: AppColors.cardDark.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+          color: Colors.white.withValues(alpha: 0.03),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.04)),
         ),
-        child: HStack([
-          Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: AppColors.mealColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(4),
+        child: Row(
+          children: [
+            // Meal type icon with gradient halo
+            Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                gradient: RadialGradient(
+                  colors: [
+                    _getMealTypeColor(meal.type).withValues(alpha: 0.2),
+                    _getMealTypeColor(meal.type).withValues(alpha: 0.05),
+                  ],
+                ),
+              ),
+              child: Icon(
+                _getMealIcon(meal.type),
+                color: _getMealTypeColor(meal.type),
+                size: 14,
+              ),
             ),
-            child: Icon(
-              _getMealIcon(meal.type),
-              color: AppColors.mealColor,
-              size: 14,
+            const Gap(10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    member.name.toString(),
+                    style: AppTypography.bodySmall.copyWith(
+                      color: Colors.white.withValues(alpha: 0.8),
+                    ),
+                  ),
+                  Text(
+                    meal.type.name,
+                    style: AppTypography.labelSmall.copyWith(
+                      color: _getMealTypeColor(meal.type).withValues(alpha: 0.6),
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          8.widthBox,
-          member.name
-              .toString()
-              .text
-              .sm
-              .color(AppColors.textPrimaryDark)
-              .make()
-              .expand(),
-          '${meal.count}'.text.sm.color(AppColors.mealColor).bold.make(),
-        ]),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: AppColors.mealColor.withValues(alpha: 0.12),
+              ),
+              child: Text(
+                '${meal.count}',
+                style: AppTypography.labelMedium.copyWith(
+                  color: AppColors.mealColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  Color _getMealTypeColor(MealType type) {
+    switch (type) {
+      case MealType.breakfast:
+        return AppColors.accentWarm;
+      case MealType.lunch:
+        return AppColors.mealColor;
+      case MealType.dinner:
+        return AppColors.accent;
+    }
   }
 
   IconData _getMealIcon(MealType type) {

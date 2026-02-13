@@ -47,7 +47,7 @@ class _BazarListTabState extends ConsumerState<BazarListTab> {
                 child: TextField(
                   controller: _addItemController,
                   style: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.textPrimaryDark,
+                    color: context.textPrimary,
                   ),
                   decoration: InputDecoration(
                     hintText: 'Add item to shopping list...',
@@ -78,17 +78,17 @@ class _BazarListTabState extends ConsumerState<BazarListTab> {
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             children: [
               if (pendingItems.isEmpty)
-                _buildEmptyState()
+                _buildEmptyState(context)
               else ...[
                 Text(
                   'Need to buy',
                   style: AppTypography.labelMedium.copyWith(
-                    color: AppColors.textSecondaryDark,
+                    color: context.textSecondary,
                   ),
                 ),
                 const Gap(AppSpacing.sm),
                 ...pendingItems.map(
-                  (item) => _buildItemCard(item, members, currentMemberId),
+                  (item) => _buildItemCard(context, item, members, currentMemberId),
                 ),
               ],
 
@@ -100,7 +100,7 @@ class _BazarListTabState extends ConsumerState<BazarListTab> {
                     Text(
                       'Purchased',
                       style: AppTypography.labelMedium.copyWith(
-                        color: AppColors.textSecondaryDark,
+                        color: context.textSecondary,
                       ),
                     ),
                     TextButton(
@@ -117,7 +117,7 @@ class _BazarListTabState extends ConsumerState<BazarListTab> {
                 ),
                 const Gap(AppSpacing.sm),
                 ...purchasedItems.map(
-                  (item) => _buildPurchasedItem(item, members),
+                  (item) => _buildPurchasedItem(context, item, members),
                 ),
               ],
               const Gap(AppSpacing.xxl),
@@ -128,7 +128,7 @@ class _BazarListTabState extends ConsumerState<BazarListTab> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.xl),
       child: Column(
@@ -136,19 +136,19 @@ class _BazarListTabState extends ConsumerState<BazarListTab> {
           Icon(
             LucideIcons.shoppingCart,
             size: 48,
-            color: AppColors.textMutedDark,
+            color: context.textMuted,
           ),
           const Gap(AppSpacing.md),
           Text(
             'Shopping list is empty',
             style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textSecondaryDark,
+              color: context.textSecondary,
             ),
           ),
           Text(
             'Add items that need to be bought',
             style: AppTypography.bodySmall.copyWith(
-              color: AppColors.textMutedDark,
+              color: context.textMuted,
             ),
           ),
         ],
@@ -157,16 +157,19 @@ class _BazarListTabState extends ConsumerState<BazarListTab> {
   }
 
   Widget _buildItemCard(
+    BuildContext context,
     BazarListItem item,
     List members,
     String currentMemberId,
   ) {
-    final addedBy = members.firstWhere(
+    if (members.isEmpty) return const SizedBox.shrink();
+    final addedBy = members.cast<dynamic>().firstWhere(
       (m) => m.id == item.addedById,
-      orElse: () => members.first,
+      orElse: () => null,
     );
+    if (addedBy == null) return const SizedBox.shrink();
     final claimedBy = item.claimedById != null
-        ? members.firstWhere(
+        ? members.cast<dynamic>().firstWhere(
             (m) => m.id == item.claimedById,
             orElse: () => null,
           )
@@ -179,12 +182,12 @@ class _BazarListTabState extends ConsumerState<BazarListTab> {
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.cardDark,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
         border: Border.all(
           color: isClaimed
               ? AppColors.success.withValues(alpha: 0.3)
-              : AppColors.borderDark.withValues(alpha: 0.5),
+              : context.borderColor.withValues(alpha: 0.5),
         ),
       ),
       child: Column(
@@ -210,7 +213,7 @@ class _BazarListTabState extends ConsumerState<BazarListTab> {
                     border: Border.all(
                       color: isClaimed
                           ? AppColors.warning
-                          : AppColors.borderDark,
+                          : context.borderColor,
                       width: 2,
                     ),
                   ),
@@ -232,14 +235,14 @@ class _BazarListTabState extends ConsumerState<BazarListTab> {
                     Text(
                       item.name,
                       style: AppTypography.titleSmall.copyWith(
-                        color: AppColors.textPrimaryDark,
+                        color: context.textPrimary,
                       ),
                     ),
                     if (item.quantity != null)
                       Text(
                         item.quantity!,
                         style: AppTypography.labelSmall.copyWith(
-                          color: AppColors.textSecondaryDark,
+                          color: context.textSecondary,
                         ),
                       ),
                   ],
@@ -249,7 +252,7 @@ class _BazarListTabState extends ConsumerState<BazarListTab> {
               Text(
                 'by ${addedBy.name}',
                 style: AppTypography.labelSmall.copyWith(
-                  color: AppColors.textMutedDark,
+                  color: context.textMuted,
                 ),
               ),
             ],
@@ -311,7 +314,7 @@ class _BazarListTabState extends ConsumerState<BazarListTab> {
                   child: Text(
                     'Unclaim',
                     style: AppTypography.labelSmall.copyWith(
-                      color: AppColors.textSecondaryDark,
+                      color: context.textSecondary,
                     ),
                   ),
                 ),
@@ -319,7 +322,7 @@ class _BazarListTabState extends ConsumerState<BazarListTab> {
               IconButton(
                 onPressed: () => _showEditSheet(context, item),
                 icon: const Icon(LucideIcons.edit2, size: 16),
-                color: AppColors.textMutedDark,
+                color: context.textMuted,
                 iconSize: 16,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -341,12 +344,16 @@ class _BazarListTabState extends ConsumerState<BazarListTab> {
     );
   }
 
-  Widget _buildPurchasedItem(BazarListItem item, List members) {
+  Widget _buildPurchasedItem(
+    BuildContext context,
+    BazarListItem item,
+    List members,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.xs),
       padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        color: AppColors.cardDark.withValues(alpha: 0.5),
+        color: context.cardColor.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
       ),
       child: Row(
@@ -360,7 +367,7 @@ class _BazarListTabState extends ConsumerState<BazarListTab> {
           Text(
             item.name,
             style: AppTypography.bodySmall.copyWith(
-              color: AppColors.textSecondaryDark,
+              color: context.textSecondary,
               decoration: TextDecoration.lineThrough,
             ),
           ),
@@ -443,9 +450,9 @@ class _EditShoppingItemSheetState extends State<_EditShoppingItemSheet> {
         top: AppSpacing.lg,
         bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
       ),
-      decoration: const BoxDecoration(
-        color: AppColors.surfaceDark,
-        borderRadius: BorderRadius.vertical(
+      decoration: BoxDecoration(
+        color: context.surfaceColor,
+        borderRadius: const BorderRadius.vertical(
           top: Radius.circular(AppSpacing.radiusLg),
         ),
       ),
@@ -459,7 +466,7 @@ class _EditShoppingItemSheetState extends State<_EditShoppingItemSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.borderDark,
+                color: context.borderColor,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -470,7 +477,7 @@ class _EditShoppingItemSheetState extends State<_EditShoppingItemSheet> {
           Text(
             'Edit Item',
             style: AppTypography.headlineSmall.copyWith(
-              color: AppColors.textPrimaryDark,
+              color: context.textPrimary,
             ),
           ),
           const Gap(AppSpacing.lg),
@@ -479,14 +486,14 @@ class _EditShoppingItemSheetState extends State<_EditShoppingItemSheet> {
           Text(
             'Item Name',
             style: AppTypography.labelMedium.copyWith(
-              color: AppColors.textSecondaryDark,
+              color: context.textSecondary,
             ),
           ),
           const Gap(AppSpacing.xs),
           TextField(
             controller: _nameController,
             style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textPrimaryDark,
+              color: context.textPrimary,
             ),
             decoration: const InputDecoration(
               hintText: 'What needs to be bought?',
@@ -499,14 +506,14 @@ class _EditShoppingItemSheetState extends State<_EditShoppingItemSheet> {
           Text(
             'Quantity (optional)',
             style: AppTypography.labelMedium.copyWith(
-              color: AppColors.textSecondaryDark,
+              color: context.textSecondary,
             ),
           ),
           const Gap(AppSpacing.xs),
           TextField(
             controller: _quantityController,
             style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textPrimaryDark,
+              color: context.textPrimary,
             ),
             decoration: const InputDecoration(
               hintText: 'e.g., 2 kg, 5 liters',
@@ -519,14 +526,14 @@ class _EditShoppingItemSheetState extends State<_EditShoppingItemSheet> {
           Text(
             'Note (optional)',
             style: AppTypography.labelMedium.copyWith(
-              color: AppColors.textSecondaryDark,
+              color: context.textSecondary,
             ),
           ),
           const Gap(AppSpacing.xs),
           TextField(
             controller: _noteController,
             style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textPrimaryDark,
+              color: context.textPrimary,
             ),
             decoration: const InputDecoration(
               hintText: 'Any special instructions?',

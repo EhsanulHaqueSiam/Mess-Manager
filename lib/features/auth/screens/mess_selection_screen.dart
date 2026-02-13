@@ -1,20 +1,20 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:go_router/go_router.dart';
-import 'package:velocity_x/velocity_x.dart';
-import 'package:getwidget/getwidget.dart';
-import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:gap/gap.dart';
 
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/router/app_router.dart';
 import 'package:mess_manager/core/models/auth_user.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
-import 'package:mess_manager/core/widgets/gf_components.dart';
+import 'package:mess_manager/core/widgets/app_components.dart';
 import 'package:mess_manager/features/auth/providers/auth_provider.dart';
 
-/// Mess Selection Screen - Uses AnimatedTextKit + GetWidget + VelocityX
+/// Mess Selection Screen - Cosmic Bioluminescence Design
 class MessSelectionScreen extends ConsumerStatefulWidget {
   const MessSelectionScreen({super.key});
 
@@ -38,152 +38,316 @@ class _MessSelectionScreenState extends ConsumerState<MessSelectionScreen> {
     final messes = authState.availableMesses;
 
     return Scaffold(
-      appBar: AppBar(
-        title: 'Select Mess'.text.make(),
-        actions: [
-          GFButton(
-            onPressed: () async {
-              HapticService.mediumTap();
-              await ref.read(authProvider.notifier).signOut();
-              if (context.mounted) context.go(AppRoutes.login);
-            },
-            text: 'Logout',
-            type: GFButtonType.transparent,
-            textColor: AppColors.error,
+      backgroundColor: const Color(0xFF0A0E1A),
+      body: Stack(
+        children: [
+          // Deep space background
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFF0A0E1A), Color(0xFF0D1520)],
+                ),
+              ),
+            ),
+          ),
+
+          // Accent orbs
+          Positioned(
+            top: -50, left: -40,
+            child: Container(
+              width: 180, height: 180,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(colors: [
+                  AppColors.primary.withValues(alpha: 0.12),
+                  Colors.transparent,
+                ]),
+              ),
+            ).animate(onPlay: (c) => c.repeat(reverse: true))
+                .scaleXY(begin: 1.0, end: 1.15, duration: 4.seconds),
+          ),
+          Positioned(
+            bottom: 80, right: -60,
+            child: Container(
+              width: 200, height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(colors: [
+                  AppColors.accentAlt.withValues(alpha: 0.08),
+                  Colors.transparent,
+                ]),
+              ),
+            ).animate(onPlay: (c) => c.repeat(reverse: true))
+                .scaleXY(begin: 0.9, end: 1.1, duration: 5.seconds),
+          ),
+
+          // Main content
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header with logout
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Hi, ${authState.user?.name ?? 'User'}!',
+                              style: AppTypography.headlineMedium.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const Gap(4),
+                            Text(
+                              'Select a mess or create a new one',
+                              style: TextStyle(color: Colors.white.withValues(alpha: 0.4)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () async {
+                          HapticService.mediumTap();
+                          await ref.read(authProvider.notifier).signOut();
+                          if (context.mounted) context.go(AppRoutes.login);
+                        },
+                        child: Text(
+                          'Logout',
+                          style: TextStyle(color: AppColors.error.withValues(alpha: 0.7), fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                    ],
+                  ).animate().fadeIn(duration: 400.ms),
+                  const Gap(28),
+
+                  // Available Messes
+                  if (messes.isNotEmpty) ...[
+                    _buildSectionLabel('YOUR MESSES'),
+                    const Gap(12),
+                    ...messes.asMap().entries.map(
+                          (entry) => _buildMessCard(entry.value, entry.key),
+                        ),
+                    const Gap(20),
+                  ],
+
+                  // Join with Code
+                  _buildSectionLabel('JOIN EXISTING MESS'),
+                  const Gap(12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: Container(
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.04),
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  width: 36, height: 36,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: RadialGradient(colors: [
+                                      AppColors.primary.withValues(alpha: 0.3),
+                                      AppColors.primary.withValues(alpha: 0.05),
+                                    ]),
+                                  ),
+                                  child: const Icon(LucideIcons.userPlus, color: AppColors.primary, size: 18),
+                                ),
+                                const Gap(10),
+                                Text('Join with Invite Code', style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                            const Gap(14),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: _inviteCodeController,
+                                    textCapitalization: TextCapitalization.characters,
+                                    style: TextStyle(color: Colors.white.withValues(alpha: 0.9)),
+                                    decoration: InputDecoration(
+                                      hintText: 'Enter invite code',
+                                      hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.25)),
+                                      isDense: true,
+                                      filled: true,
+                                      fillColor: Colors.white.withValues(alpha: 0.03),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                                        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                                        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                                        borderSide: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const Gap(10),
+                                GestureDetector(
+                                  onTap: _joinMess,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(colors: [AppColors.primary, Color(0xFF2A9D8F)]),
+                                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                                    ),
+                                    child: const Text('Join', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.05),
+                  const Gap(20),
+
+                  // Divider
+                  Row(
+                    children: [
+                      Expanded(child: Container(height: 1, decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.transparent, Colors.white.withValues(alpha: 0.08)])))),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text('OR', style: AppTypography.bodySmall.copyWith(color: Colors.white.withValues(alpha: 0.25))),
+                      ),
+                      Expanded(child: Container(height: 1, decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.white.withValues(alpha: 0.08), Colors.transparent])))),
+                    ],
+                  ).animate().fadeIn(delay: 400.ms),
+                  const Gap(20),
+
+                  // Create Mess
+                  GestureDetector(
+                    onTap: () => _showCreateMessSheet(context),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.04),
+                            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                            border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(LucideIcons.plus, size: 18, color: AppColors.primaryLight),
+                              const Gap(8),
+                              Text('Create New Mess', style: TextStyle(color: AppColors.primaryLight, fontWeight: FontWeight.w600)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ).animate().fadeIn(delay: 500.ms),
+                  const Gap(24),
+
+                  // Skip
+                  Center(
+                    child: GestureDetector(
+                      onTap: _continueToDefault,
+                      child: Text(
+                        'Continue with Default Mess',
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
+                      ),
+                    ),
+                  ).animate().fadeIn(delay: 600.ms),
+                  const Gap(32),
+                ],
+              ),
+            ),
           ),
         ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: VStack(crossAlignment: CrossAxisAlignment.start, [
-          // Welcome with AnimatedTextKit
-          AnimatedTextKit(
-            animatedTexts: [
-              TypewriterAnimatedText(
-                'Hi, ${authState.user?.name ?? 'User'}! 👋',
-                textStyle: AppTypography.headlineMedium.copyWith(
-                  color: AppColors.textPrimaryDark,
-                ),
-                speed: 60.ms,
-              ),
-            ],
-            isRepeatingAnimation: false,
-            displayFullTextOnTap: true,
-          ),
-          4.heightBox,
-          'Select a mess or create a new one'.text
-              .color(AppColors.textSecondaryDark)
-              .make()
-              .animate()
-              .fadeIn(delay: 200.ms),
-          24.heightBox,
-
-          // Available Messes
-          if (messes.isNotEmpty) ...[
-            'Your Messes'.text.sm.color(AppColors.textSecondaryDark).make(),
-            8.heightBox,
-            ...messes.asMap().entries.map(
-              (entry) => _buildMessCard(entry.value, entry.key),
-            ),
-            16.heightBox,
-          ],
-
-          // Join with Code
-          GFAppCard(
-            child: VStack(crossAlignment: CrossAxisAlignment.start, [
-              HStack([
-                const Icon(
-                  LucideIcons.userPlus,
-                  color: AppColors.primary,
-                  size: 20,
-                ),
-                8.widthBox,
-                'Join Existing Mess'.text
-                    .color(AppColors.textPrimaryDark)
-                    .make(),
-              ]),
-              12.heightBox,
-              HStack([
-                TextField(
-                  controller: _inviteCodeController,
-                  textCapitalization: TextCapitalization.characters,
-                  decoration: const InputDecoration(
-                    hintText: 'Enter invite code',
-                    isDense: true,
-                  ),
-                ).expand(),
-                8.widthBox,
-                GFButton(
-                  onPressed: _joinMess,
-                  text: 'Join',
-                  color: AppColors.primary,
-                ),
-              ]),
-            ]),
-          ),
-          16.heightBox,
-
-          // Or Divider
-          HStack([
-            const Expanded(child: Divider()),
-            'OR'.text.xs.color(AppColors.textMutedDark).make().px12(),
-            const Expanded(child: Divider()),
-          ]),
-          16.heightBox,
-
-          // Create Mess
-          GFSecondaryButton(
-            text: 'Create New Mess',
-            icon: LucideIcons.plus,
-            onPressed: () => _showCreateMessSheet(context),
-          ),
-          24.heightBox,
-
-          // Skip
-          GFButton(
-            onPressed: _continueToDefault,
-            text: 'Continue with Default Mess',
-            type: GFButtonType.transparent,
-            textColor: AppColors.textMutedDark,
-            fullWidthButton: true,
-          ).centered(),
-        ]),
       ),
     );
   }
 
+  Widget _buildSectionLabel(String text) {
+    return Row(
+      children: [
+        Container(
+          width: 3, height: 14,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(2),
+            gradient: const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [AppColors.primary, AppColors.accentAlt]),
+          ),
+        ),
+        const Gap(8),
+        Text(text, style: AppTypography.bodySmall.copyWith(color: Colors.white.withValues(alpha: 0.4), fontWeight: FontWeight.w600, letterSpacing: 1.5, fontSize: 11)),
+      ],
+    );
+  }
+
   Widget _buildMessCard(Mess mess, int index) {
-    return GFCard(
-      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      padding: EdgeInsets.zero,
-      gradient: LinearGradient(
-        colors: [
-          AppColors.primary.withValues(alpha: 0.1),
-          AppColors.primaryLight.withValues(alpha: 0.05),
-        ],
-      ),
-      border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
-      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-      content: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _selectMess(mess.id),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: GestureDetector(
+        onTap: () => _selectMess(mess.id),
+        child: ClipRRect(
           borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          child: HStack([
-            GFAvatar(
-              backgroundColor: AppColors.primary.withValues(alpha: 0.2),
-              child: const Icon(LucideIcons.home, color: AppColors.primary),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+            child: Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [
+                  AppColors.primary.withValues(alpha: 0.08),
+                  AppColors.primary.withValues(alpha: 0.03),
+                ]),
+                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44, height: 44,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(colors: [
+                        AppColors.primary.withValues(alpha: 0.3),
+                        AppColors.primary.withValues(alpha: 0.05),
+                      ]),
+                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                    ),
+                    child: const Icon(LucideIcons.home, color: AppColors.primary, size: 20),
+                  ),
+                  const Gap(12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(mess.name, style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontWeight: FontWeight.bold)),
+                        Text(mess.address, style: AppTypography.bodySmall.copyWith(color: Colors.white.withValues(alpha: 0.35))),
+                      ],
+                    ),
+                  ),
+                  Icon(LucideIcons.chevronRight, color: Colors.white.withValues(alpha: 0.2), size: 18),
+                ],
+              ),
             ),
-            12.widthBox,
-            VStack(crossAlignment: CrossAxisAlignment.start, [
-              mess.name.text.color(AppColors.textPrimaryDark).bold.make(),
-              mess.address.text.sm.color(AppColors.textMutedDark).make(),
-            ]).expand(),
-            const Icon(
-              LucideIcons.chevronRight,
-              color: AppColors.textMutedDark,
-            ),
-          ]).p16(),
+          ),
         ),
       ),
     ).animate(delay: (80 * index).ms).fadeIn().slideX(begin: 0.03);
@@ -198,7 +362,6 @@ class _MessSelectionScreenState extends ConsumerState<MessSelectionScreen> {
   void _joinMess() async {
     final code = _inviteCodeController.text.trim();
     if (code.isEmpty) return;
-
     HapticService.buttonPress();
     try {
       await ref.read(authProvider.notifier).joinMess(code);
@@ -217,73 +380,40 @@ class _MessSelectionScreenState extends ConsumerState<MessSelectionScreen> {
     final nameController = TextEditingController();
     final addressController = TextEditingController();
 
-    HapticService.modalOpen();
-    showModalBottomSheet(
+    AppSheet.show(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: EdgeInsets.only(
-          left: AppSpacing.lg,
-          right: AppSpacing.lg,
-          top: AppSpacing.lg,
-          bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
+      title: 'Create New Mess',
+      child: Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: Column(
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(labelText: 'Mess Name', hintText: 'e.g., Area51, Bachelor Pad'),
+            ),
+            const Gap(12),
+            TextField(
+              controller: addressController,
+              decoration: const InputDecoration(labelText: 'Address', hintText: 'Dhaka, Bangladesh'),
+            ),
+            const Gap(24),
+            AppPrimaryButton(
+              text: 'Create Mess',
+              onPressed: () async {
+                if (nameController.text.trim().isEmpty) return;
+                HapticService.success();
+                await ref.read(authProvider.notifier).createMess(
+                      name: nameController.text.trim(),
+                      address: addressController.text.trim(),
+                    );
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  context.go(AppRoutes.dashboard);
+                }
+              },
+            ),
+          ],
         ),
-        decoration: const BoxDecoration(
-          color: AppColors.surfaceDark,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppSpacing.radiusLg),
-          ),
-        ),
-        child: VStack([
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppColors.borderDark,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ).centered(),
-          16.heightBox,
-          'Create New Mess'.text.xl.bold
-              .color(AppColors.textPrimaryDark)
-              .make()
-              .wFull(context),
-          16.heightBox,
-          TextField(
-            controller: nameController,
-            decoration: const InputDecoration(
-              labelText: 'Mess Name',
-              hintText: 'e.g., Area51, Bachelor Pad',
-            ),
-          ),
-          12.heightBox,
-          TextField(
-            controller: addressController,
-            decoration: const InputDecoration(
-              labelText: 'Address',
-              hintText: 'Dhaka, Bangladesh',
-            ),
-          ),
-          24.heightBox,
-          GFPrimaryButton(
-            text: 'Create Mess',
-            onPressed: () async {
-              if (nameController.text.trim().isEmpty) return;
-              HapticService.success();
-              await ref
-                  .read(authProvider.notifier)
-                  .createMess(
-                    name: nameController.text.trim(),
-                    address: addressController.text.trim(),
-                  );
-              if (context.mounted) {
-                Navigator.pop(context);
-                context.go(AppRoutes.dashboard);
-              }
-            },
-          ),
-        ]),
       ),
     );
   }

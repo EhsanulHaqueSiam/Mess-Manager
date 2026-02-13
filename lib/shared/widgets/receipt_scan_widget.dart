@@ -34,7 +34,7 @@ class _ReceiptScanSheetState extends ConsumerState<ReceiptScanSheet> {
       ),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
+        color: context.surfaceColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
@@ -45,7 +45,7 @@ class _ReceiptScanSheetState extends ConsumerState<ReceiptScanSheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.borderDark,
+              color: context.borderColor,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -120,7 +120,7 @@ class _ReceiptScanSheetState extends ConsumerState<ReceiptScanSheet> {
               : state.progress < 0.6
               ? 'Extracting text...'
               : 'Parsing items...',
-          style: TextStyle(color: AppColors.textSecondaryDark),
+          style: TextStyle(color: context.textSecondary),
         ),
         const SizedBox(height: 40),
       ],
@@ -131,11 +131,11 @@ class _ReceiptScanSheetState extends ConsumerState<ReceiptScanSheet> {
     return Column(
       children: [
         const SizedBox(height: 20),
-        Icon(LucideIcons.receipt, size: 64, color: AppColors.textMutedDark),
+        Icon(LucideIcons.receipt, size: 64, color: context.textMuted),
         const SizedBox(height: 16),
         Text(
           'Scan a receipt to auto-extract items',
-          style: TextStyle(color: AppColors.textSecondaryDark),
+          style: TextStyle(color: context.textSecondary),
         ),
         const SizedBox(height: 32),
         Row(
@@ -175,9 +175,9 @@ class _ReceiptScanSheetState extends ConsumerState<ReceiptScanSheet> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 24),
         decoration: BoxDecoration(
-          color: AppColors.cardDark,
+          color: context.cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.borderDark),
+          border: Border.all(color: context.borderColor),
         ),
         child: Column(
           children: [
@@ -186,7 +186,7 @@ class _ReceiptScanSheetState extends ConsumerState<ReceiptScanSheet> {
             Text(
               label,
               style: TextStyle(
-                color: AppColors.textPrimaryDark,
+                color: context.textPrimary,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -228,7 +228,7 @@ class _ReceiptScanSheetState extends ConsumerState<ReceiptScanSheet> {
                     Text(
                       '${result.items.length} items found',
                       style: TextStyle(
-                        color: AppColors.textSecondaryDark,
+                        color: context.textSecondary,
                         fontSize: 12,
                       ),
                     ),
@@ -251,7 +251,7 @@ class _ReceiptScanSheetState extends ConsumerState<ReceiptScanSheet> {
                     Text(
                       'Receipt total',
                       style: TextStyle(
-                        color: AppColors.textMutedDark,
+                        color: context.textMuted,
                         fontSize: 10,
                       ),
                     ),
@@ -293,7 +293,7 @@ class _ReceiptScanSheetState extends ConsumerState<ReceiptScanSheet> {
             ),
             Text(
               'Select all',
-              style: TextStyle(color: AppColors.textSecondaryDark),
+              style: TextStyle(color: context.textSecondary),
             ),
           ],
         ),
@@ -360,12 +360,12 @@ class _ReceiptScanSheetState extends ConsumerState<ReceiptScanSheet> {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: isSelected ? AppColors.cardDark : Colors.transparent,
+        color: isSelected ? context.cardColor : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isSelected
               ? AppColors.primary.withValues(alpha: 0.3)
-              : AppColors.borderDark,
+              : context.borderColor,
         ),
       ),
       child: ListTile(
@@ -387,13 +387,13 @@ class _ReceiptScanSheetState extends ConsumerState<ReceiptScanSheet> {
         title: Text(
           item.name,
           style: TextStyle(
-            color: AppColors.textPrimaryDark,
+            color: context.textPrimary,
             fontWeight: FontWeight.w500,
           ),
         ),
         subtitle: Text(
           category,
-          style: TextStyle(color: AppColors.textMutedDark, fontSize: 12),
+          style: TextStyle(color: context.textMuted, fontSize: 12),
         ),
         trailing: Text(
           '৳${item.price.toStringAsFixed(0)}',

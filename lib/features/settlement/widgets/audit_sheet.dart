@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:velocity_x/velocity_x.dart';
 import 'package:gap/gap.dart';
-import 'package:getwidget/getwidget.dart';
 
 import 'package:mess_manager/core/theme/app_theme.dart';
+import 'package:mess_manager/core/widgets/app_components.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
 import 'package:mess_manager/features/settlement/providers/audit_provider.dart';
 
@@ -23,7 +22,7 @@ class AuditSheet extends ConsumerWidget {
         maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
+        color: context.surfaceColor,
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(AppSpacing.radiusLg),
         ),
@@ -36,7 +35,7 @@ class AuditSheet extends ConsumerWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.borderDark,
+              color: context.borderColor,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -45,30 +44,51 @@ class AuditSheet extends ConsumerWidget {
           // Header
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child: HStack([
-              Icon(
-                audit.isClean
-                    ? LucideIcons.shieldCheck
-                    : LucideIcons.shieldAlert,
-                color: audit.isClean ? AppColors.success : AppColors.warning,
-                size: 24,
-              ),
-              12.widthBox,
-              VStack(crossAlignment: CrossAxisAlignment.start, [
-                'Data Audit Report'.text.xl.bold.make(),
-                'Checked at ${_formatTime(audit.auditedAt)}'.text.xs.gray500
-                    .make(),
-              ]).expand(),
-              if (audit.isClean)
-                GFBadge(text: 'Clean', color: AppColors.success)
-              else
-                GFBadge(
-                  text: '${audit.issues.length} Issues',
-                  color: audit.criticalCount > 0
-                      ? AppColors.error
-                      : AppColors.warning,
+            child: Row(
+              children: [
+                Icon(
+                  audit.isClean
+                      ? LucideIcons.shieldCheck
+                      : LucideIcons.shieldAlert,
+                  color: audit.isClean ? AppColors.success : AppColors.warning,
+                  size: 24,
                 ),
-            ]),
+                const Gap(12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Data Audit Report',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        'Checked at ${_formatTime(audit.auditedAt)}',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.grey[500],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (audit.isClean)
+                  AppBadge.success('Clean')
+                else
+                  AppBadge(
+                    text: '${audit.issues.length} Issues',
+                    color: (audit.criticalCount > 0
+                            ? AppColors.error
+                            : AppColors.warning)
+                        .withValues(alpha: 0.1),
+                    textColor: audit.criticalCount > 0
+                        ? AppColors.error
+                        : AppColors.warning,
+                  ),
+              ],
+            ),
           ),
           const Gap(AppSpacing.md),
 
@@ -78,60 +98,106 @@ class AuditSheet extends ConsumerWidget {
             child: Container(
               padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
-                color: AppColors.cardDark,
+                color: context.cardColor,
                 borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                border: Border.all(color: AppColors.borderDark),
+                border: Border.all(color: context.borderColor),
               ),
               child: Column(
                 children: [
-                  HStack([
-                    _buildStatItem(
-                      'Members',
-                      audit.memberCount.toString(),
-                      LucideIcons.users,
-                    ),
-                    _buildStatItem(
-                      'Bazar',
-                      audit.bazarEntryCount.toString(),
-                      LucideIcons.shoppingCart,
-                    ),
-                    _buildStatItem(
-                      'Meals',
-                      audit.mealCount.toString(),
-                      LucideIcons.utensils,
-                    ),
-                    _buildStatItem(
-                      'Transactions',
-                      audit.transactionCount.toString(),
-                      LucideIcons.banknote,
-                    ),
-                  ], alignment: MainAxisAlignment.spaceAround),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildStatItem(
+                        context,
+                        'Members',
+                        audit.memberCount.toString(),
+                        LucideIcons.users,
+                      ),
+                      _buildStatItem(
+                        context,
+                        'Bazar',
+                        audit.bazarEntryCount.toString(),
+                        LucideIcons.shoppingCart,
+                      ),
+                      _buildStatItem(
+                        context,
+                        'Meals',
+                        audit.mealCount.toString(),
+                        LucideIcons.utensils,
+                      ),
+                      _buildStatItem(
+                        context,
+                        'Transactions',
+                        audit.transactionCount.toString(),
+                        LucideIcons.banknote,
+                      ),
+                    ],
+                  ),
                   const Divider(height: 24),
-                  HStack([
-                    VStack([
-                      '৳${audit.totalBazar.toStringAsFixed(0)}'.text.lg.bold
-                          .make(),
-                      'Total Bazar'.text.xs.gray500.make(),
-                    ]).expand(),
-                    VStack([
-                      '৳${audit.totalMealCost.toStringAsFixed(0)}'.text.lg.bold
-                          .make(),
-                      'Total Meal Cost'.text.xs.gray500.make(),
-                    ]).expand(),
-                    VStack([
-                      '৳${audit.actualDiscrepancy.abs().toStringAsFixed(0)}'
-                          .text
-                          .lg
-                          .bold
-                          .color(
-                            audit.actualDiscrepancy.abs() > 1
-                                ? AppColors.warning
-                                : AppColors.success,
-                          )
-                          .make(),
-                      'Discrepancy'.text.xs.gray500.make(),
-                    ]).expand(),
-                  ]),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          children: [
+                            Text(
+                              '৳${audit.totalBazar.toStringAsFixed(0)}',
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'Total Bazar',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey[500],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Column(
+                          children: [
+                            Text(
+                              '৳${audit.totalMealCost.toStringAsFixed(0)}',
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'Total Meal Cost',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey[500],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Column(
+                          children: [
+                            Text(
+                              '৳${audit.actualDiscrepancy.abs().toStringAsFixed(0)}',
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: audit.actualDiscrepancy.abs() > 1
+                                    ? AppColors.warning
+                                    : AppColors.success,
+                              ),
+                            ),
+                            Text(
+                              'Discrepancy',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey[500],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -141,7 +207,7 @@ class AuditSheet extends ConsumerWidget {
           // Issues List
           Expanded(
             child: audit.isClean
-                ? _buildCleanState()
+                ? _buildCleanState(context)
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.lg,
@@ -149,7 +215,7 @@ class AuditSheet extends ConsumerWidget {
                     itemCount: audit.issues.length,
                     itemBuilder: (context, index) {
                       final issue = audit.issues[index];
-                      return _buildIssueCard(issue, index);
+                      return _buildIssueCard(context, issue, index);
                     },
                   ),
           ),
@@ -157,14 +223,15 @@ class AuditSheet extends ConsumerWidget {
           // Footer
           Padding(
             padding: const EdgeInsets.all(AppSpacing.lg),
-            child: GFButton(
-              onPressed: () {
-                HapticService.buttonPress();
-                Navigator.pop(context);
-              },
-              text: 'Close',
-              fullWidthButton: true,
-              type: GFButtonType.outline,
+            child: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () {
+                  HapticService.buttonPress();
+                  Navigator.pop(context);
+                },
+                child: const Text('Close'),
+              ),
             ),
           ),
         ],
@@ -172,32 +239,53 @@ class AuditSheet extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatItem(String label, String value, IconData icon) {
-    return VStack(crossAlignment: CrossAxisAlignment.center, [
-      Icon(icon, size: 16, color: AppColors.textSecondaryDark),
-      4.heightBox,
-      value.text.semiBold.make(),
-      label.text.xs.gray500.make(),
-    ]);
+  Widget _buildStatItem(BuildContext context, String label, String value, IconData icon) {
+    return Column(
+      children: [
+        Icon(icon, size: 16, color: context.textSecondary),
+        const Gap(4),
+        Text(
+          value,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        Text(
+          label,
+          style: TextStyle(fontSize: 10, color: Colors.grey[500]),
+        ),
+      ],
+    );
   }
 
-  Widget _buildCleanState() {
+  Widget _buildCleanState(BuildContext context) {
     return Center(
-      child: VStack(crossAlignment: CrossAxisAlignment.center, [
-        const Icon(
-          LucideIcons.checkCircle2,
-          size: 64,
-          color: AppColors.success,
-        ),
-        16.heightBox,
-        'All Clear!'.text.xl.bold.color(AppColors.success).make(),
-        8.heightBox,
-        'No data integrity issues found.'.text.gray500.center.make(),
-      ]),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            LucideIcons.checkCircle2,
+            size: 64,
+            color: AppColors.success,
+          ),
+          const Gap(16),
+          Text(
+            'All Clear!',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppColors.success,
+            ),
+          ),
+          const Gap(8),
+          Text(
+            'No data integrity issues found.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey[500]),
+          ),
+        ],
+      ),
     ).animate().fadeIn().scale(begin: const Offset(0.9, 0.9));
   }
 
-  Widget _buildIssueCard(AuditIssue issue, int index) {
+  Widget _buildIssueCard(BuildContext context, AuditIssue issue, int index) {
     final color = issue.isCritical ? AppColors.error : AppColors.warning;
     final icon = _getIssueIcon(issue.type);
 
@@ -209,31 +297,68 @@ class AuditSheet extends ConsumerWidget {
         borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
-      child: HStack([
-        Icon(icon, size: 20, color: color),
-        12.widthBox,
-        VStack(crossAlignment: CrossAxisAlignment.start, [
-          HStack([
-            issue.title.text.semiBold.color(color).make().expand(),
-            if (issue.isCritical)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppColors.error,
-                  borderRadius: BorderRadius.circular(4),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: color),
+          const Gap(12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        issue.title,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: color,
+                        ),
+                      ),
+                    ),
+                    if (issue.isCritical)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.error,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'CRITICAL',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-                child: 'CRITICAL'.text.white.xs.make(),
-              ),
-          ]),
-          4.heightBox,
-          issue.description.text.sm.gray400.make(),
-          if (issue.amount != null) ...[
-            4.heightBox,
-            'Amount: ৳${issue.amount!.abs().toStringAsFixed(0)}'.text.xs.gray500
-                .make(),
-          ],
-        ]).expand(),
-      ]),
+                const Gap(4),
+                Text(
+                  issue.description,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[400],
+                  ),
+                ),
+                if (issue.amount != null) ...[
+                  const Gap(4),
+                  Text(
+                    'Amount: ৳${issue.amount!.abs().toStringAsFixed(0)}',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
     ).animate(delay: (index * 50).ms).fadeIn().slideX(begin: 0.05);
   }
 

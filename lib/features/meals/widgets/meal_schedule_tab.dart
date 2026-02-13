@@ -44,10 +44,10 @@ class _MealScheduleTabState extends ConsumerState<MealScheduleTab> {
         Container(
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
-            color: AppColors.cardDark,
+            color: context.cardColor,
             border: Border(
               bottom: BorderSide(
-                color: AppColors.borderDark.withValues(alpha: 0.5),
+                color: context.borderColor.withValues(alpha: 0.5),
               ),
             ),
           ),
@@ -65,7 +65,7 @@ class _MealScheduleTabState extends ConsumerState<MealScheduleTab> {
                   Text(
                     'Default Weekly Schedule',
                     style: AppTypography.titleMedium.copyWith(
-                      color: AppColors.textPrimaryDark,
+                      color: context.textPrimary,
                     ),
                   ),
                 ],
@@ -74,7 +74,7 @@ class _MealScheduleTabState extends ConsumerState<MealScheduleTab> {
               Text(
                 'Set the expected meals for each day. Actual meals can differ.',
                 style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.textSecondaryDark,
+                  color: context.textSecondary,
                 ),
               ),
               const Gap(AppSpacing.md),
@@ -96,7 +96,7 @@ class _MealScheduleTabState extends ConsumerState<MealScheduleTab> {
                     labelStyle: TextStyle(
                       color: isSelected
                           ? AppColors.primary
-                          : AppColors.textPrimaryDark,
+                          : context.textPrimary,
                       fontSize: 12,
                     ),
                   );
@@ -122,7 +122,7 @@ class _MealScheduleTabState extends ConsumerState<MealScheduleTab> {
                           child: Text(
                             _weekdays[index],
                             style: AppTypography.labelSmall.copyWith(
-                              color: AppColors.textSecondaryDark,
+                              color: context.textSecondary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -152,7 +152,7 @@ class _MealScheduleTabState extends ConsumerState<MealScheduleTab> {
                               Text(
                                 mealType[0].toUpperCase(),
                                 style: AppTypography.labelSmall.copyWith(
-                                  color: AppColors.textSecondaryDark,
+                                  color: context.textSecondary,
                                 ),
                               ),
                             ],
@@ -200,12 +200,12 @@ class _MealScheduleTabState extends ConsumerState<MealScheduleTab> {
                                   decoration: BoxDecoration(
                                     color: isEnabled
                                         ? AppColors.mealColor
-                                        : AppColors.cardDark,
+                                        : context.cardColor,
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
                                       color: isEnabled
                                           ? AppColors.mealColor
-                                          : AppColors.borderDark,
+                                          : context.borderColor,
                                     ),
                                   ),
                                   child: isEnabled
@@ -226,7 +226,7 @@ class _MealScheduleTabState extends ConsumerState<MealScheduleTab> {
                 }),
 
                 const Gap(AppSpacing.lg),
-                const Divider(color: AppColors.borderDark),
+                Divider(color: context.borderColor),
                 const Gap(AppSpacing.md),
 
                 // Summary and Actions
@@ -251,7 +251,7 @@ class _MealScheduleTabState extends ConsumerState<MealScheduleTab> {
                             Text(
                               'Expected Weekly',
                               style: AppTypography.labelSmall.copyWith(
-                                color: AppColors.textSecondaryDark,
+                                color: context.textSecondary,
                               ),
                             ),
                             Text(
@@ -330,12 +330,12 @@ class _MealScheduleTabState extends ConsumerState<MealScheduleTab> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surfaceDark,
+        backgroundColor: context.surfaceColor,
         title: const Text('Apply to all members?'),
         content: Text(
           'This will copy the current schedule to all other members.',
           style: AppTypography.bodyMedium.copyWith(
-            color: AppColors.textSecondaryDark,
+            color: context.textSecondary,
           ),
         ),
         actions: [

@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mess_manager/core/models/member.dart';
 import 'package:mess_manager/core/database/isar_service.dart';
+import 'package:mess_manager/core/services/mock_data_service.dart';
 
 class MemberService {
   static final _firestore = FirebaseFirestore.instance;
@@ -35,8 +37,16 @@ class MemberService {
 
       return members;
     } catch (e) {
-      // If offline/error, return specific error or empty
-      // relying on local data from step 1
+      // If offline/error, fallback to local Isar data
+      final localMembers = IsarService.getAllMembers();
+      if (localMembers.isNotEmpty) {
+        return localMembers;
+      }
+      // In debug mode, return mock members as final fallback
+      if (kDebugMode) {
+        return MockDataService.mockMembers;
+      }
+      // Only rethrow if we have nothing locally
       rethrow;
     }
   }

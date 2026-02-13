@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:dynamic_color/dynamic_color.dart';
@@ -36,11 +38,17 @@ void main() async {
     () async {
       WidgetsFlutterBinding.ensureInitialized();
 
+      // Enable 120Hz+ display support for smoother animations/scrolling
+      // This enables pointer event resampling for high refresh rate displays
+      GestureBinding.instance.resamplingEnabled = true;
+
       // Use path URL strategy for web (removes # from URLs)
       usePathUrlStrategy();
 
-      // Configure flutter_animate defaults
+      // Configure flutter_animate for faster, snappier animations
       Animate.restartOnHotReload = true;
+      // Reduce default animation duration for a faster feel (default is 300ms)
+      Animate.defaultDuration = const Duration(milliseconds: 200);
 
       // Get saved theme mode (for adaptive_theme initial mode)
       final savedThemeMode = await AdaptiveTheme.getThemeMode();
@@ -88,6 +96,22 @@ void main() async {
       }
     },
   );
+}
+
+/// Custom scroll behavior for smoother scrolling on high refresh rate displays
+class SmoothScrollBehavior extends MaterialScrollBehavior {
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) {
+    // Use bouncing scroll physics for a premium iOS-like feel
+    return const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
+  }
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    PointerDeviceKind.touch,
+    PointerDeviceKind.stylus,
+    PointerDeviceKind.mouse,
+  };
 }
 
 class Area51App extends ConsumerWidget {
@@ -141,6 +165,8 @@ class Area51App extends ConsumerWidget {
                 debugShowCheckedModeBanner: false,
                 theme: theme, // Use theme from ThemeProvider for animations
                 routerConfig: router,
+                // Performance optimizations
+                scrollBehavior: SmoothScrollBehavior(),
               ),
             );
           },

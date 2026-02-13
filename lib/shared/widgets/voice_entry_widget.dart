@@ -113,7 +113,7 @@ class _VoiceEntrySheetState extends ConsumerState<VoiceEntrySheet> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
+        color: context.surfaceColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
@@ -124,7 +124,7 @@ class _VoiceEntrySheetState extends ConsumerState<VoiceEntrySheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.borderDark,
+              color: context.borderColor,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -139,7 +139,7 @@ class _VoiceEntrySheetState extends ConsumerState<VoiceEntrySheet> {
             padding: const EdgeInsets.all(16),
             constraints: const BoxConstraints(minHeight: 80),
             decoration: BoxDecoration(
-              color: AppColors.cardDark,
+              color: context.cardColor,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Center(
@@ -149,8 +149,8 @@ class _VoiceEntrySheetState extends ConsumerState<VoiceEntrySheet> {
                     : state.currentText,
                 style: TextStyle(
                   color: state.currentText.isEmpty
-                      ? AppColors.textMutedDark
-                      : AppColors.textPrimaryDark,
+                      ? context.textMuted
+                      : context.textPrimary,
                   fontSize: 16,
                 ),
                 textAlign: TextAlign.center,
@@ -293,7 +293,7 @@ class _VoiceEntrySheetState extends ConsumerState<VoiceEntrySheet> {
       children: [
         Text(
           'Try saying:',
-          style: TextStyle(color: AppColors.textMutedDark, fontSize: 12),
+          style: TextStyle(color: context.textMuted, fontSize: 12),
         ),
         const SizedBox(height: 8),
         ...examples.map(
@@ -302,7 +302,7 @@ class _VoiceEntrySheetState extends ConsumerState<VoiceEntrySheet> {
             child: Text(
               e,
               style: TextStyle(
-                color: AppColors.textSecondaryDark,
+                color: context.textSecondary,
                 fontSize: 13,
                 fontStyle: FontStyle.italic,
               ),
