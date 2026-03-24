@@ -259,7 +259,7 @@ class SettlementScreen extends ConsumerWidget {
                       ],
 
                       // Who Owes Whom Section
-                      _buildSectionLabel('WHO OWES WHOM',
+                      _buildSectionLabel('Who owes whom',
                           whoOwesWhom.isNotEmpty ? whoOwesWhom.length : null),
                       const Gap(10),
                       if (whoOwesWhom.isEmpty)
@@ -297,7 +297,7 @@ class SettlementScreen extends ConsumerWidget {
                       const Gap(20),
 
                       // Balance Summary Section
-                      _buildSectionLabel('MEMBER BALANCES',
+                      _buildSectionLabel('Member balances',
                           balances.isNotEmpty ? balances.length : null),
                       const Gap(10),
                       if (members.isNotEmpty)
@@ -653,24 +653,15 @@ class SettlementScreen extends ConsumerWidget {
           height: 14,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(2),
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                AppColors.moneyNegative,
-                AppColors.accent,
-              ],
-            ),
+            color: AppColors.moneyNegative,
           ),
         ),
         const Gap(8),
         Text(
           text,
-          style: AppTypography.bodySmall.copyWith(
+          style: AppTypography.labelMedium.copyWith(
             color: Colors.white.withValues(alpha: 0.4),
             fontWeight: FontWeight.w600,
-            letterSpacing: 1.5,
-            fontSize: 11,
           ),
         ),
         if (count != null) ...[

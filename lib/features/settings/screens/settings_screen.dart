@@ -129,14 +129,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 const Gap(24),
 
                 // ── Appearance ──
-                _sectionLabel('APPEARANCE', 0),
+                _sectionLabel('Appearance', 0),
                 const Gap(8),
                 _buildThemeTile(isDarkMode, 1),
                 _buildThemeColorTile(2),
                 const Gap(20),
 
                 // ── Notifications ──
-                _sectionLabel('NOTIFICATIONS', 3),
+                _sectionLabel('Notifications', 3),
                 const Gap(8),
                 _buildGlassTile(
                   icon: LucideIcons.bellRing,
@@ -158,7 +158,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                 // ── Admin Section (conditional) ──
                 if (isAdmin) ...[
-                  _sectionLabel('ADMIN', 6),
+                  _sectionLabel('Admin', 6),
                   const Gap(8),
                   _buildGlassTile(
                     icon: LucideIcons.home,
@@ -173,7 +173,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ],
 
                 // ── Data & Backup ──
-                _sectionLabel('DATA & BACKUP', 9),
+                _sectionLabel('Data and backup', 9),
                 const Gap(8),
                 _buildGlassTile(
                   icon: LucideIcons.downloadCloud,
@@ -221,14 +221,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 const Gap(20),
 
                 // ── Privacy & Security ──
-                _sectionLabel('PRIVACY & SECURITY', 13),
+                _sectionLabel('Privacy and security', 13),
                 const Gap(8),
                 _buildPrivacyModeTile(14),
                 _buildBiometricLockTile(15),
                 const Gap(20),
 
                 // ── About ──
-                _sectionLabel('ABOUT', 16),
+                _sectionLabel('About', 16),
                 const Gap(8),
                 _buildGlassTile(
                   icon: LucideIcons.info,
@@ -500,29 +500,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           height: 14,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(2),
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                AppColors.primaryLight,
-                AppColors.primaryLight.withValues(alpha: 0.3),
-              ],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primaryLight.withValues(alpha: 0.2),
-                blurRadius: 4,
-                spreadRadius: -1,
-              ),
-            ],
+            color: AppColors.primary,
           ),
         ),
         const Gap(8),
         Text(
           text,
-          style: AppTypography.labelSmall.copyWith(
+          style: AppTypography.labelMedium.copyWith(
             color: Colors.white.withValues(alpha: 0.35),
-            letterSpacing: 1.5,
             fontWeight: FontWeight.w600,
           ),
         ),

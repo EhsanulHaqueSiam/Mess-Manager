@@ -4,6 +4,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:dynamic_color/dynamic_color.dart';
@@ -38,8 +40,23 @@ void main() async {
     () async {
       WidgetsFlutterBinding.ensureInitialized();
 
-      // Enable 120Hz+ display support for smoother animations/scrolling
-      // This enables pointer event resampling for high refresh rate displays
+      // Enable the highest available refresh rate (no hard limit).
+      // Supports 30/60/90/120/165/240+ Hz — whatever the device offers.
+      if (!kIsWeb) {
+        try {
+          final modes = await FlutterDisplayMode.supported;
+          modes.sort((a, b) => b.refreshRate.compareTo(a.refreshRate));
+          if (modes.isNotEmpty) {
+            await FlutterDisplayMode.setPreferredMode(modes.first);
+            debugPrint('Display: ${modes.first.width}x${modes.first.height} @ ${modes.first.refreshRate}Hz');
+            debugPrint('Available modes: ${modes.map((m) => '${m.refreshRate}Hz').toSet().join(', ')}');
+          }
+        } catch (e) {
+          debugPrint('DisplayMode setup skipped: $e');
+        }
+      }
+
+      // Enable pointer event resampling for high refresh rate displays
       GestureBinding.instance.resamplingEnabled = true;
 
       // Use path URL strategy for web (removes # from URLs)

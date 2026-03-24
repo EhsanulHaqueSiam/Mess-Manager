@@ -295,7 +295,7 @@ class MonthSummaryScreen extends ConsumerWidget {
                         const Gap(20),
 
                         // Balance Table
-                        _buildSectionLabel('MEMBER BALANCES',
+                        _buildSectionLabel('Member balances',
                             balances.isNotEmpty ? balances.length : null),
                         const Gap(10),
                         _buildBalanceTable(balances, summary)
@@ -304,7 +304,7 @@ class MonthSummaryScreen extends ConsumerWidget {
                         const Gap(20),
 
                         // Summary Stats
-                        _buildSectionLabel('CALCULATION SUMMARY', null),
+                        _buildSectionLabel('Calculation summary', null),
                         const Gap(10),
                         _buildSummaryStats(summary)
                             .animate(delay: 200.ms)
@@ -312,7 +312,7 @@ class MonthSummaryScreen extends ConsumerWidget {
                         const Gap(24),
 
                         // Signature Block
-                        _buildSectionLabel('VERIFICATION', null),
+                        _buildSectionLabel('Verification', null),
                         const Gap(10),
                         _buildSignatureBlock()
                             .animate(delay: 300.ms)
@@ -342,24 +342,15 @@ class MonthSummaryScreen extends ConsumerWidget {
           height: 14,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(2),
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                AppColors.primary,
-                AppColors.accent,
-              ],
-            ),
+            color: AppColors.primary,
           ),
         ),
         const Gap(8),
         Text(
           text,
-          style: AppTypography.bodySmall.copyWith(
+          style: AppTypography.labelMedium.copyWith(
             color: Colors.white.withValues(alpha: 0.4),
             fontWeight: FontWeight.w600,
-            letterSpacing: 1.5,
-            fontSize: 11,
           ),
         ),
         if (count != null) ...[

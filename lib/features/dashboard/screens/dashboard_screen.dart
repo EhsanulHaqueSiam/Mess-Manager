@@ -98,11 +98,11 @@ class DashboardScreen extends ConsumerWidget {
                     const Gap(16),
                     NotificationAlertsArea(alerts: getSampleAlerts()),
                     const Gap(24),
-                    _sectionLabel(context, 'QUICK ACTIONS'),
+                    _sectionLabel(context, 'Quick actions'),
                     const Gap(12),
                     _buildQuickActions(context),
                     const Gap(28),
-                    _sectionLabel(context, 'EXPLORE'),
+                    _sectionLabel(context, 'Explore'),
                     const Gap(12),
                     _buildModulesGrid(context),
                     const Gap(24),
@@ -111,7 +111,7 @@ class DashboardScreen extends ConsumerWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Expanded(child: _sectionLabel(context, 'ACTIVITY')),
+                        Expanded(child: _sectionLabel(context, 'Activity')),
                         GestureDetector(
                           onTap: () {},
                           child: Text(
@@ -167,11 +167,11 @@ class DashboardScreen extends ConsumerWidget {
                   ],
                 ).createShader(bounds),
                 child: Text(
-                  _getGreeting().toUpperCase(),
+                  _getGreeting(),
                   style: AppTypography.labelSmall.copyWith(
                     color: Colors.white,
-                    letterSpacing: 2.0,
-                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.0,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               )
@@ -1001,46 +1001,23 @@ class DashboardScreen extends ConsumerWidget {
   Widget _sectionLabel(BuildContext context, String text) {
     return Row(
       children: [
-        // Accent line with gradient
         Container(
           width: 3,
-          height: 16,
+          height: 14,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppColors.primaryLight, AppColors.accentAlt],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
+            color: AppColors.primary,
             borderRadius: BorderRadius.circular(2),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primaryLight.withValues(alpha: 0.3),
-                blurRadius: 6,
-                spreadRadius: -1,
-              ),
-            ],
           ),
         ),
         const Gap(10),
-        // Gradient label text
-        ShaderMask(
-          shaderCallback: (bounds) => LinearGradient(
-            colors: [
-              context.textMuted,
-              context.textSecondary,
-            ],
-          ).createShader(bounds),
-          child: Text(
-            text,
-            style: AppTypography.labelSmall.copyWith(
-              color: Colors.white,
-              letterSpacing: 2.0,
-              fontWeight: FontWeight.w700,
-            ),
+        Text(
+          text,
+          style: AppTypography.labelMedium.copyWith(
+            color: Colors.white.withValues(alpha: 0.35),
+            fontWeight: FontWeight.w600,
           ),
         ),
         const Gap(10),
-        // Trailing fade line
         Expanded(
           child: Container(
             height: 1,

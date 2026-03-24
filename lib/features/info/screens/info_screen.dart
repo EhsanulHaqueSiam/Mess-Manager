@@ -483,21 +483,16 @@ class InfoScreen extends ConsumerWidget {
           width: 3,
           height: 14,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [AppColors.primary, AppColors.accentAlt],
-            ),
+            color: AppColors.primary,
             borderRadius: BorderRadius.circular(1.5),
           ),
         ),
         const Gap(8),
         Text(
-          title.toUpperCase(),
-          style: AppTypography.bodySmall.copyWith(
+          title,
+          style: AppTypography.labelMedium.copyWith(
             color: Colors.white.withValues(alpha: 0.5),
             fontWeight: FontWeight.w600,
-            letterSpacing: 1.5,
           ),
         ),
       ],

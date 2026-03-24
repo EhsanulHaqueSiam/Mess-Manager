@@ -120,7 +120,7 @@ class BalanceScreen extends ConsumerWidget {
                 const Gap(24),
 
                 // ── Member Balances ──
-                _sectionLabel('MEMBER BALANCES'),
+                _sectionLabel('Member balances'),
                 const Gap(4),
                 Text(
                   'Positive = will receive · Negative = owes',
@@ -382,19 +382,14 @@ class BalanceScreen extends ConsumerWidget {
           height: 14,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(2),
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.3)],
-            ),
+            color: AppColors.primary,
           ),
         ),
         const Gap(8),
         Text(
           text,
-          style: AppTypography.labelSmall.copyWith(
+          style: AppTypography.labelMedium.copyWith(
             color: Colors.white.withValues(alpha: 0.35),
-            letterSpacing: 1.5,
             fontWeight: FontWeight.w600,
           ),
         ),

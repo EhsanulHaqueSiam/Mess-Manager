@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gap/gap.dart';
@@ -6,6 +7,77 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
 import 'package:mess_manager/core/services/toast_service.dart';
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GLASS CARD — True glassmorphism with refraction
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Premium glass card with backdrop blur, inner refraction border, and tinted shadow.
+/// Use for hero sections, balance cards, and elevated content.
+class GlassCard extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry? padding;
+  final EdgeInsetsGeometry? margin;
+  final double blur;
+  final double opacity;
+  final VoidCallback? onTap;
+
+  const GlassCard({
+    super.key,
+    required this.child,
+    this.padding,
+    this.margin,
+    this.blur = 16,
+    this.opacity = 0.05,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Widget card = ClipRRect(
+      borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+        child: Container(
+          padding: padding ?? const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+            color: Colors.white.withValues(alpha: opacity),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.08),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0A0F14).withValues(alpha: 0.4),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          foregroundDecoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+            border: Border(
+              top: BorderSide(
+                color: Colors.white.withValues(alpha: 0.1),
+                width: 1,
+              ),
+            ),
+          ),
+          child: child,
+        ),
+      ),
+    );
+
+    if (onTap != null) {
+      card = _CardTappable(onTap: onTap!, child: card);
+    }
+
+    if (margin != null) {
+      return Padding(padding: margin!, child: card);
+    }
+    return card;
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // BUTTONS
@@ -47,7 +119,7 @@ class AppPrimaryButton extends StatelessWidget {
             vertical: AppSpacing.md,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
           ),
           textStyle: AppTypography.labelLarge,
         ),
@@ -118,7 +190,7 @@ class AppSecondaryButton extends StatelessWidget {
           vertical: AppSpacing.sm + 2,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
         ),
         textStyle: AppTypography.labelMedium,
       ),
@@ -164,7 +236,7 @@ class AppDangerButton extends StatelessWidget {
           vertical: AppSpacing.sm + 2,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
         ),
       ),
       child: Row(
@@ -185,7 +257,7 @@ class AppDangerButton extends StatelessWidget {
 // CARDS
 // ═══════════════════════════════════════════════════════════════════════════
 
-/// Themed card with app styling — theme-aware
+/// Premium themed card with glass refraction inner border — theme-aware
 class AppCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -206,32 +278,106 @@ class AppCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bg = color ?? context.cardColor;
+    final border = borderColor ?? context.borderColor.withValues(alpha: 0.3);
+
     final cardWidget = Container(
       padding: padding ?? const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: color ?? context.cardColor,
+        color: bg,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(
-          color: borderColor ?? context.borderColor.withValues(alpha: 0.5),
-        ),
+        border: Border.all(color: border),
+        boxShadow: context.isDark
+            ? [
+                BoxShadow(
+                  color: const Color(0xFF0A0F14).withValues(alpha: 0.5),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+                BoxShadow(
+                  color: Colors.white.withValues(alpha: 0.02),
+                  blurRadius: 0,
+                  spreadRadius: 0.5,
+                ),
+              ]
+            : AppSpacing.shadowSm,
       ),
+      foregroundDecoration: context.isDark
+          ? BoxDecoration(
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              border: Border(
+                top: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.06),
+                  width: 1,
+                ),
+              ),
+            )
+          : null,
       child: child,
     );
 
-    final tappable = onTap != null
-        ? GestureDetector(
-            onTap: () {
-              HapticService.lightTap();
-              onTap!.call();
-            },
-            child: cardWidget,
-          )
-        : cardWidget;
+    if (onTap != null) {
+      final tappable = _CardTappable(onTap: onTap!, child: cardWidget);
+      if (margin != null) {
+        return Padding(padding: margin!, child: tappable);
+      }
+      return tappable;
+    }
 
     if (margin != null) {
-      return Padding(padding: margin!, child: tappable);
+      return Padding(padding: margin!, child: cardWidget);
     }
-    return tappable;
+    return cardWidget;
+  }
+}
+
+/// Tappable card wrapper with scale + haptic feedback
+class _CardTappable extends StatefulWidget {
+  final VoidCallback onTap;
+  final Widget child;
+
+  const _CardTappable({required this.onTap, required this.child});
+
+  @override
+  State<_CardTappable> createState() => _CardTappableState();
+}
+
+class _CardTappableState extends State<_CardTappable>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      duration: const Duration(milliseconds: 80),
+      reverseDuration: const Duration(milliseconds: 120),
+      vsync: this,
+    );
+    _scale = Tween(begin: 1.0, end: 0.975).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => _ctrl.forward(),
+      onTapUp: (_) {
+        _ctrl.reverse();
+        HapticService.lightTap();
+        widget.onTap();
+      },
+      onTapCancel: () => _ctrl.reverse(),
+      child: ScaleTransition(scale: _scale, child: widget.child),
+    );
   }
 }
 
@@ -264,18 +410,30 @@ class AppMemberAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CircleAvatar(
-      radius: size / 2,
-      backgroundColor:
-          backgroundColor ?? AppColors.primary.withValues(alpha: 0.2),
-      backgroundImage: imageUrl != null ? NetworkImage(imageUrl!) : null,
+    final bgColor =
+        backgroundColor ?? AppColors.primary.withValues(alpha: 0.2);
+    final radius = size * 0.28;
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(radius),
+        image: imageUrl != null
+            ? DecorationImage(
+                image: NetworkImage(imageUrl!), fit: BoxFit.cover)
+            : null,
+      ),
       child: imageUrl == null
-          ? Text(
-              _initials,
-              style: AppTypography.labelMedium.copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.bold,
-                fontSize: size * 0.35,
+          ? Center(
+              child: Text(
+                _initials,
+                style: AppTypography.labelMedium.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: size * 0.35,
+                ),
               ),
             )
           : null,
@@ -336,7 +494,7 @@ class AppBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: outline ? Colors.transparent : bgColor,
         border: outline ? Border.all(color: fgColor) : null,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusXs),
       ),
       child: Text(
         text,
@@ -575,10 +733,25 @@ class AppSheet extends StatelessWidget {
     return Container(
       padding: padding ?? const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: context.surfaceColor,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(AppSpacing.radiusLg),
+        color: context.isDark ? const Color(0xFF0D1520) : context.surfaceColor,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppSpacing.radiusXl),
         ),
+        border: context.isDark
+            ? const Border(
+                top: BorderSide(
+                  color: Color(0x0FFFFFFF),
+                  width: 1,
+                ),
+              )
+            : null,
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0A0F14).withValues(alpha: 0.5),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
+          ),
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -587,11 +760,17 @@ class AppSheet extends StatelessWidget {
           if (showHandle)
             Center(
               child: Container(
-                width: 40,
+                width: 48,
                 height: 4,
                 margin: const EdgeInsets.only(bottom: AppSpacing.md),
                 decoration: BoxDecoration(
-                  color: context.borderColor,
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.white.withValues(alpha: 0.1),
+                      Colors.white.withValues(alpha: 0.2),
+                      Colors.white.withValues(alpha: 0.1),
+                    ],
+                  ),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -617,8 +796,8 @@ class AppSheet extends StatelessWidget {
 // INPUT
 // ═══════════════════════════════════════════════════════════════════════════
 
-/// Input field — theme-aware
-class AppInput extends StatelessWidget {
+/// Input field with focus glow — theme-aware
+class AppInput extends StatefulWidget {
   final String? label;
   final String? hint;
   final String? helperText;
@@ -647,35 +826,61 @@ class AppInput extends StatelessWidget {
   });
 
   @override
+  State<AppInput> createState() => _AppInputState();
+}
+
+class _AppInputState extends State<AppInput> {
+  bool _focused = false;
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (label != null) ...[
+        if (widget.label != null) ...[
           Text(
-            label!,
+            widget.label!,
             style: AppTypography.labelMedium.copyWith(
-              color: context.textSecondary,
+              color: _focused ? AppColors.primary : context.textSecondary,
             ),
           ),
           const Gap(4),
         ],
-        TextFormField(
-          controller: controller,
-          obscureText: obscureText,
-          keyboardType: keyboardType,
-          validator: validator,
-          onChanged: onChanged,
-          maxLines: maxLines,
-          style: AppTypography.bodyMedium.copyWith(
-            color: context.textPrimary,
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+            boxShadow: _focused
+                ? [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.15),
+                      blurRadius: 8,
+                      spreadRadius: -2,
+                    ),
+                  ]
+                : [],
           ),
-          decoration: InputDecoration(
-            hintText: hint,
-            helperText: helperText,
-            prefixIcon:
-                prefixIcon != null ? Icon(prefixIcon, size: 18) : null,
-            suffix: suffix,
+          child: Focus(
+            onFocusChange: (hasFocus) => setState(() => _focused = hasFocus),
+            child: TextFormField(
+              controller: widget.controller,
+              obscureText: widget.obscureText,
+              keyboardType: widget.keyboardType,
+              validator: widget.validator,
+              onChanged: widget.onChanged,
+              maxLines: widget.maxLines,
+              style: AppTypography.bodyMedium.copyWith(
+                color: context.textPrimary,
+              ),
+              decoration: InputDecoration(
+                hintText: widget.hint,
+                helperText: widget.helperText,
+                prefixIcon: widget.prefixIcon != null
+                    ? Icon(widget.prefixIcon, size: 18)
+                    : null,
+                suffix: widget.suffix,
+              ),
+            ),
           ),
         ),
       ],

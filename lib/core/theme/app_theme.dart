@@ -39,10 +39,10 @@ class AppColors {
   static const secondaryLight = Color(0xFF60A5FA); // Electric Blue
   static const secondaryDark = Color(0xFF0F172A); // Space Black
 
-  // === Accent: Electric Bioluminescence ===
-  static const accent = Color(0xFFD946EF); // Hyper Violet
-  static const accentAlt = Color(0xFF22D3EE); // Cyan Glow
-  static const accentWarm = Color(0xFFF97316); // Thermal Orange
+  // === Accent: Bioluminescent Cyan ===
+  static const accent = Color(0xFF22D3EE); // Cyan Glow (primary accent)
+  static const accentAlt = Color(0xFF34D399); // Mint (secondary accent)
+  static const accentWarm = Color(0xFFF59E0B); // Amber (warm, used sparingly)
 
   // === Dark Theme (Sophisticated, not pure black) ===
   static const backgroundDark = Color(0xFF0A0F14); // Deep Space
@@ -85,14 +85,14 @@ class AppColors {
   ];
 
   static const gradientCosmic = [
-    Color(0xFF1E3A8A),
-    Color(0xFF6366F1),
-    Color(0xFFD946EF),
+    Color(0xFF0A4A47),
+    Color(0xFF1E6F6B),
+    Color(0xFF22D3EE),
   ];
 
   static const gradientThermal = [
-    Color(0xFFEF4444),
-    Color(0xFFF97316),
+    Color(0xFFD97706),
+    Color(0xFFF59E0B),
     Color(0xFFFBBF24),
   ];
 }
@@ -115,10 +115,10 @@ class AppSpacing {
   static const double radiusXl = 28.0;
   static const double radiusFull = 9999.0;
 
-  // Elevation shadows
+  // Elevation shadows (tinted to match dark background hue)
   static List<BoxShadow> get shadowSm => [
     BoxShadow(
-      color: Colors.black.withValues(alpha: 0.05),
+      color: const Color(0xFF0A0F14).withValues(alpha: 0.4),
       blurRadius: 4,
       offset: const Offset(0, 2),
     ),
@@ -126,7 +126,7 @@ class AppSpacing {
 
   static List<BoxShadow> get shadowMd => [
     BoxShadow(
-      color: Colors.black.withValues(alpha: 0.1),
+      color: const Color(0xFF0A0F14).withValues(alpha: 0.6),
       blurRadius: 12,
       offset: const Offset(0, 4),
     ),
@@ -139,6 +139,39 @@ class AppSpacing {
       spreadRadius: -4,
     ),
   ];
+
+  /// Premium glass tile decoration — use instead of raw BoxDecoration everywhere.
+  /// Replaces the generic `Colors.white.withValues(alpha: 0.04)` + `0.06 border` pattern.
+  static BoxDecoration glassTile({
+    double radius = radiusMd,
+    Color? accentColor,
+  }) {
+    return BoxDecoration(
+      borderRadius: BorderRadius.circular(radius),
+      color: Colors.white.withValues(alpha: 0.05),
+      border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+      boxShadow: [
+        BoxShadow(
+          color: const Color(0xFF0A0F14).withValues(alpha: 0.3),
+          blurRadius: 6,
+          offset: const Offset(0, 2),
+        ),
+      ],
+    );
+  }
+
+  /// Foreground decoration to add glass refraction highlight on top edge.
+  static BoxDecoration glassTileHighlight({double radius = radiusMd}) {
+    return BoxDecoration(
+      borderRadius: BorderRadius.circular(radius),
+      border: const Border(
+        top: BorderSide(
+          color: Color(0x0FFFFFFF), // white at ~6%
+          width: 1,
+        ),
+      ),
+    );
+  }
 }
 
 /// Typography System (2025-2026 Trending Fonts)

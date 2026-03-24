@@ -454,7 +454,7 @@ class _EntriesTabState extends State<_EntriesTab> {
                 const Gap(20),
 
                 // ── Member Summary ──
-                _sectionLabel('THIS MONTH'),
+                _sectionLabel('This month'),
                 const Gap(10),
                 ...members.asMap().entries.map(
                   (entry) => _buildMemberRow(
@@ -467,7 +467,7 @@ class _EntriesTabState extends State<_EntriesTab> {
                 ),
                 const Gap(20),
 
-                _sectionLabel('RECENT ENTRIES'),
+                _sectionLabel('Recent entries'),
               ],
             ),
           ),
@@ -622,19 +622,14 @@ class _EntriesTabState extends State<_EntriesTab> {
           height: 14,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(2),
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [AppColors.mealColor, AppColors.mealColor.withValues(alpha: 0.3)],
-            ),
+            color: AppColors.mealColor,
           ),
         ),
         const Gap(8),
         Text(
           text,
-          style: AppTypography.labelSmall.copyWith(
+          style: AppTypography.labelMedium.copyWith(
             color: Colors.white.withValues(alpha: 0.35),
-            letterSpacing: 1.5,
             fontWeight: FontWeight.w600,
           ),
         ),
