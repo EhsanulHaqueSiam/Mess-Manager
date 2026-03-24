@@ -1,52 +1,52 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
-
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
-.idea/
-
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
-
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
+# Flutter/Dart
 .dart_tool/
+.flutter-plugins
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
 /build/
 /coverage/
-CLAUDE.md
-.claude/
+**/doc/api/
+**/ios/Flutter/.last_build_id
 
-# Symbolication related
-app.*.symbols
+# Generated code (rebuild with: dart run build_runner build)
+*.g.dart
+*.freezed.dart
+*.mocks.dart
 
-# Obfuscation related
-app.*.map.json
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
 
-# Android Studio will place build artifacts here
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+
+# Flutter metadata
+.metadata
+
+# Android
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/.gradle/
+/android/app/build/
+/android/build/
+/android/local.properties
+android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
 
-# Firebase - Sensitive Config
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/
+
+# Firebase (sensitive — generated from CI secrets)
 lib/firebase_options.dart
 android/app/google-services.json
 ios/Runner/GoogleService-Info.plist
@@ -54,7 +54,7 @@ macos/Runner/GoogleService-Info.plist
 .firebaserc
 firebase.json
 
-# Environment & Secrets
+# Secrets & credentials
 .env
 .env.*
 *.keystore
@@ -62,3 +62,13 @@ firebase.json
 key.properties
 credentials.json
 service-account*.json
+
+# Symbolication & obfuscation
+app.*.symbols
+app.*.map.json
+
+# Debug info
+/build/debug-info/
+
+# Claude Code
+.claude/

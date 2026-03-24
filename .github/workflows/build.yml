@@ -9,13 +9,13 @@ name: Flutter CI/CD
 
 on:
   push:
-    branches: [main, develop, dev]
+    branches: [main, dev]
     paths-ignore:
       - '**.md'
       - 'docs/**'
       - '.gitignore'
   pull_request:
-    branches: [main, develop, dev]
+    branches: [main, dev]
   workflow_dispatch: # Manual trigger
 
 concurrency:
@@ -23,7 +23,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FLUTTER_VERSION: "3.38.5"
+  FLUTTER_VERSION: "3.41.5"
   JAVA_VERSION: "17"
 
 jobs:
@@ -55,6 +55,9 @@ jobs:
 
       - name: 📦 Get dependencies
         run: flutter pub get
+
+      - name: 🔧 Generate code
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: 🔬 Run analyzer
         run: flutter analyze --no-fatal-infos --no-fatal-warnings || true
