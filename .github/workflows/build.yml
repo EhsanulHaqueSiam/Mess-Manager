@@ -111,6 +111,9 @@ jobs:
       - name: 🔥 Create firebase_options.dart from secret
         run: echo "${{ secrets.FIREBASE_OPTIONS_DART }}" | base64 --decode > lib/firebase_options.dart
 
+      - name: 🔧 Generate code
+        run: dart run build_runner build --delete-conflicting-outputs
+
       - name: 🔨 Build APK (Release)
         run: |
           flutter build apk --release \
@@ -162,6 +165,9 @@ jobs:
 
       - name: 🔥 Create firebase_options.dart from secret
         run: echo "${{ secrets.FIREBASE_OPTIONS_DART }}" | base64 --decode > lib/firebase_options.dart
+
+      - name: 🔧 Generate code
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: 🍫 Setup CocoaPods cache
         uses: actions/cache@v4
