@@ -35,7 +35,7 @@ class LocalNotificationService {
     );
 
     await _notifications.initialize(
-      settings,
+      settings: settings,
       onDidReceiveNotificationResponse: _onNotificationTap,
     );
 
@@ -90,11 +90,11 @@ class LocalNotificationService {
     final id = mealType == 'lunch' ? 1 : 2;
 
     await _notifications.zonedSchedule(
-      id,
-      '🍽️ $mealType Reminder',
-      'Bringing any guests today?',
-      _nextInstanceOfTime(hour, minute),
-      NotificationDetails(
+      id: id,
+      title: '🍽️ $mealType Reminder',
+      body: 'Bringing any guests today?',
+      scheduledDate: _nextInstanceOfTime(hour, minute),
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           'meal_reminders',
           'Meal Reminders',
@@ -125,7 +125,7 @@ class LocalNotificationService {
   /// Cancel meal reminder
   static Future<void> cancelMealReminder(String mealType) async {
     final id = mealType == 'lunch' ? 1 : 2;
-    await _notifications.cancel(id);
+    await _notifications.cancel(id: id);
   }
 
   // ============== DUTY REMINDERS ==============
@@ -149,11 +149,11 @@ class LocalNotificationService {
     if (scheduledDate.isBefore(DateTime.now())) return;
 
     await _notifications.zonedSchedule(
-      100 + id.hashCode,
-      '🧹 Duty Today: $dutyName',
-      'Your turn for $dutyName duty',
-      tz.TZDateTime.from(scheduledDate, tz.local),
-      NotificationDetails(
+      id: 100 + id.hashCode,
+      title: '🧹 Duty Today: $dutyName',
+      body: 'Your turn for $dutyName duty',
+      scheduledDate: tz.TZDateTime.from(scheduledDate, tz.local),
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           'duty_reminders',
           'Duty Reminders',
@@ -177,10 +177,10 @@ class LocalNotificationService {
   /// Show low DESCO balance alert
   static Future<void> showLowDescoAlert(double balance) async {
     await _notifications.show(
-      200,
-      '⚡ Low DESCO Balance',
-      'Only ৳${balance.toStringAsFixed(0)} remaining',
-      NotificationDetails(
+      id: 200,
+      title: '⚡ Low DESCO Balance',
+      body: 'Only ৳${balance.toStringAsFixed(0)} remaining',
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           'desco_alerts',
           'DESCO Alerts',
@@ -208,10 +208,10 @@ class LocalNotificationService {
     required double amount,
   }) async {
     await _notifications.show(
-      300,
-      '💰 Settlement Due',
-      '$fromName owes $toName ৳${amount.toStringAsFixed(0)}',
-      NotificationDetails(
+      id: 300,
+      title: '💰 Settlement Due',
+      body: '$fromName owes $toName ৳${amount.toStringAsFixed(0)}',
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           'settlement_reminders',
           'Settlement Reminders',
@@ -243,14 +243,14 @@ class LocalNotificationService {
     if (reminderDate.isBefore(DateTime.now())) return;
 
     await _notifications.zonedSchedule(
-      400 + id.hashCode,
-      '📅 Bill Due Soon: $billName',
-      '৳${amount.toStringAsFixed(0)} due on ${dueDate.day}/${dueDate.month}',
-      tz.TZDateTime.from(
+      id: 400 + id.hashCode,
+      title: '📅 Bill Due Soon: $billName',
+      body: '৳${amount.toStringAsFixed(0)} due on ${dueDate.day}/${dueDate.month}',
+      scheduledDate: tz.TZDateTime.from(
         DateTime(reminderDate.year, reminderDate.month, reminderDate.day, 9, 0),
         tz.local,
       ),
-      NotificationDetails(
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           'bill_reminders',
           'Bill Reminders',
@@ -276,7 +276,7 @@ class LocalNotificationService {
 
   /// Cancel bill reminder
   static Future<void> cancelBillReminder(int id) async {
-    await _notifications.cancel(400 + id.hashCode);
+    await _notifications.cancel(id: 400 + id.hashCode);
   }
 
   // ============== BAZAR ROSTER ALERTS ==============
@@ -287,10 +287,10 @@ class LocalNotificationService {
     required DateTime weekStartDate,
   }) async {
     await _notifications.show(
-      500,
-      '🛒 Your Bazar Turn This Week',
-      '$memberName, you are on bazar duty starting ${weekStartDate.day}/${weekStartDate.month}',
-      NotificationDetails(
+      id: 500,
+      title: '🛒 Your Bazar Turn This Week',
+      body: '$memberName, you are on bazar duty starting ${weekStartDate.day}/${weekStartDate.month}',
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           'bazar_roster',
           'Bazar Roster',
@@ -319,10 +319,10 @@ class LocalNotificationService {
     required int percentIncrease,
   }) async {
     await _notifications.show(
-      600,
-      '📈 Price Spike: $itemName',
-      '৳${currentPrice.toStringAsFixed(0)} (+$percentIncrease% from avg ৳${avgPrice.toStringAsFixed(0)})',
-      NotificationDetails(
+      id: 600,
+      title: '📈 Price Spike: $itemName',
+      body: '৳${currentPrice.toStringAsFixed(0)} (+$percentIncrease% from avg ৳${avgPrice.toStringAsFixed(0)})',
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           'price_alerts',
           'Price Alerts',

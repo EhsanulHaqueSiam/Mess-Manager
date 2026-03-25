@@ -1,22 +1,14 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'api_client.dart';
 
 /// Dio client configuration with interceptors
 class DioClient {
   static Dio? _dio;
-  static ApiClient? _apiClient;
 
   /// Get configured Dio instance
   static Dio get dio {
     _dio ??= _createDio();
     return _dio!;
-  }
-
-  /// Get API client
-  static ApiClient get api {
-    _apiClient ??= ApiClient(dio);
-    return _apiClient!;
   }
 
   /// Create and configure Dio
@@ -70,7 +62,6 @@ class DioClient {
   /// Reset Dio instance (useful for logout)
   static void reset() {
     _dio = null;
-    _apiClient = null;
   }
 
   /// Set auth token

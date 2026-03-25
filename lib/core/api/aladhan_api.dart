@@ -1,33 +1,48 @@
 import 'package:dio/dio.dart';
-import 'package:retrofit/retrofit.dart';
-
-part 'aladhan_api.g.dart';
 
 /// Aladhan Prayer Times API Client
-/// Uses Retrofit for clean API definitions
-@RestApi(baseUrl: 'https://api.aladhan.com/v1')
-abstract class AladhanApi {
-  factory AladhanApi(Dio dio, {String baseUrl}) = _AladhanApi;
+/// Uses plain Dio for HTTP requests
+class AladhanApi {
+  final Dio _dio;
+
+  AladhanApi(Dio dio)
+      : _dio = Dio(BaseOptions(
+          baseUrl: 'https://api.aladhan.com/v1',
+          connectTimeout: dio.options.connectTimeout,
+          receiveTimeout: dio.options.receiveTimeout,
+        ));
 
   /// Get prayer times by coordinates for a specific date
   /// [date] format: DD-MM-YYYY
   /// [method] calculation method (1 = University of Islamic Sciences, Karachi)
-  @GET('/timings/{date}')
   Future<AladhanResponse> getTimingsByCoordinates(
-    @Path('date') String date,
-    @Query('latitude') double latitude,
-    @Query('longitude') double longitude, {
-    @Query('method') int method = 1,
-  });
+    String date,
+    double latitude,
+    double longitude, {
+    int method = 1,
+  }) async {
+    final response = await _dio.get('/timings/$date', queryParameters: {
+      'latitude': latitude,
+      'longitude': longitude,
+      'method': method,
+    });
+    return AladhanResponse.fromJson(response.data);
+  }
 
   /// Get prayer times by city name
-  @GET('/timingsByCity/{date}')
   Future<AladhanResponse> getTimingsByCity(
-    @Path('date') String date,
-    @Query('city') String city,
-    @Query('country') String country, {
-    @Query('method') int method = 1,
-  });
+    String date,
+    String city,
+    String country, {
+    int method = 1,
+  }) async {
+    final response = await _dio.get('/timingsByCity/$date', queryParameters: {
+      'city': city,
+      'country': country,
+      'method': method,
+    });
+    return AladhanResponse.fromJson(response.data);
+  }
 }
 
 /// API Response wrapper

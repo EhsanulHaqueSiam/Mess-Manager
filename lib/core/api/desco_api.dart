@@ -1,52 +1,98 @@
 import 'package:dio/dio.dart';
-import 'package:retrofit/retrofit.dart';
-
-part 'desco_api.g.dart';
 
 /// DESCO Prepaid Meter API Client
-/// Uses Retrofit for clean API definitions
-@RestApi(baseUrl: 'https://prepaid.desco.org.bd/api')
-abstract class DescoApi {
-  factory DescoApi(Dio dio, {String baseUrl}) = _DescoApi;
+/// Uses plain Dio for HTTP requests
+class DescoApi {
+  final Dio _dio;
+
+  DescoApi(Dio dio)
+      : _dio = Dio(BaseOptions(
+          baseUrl: 'https://prepaid.desco.org.bd/api',
+          connectTimeout: dio.options.connectTimeout,
+          receiveTimeout: dio.options.receiveTimeout,
+        ));
 
   /// Get customer info by account or meter number
   /// accountNo = 8 digits, meterNo = 12 digits
-  @GET('/tkdes/customer/getCustomerInfo')
   Future<DescoApiResponse> getCustomerInfo({
-    @Query('accountNo') String? accountNo,
-    @Query('meterNo') String? meterNo,
-  });
+    String? accountNo,
+    String? meterNo,
+  }) async {
+    final response = await _dio.get(
+      '/tkdes/customer/getCustomerInfo',
+      queryParameters: {
+        if (accountNo != null) 'accountNo': accountNo,
+        if (meterNo != null) 'meterNo': meterNo,
+      },
+    );
+    return DescoApiResponse.fromJson(response.data);
+  }
 
   /// Get current balance
-  @GET('/tkdes/customer/getBalance')
   Future<DescoApiResponse> getBalance(
-    @Query('accountNo') String accountNo,
-    @Query('meterNo') String meterNo,
-  );
+    String accountNo,
+    String meterNo,
+  ) async {
+    final response = await _dio.get(
+      '/tkdes/customer/getBalance',
+      queryParameters: {
+        'accountNo': accountNo,
+        'meterNo': meterNo,
+      },
+    );
+    return DescoApiResponse.fromJson(response.data);
+  }
 
   /// Get monthly consumption for a year range
-  @GET('/tkdes/customer/getCustomerMonthlyConsumption')
   Future<DescoApiResponse> getMonthlyConsumption(
-    @Query('accountNo') String accountNo,
-    @Query('meterNo') String meterNo,
-    @Query('monthFrom') String monthFrom, // Format: YYYY-MM
-    @Query('monthTo') String monthTo, // Format: YYYY-MM
-  );
+    String accountNo,
+    String meterNo,
+    String monthFrom, // Format: YYYY-MM
+    String monthTo, // Format: YYYY-MM
+  ) async {
+    final response = await _dio.get(
+      '/tkdes/customer/getCustomerMonthlyConsumption',
+      queryParameters: {
+        'accountNo': accountNo,
+        'meterNo': meterNo,
+        'monthFrom': monthFrom,
+        'monthTo': monthTo,
+      },
+    );
+    return DescoApiResponse.fromJson(response.data);
+  }
 
   /// Get recharge history
-  @GET('/tkdes/customer/getRechargeHistory')
   Future<DescoApiResponse> getRechargeHistory(
-    @Query('accountNo') String accountNo,
-    @Query('meterNo') String meterNo,
-    @Query('dateFrom') String dateFrom, // Format: YYYY-MM-DD
-    @Query('dateTo') String dateTo, // Format: YYYY-MM-DD
-  );
+    String accountNo,
+    String meterNo,
+    String dateFrom, // Format: YYYY-MM-DD
+    String dateTo, // Format: YYYY-MM-DD
+  ) async {
+    final response = await _dio.get(
+      '/tkdes/customer/getRechargeHistory',
+      queryParameters: {
+        'accountNo': accountNo,
+        'meterNo': meterNo,
+        'dateFrom': dateFrom,
+        'dateTo': dateTo,
+      },
+    );
+    return DescoApiResponse.fromJson(response.data);
+  }
 
   /// Get customer location
-  @GET('/common/getCustomerLocation')
   Future<DescoApiResponse> getCustomerLocation(
-    @Query('accountNo') String accountNo,
-  );
+    String accountNo,
+  ) async {
+    final response = await _dio.get(
+      '/common/getCustomerLocation',
+      queryParameters: {
+        'accountNo': accountNo,
+      },
+    );
+    return DescoApiResponse.fromJson(response.data);
+  }
 }
 
 /// Generic API response wrapper for DESCO

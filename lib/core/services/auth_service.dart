@@ -9,7 +9,7 @@ import 'package:mess_manager/core/services/firebase_service.dart';
 /// Note: Disabled on web since Firebase is not configured
 class AuthService {
   static FirebaseAuth? _authInstance;
-  static GoogleSignIn? _googleSignInInstance;
+  static bool _googleSignInInitialized = false;
 
   /// Lazy getter for FirebaseAuth - only initialize when first accessed
   static FirebaseAuth get _auth {
@@ -19,12 +19,11 @@ class AuthService {
     return _authInstance ??= FirebaseAuth.instance;
   }
 
-  /// Lazy getter for GoogleSignIn
-  static GoogleSignIn get _googleSignIn {
-    if (kIsWeb) {
-      throw UnsupportedError('AuthService is not available on web');
-    }
-    return _googleSignInInstance ??= GoogleSignIn();
+  /// Initialize GoogleSignIn singleton (must be called before use)
+  static Future<void> _ensureGoogleSignInInitialized() async {
+    if (_googleSignInInitialized) return;
+    await GoogleSignIn.instance.initialize();
+    _googleSignInInitialized = true;
   }
 
   /// Check if auth is available (not on web)
@@ -119,19 +118,19 @@ class AuthService {
       return AuthResult.failure('Google Sign In not available on web');
     }
     try {
-      // Trigger the authentication flow
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        return AuthResult.failure('Google sign in cancelled');
-      }
+      // Ensure GoogleSignIn is initialized
+      await _ensureGoogleSignInInitialized();
 
-      // Obtain the auth details from the request
+      // Trigger the authentication flow (v7 API)
+      final GoogleSignInAccount googleUser =
+          await GoogleSignIn.instance.authenticate();
+
+      // Obtain the auth details (v7: authentication is a sync getter with idToken)
       final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
+          googleUser.authentication;
 
-      // Create a new credential
+      // Create a new credential (v7: no accessToken on authentication, only idToken)
       final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
@@ -145,6 +144,8 @@ class AuthService {
       await FirebaseService.setUserId(userCredential.user?.uid);
 
       return AuthResult.success(userCredential.user);
+    } on GoogleSignInException catch (_) {
+      return AuthResult.failure('Google sign in cancelled');
     } on FirebaseAuthException catch (e) {
       return AuthResult.failure(_mapAuthError(e.code));
     } catch (e) {
@@ -162,7 +163,7 @@ class AuthService {
     if (!isAvailable) return; // No-op on web
     try {
       await FirebaseService.logEvent(name: 'logout');
-      await _googleSignIn.signOut();
+      await GoogleSignIn.instance.signOut();
       await _auth.signOut();
       await FirebaseService.setUserId(null);
     } catch (e) {

@@ -63,7 +63,7 @@ dependencies:
   firebase_remote_config: ^6.1.3      # Remote config (free)
   firebase_app_check: ^0.4.1+3       # App security (free)
   firebase_in_app_messaging: ^0.9.0+5 # In-app messages (free)
-  google_sign_in: ^6.2.2              # Google Sign-In (Pinned to 6.x to avoid v7 breaking changes)
+  google_sign_in: ^7.0.0              # Google Sign-In (v7 singleton API)
 
   # AI/ML (Firebase AI Logic)
   firebase_ai: ^3.6.1                 # Firebase AI Logic SDK (Gemini via Firebase)
@@ -80,7 +80,6 @@ dependencies:
   shadcn_ui: ^0.46.0
   flutter_hooks: ^0.21.3+1
   hooks_riverpod: ^3.1.0
-  retrofit: ^4.9.2
   dynamic_color: ^1.8.1
   adaptive_theme: ^3.7.2
   animated_theme_switcher: ^2.0.10
@@ -115,13 +114,12 @@ dev_dependencies:
   freezed: ^3.2.3
   json_serializable: ^6.8.0
   riverpod_generator: ^4.0.0+1
-  retrofit_generator: ^10.2.1
   # Note: isar_community_generator removed due to unresolvable version conflicts
   # between isar_plus (needs analyzer ^8.4.1) and isar_community_generator (needs analyzer <8.3.0)
   # Using Hive for now until Isar ecosystem stabilizes
 
 dependency_overrides:
-  # Keep source_gen/build overrides for other generators (freezed, retrofit, etc.)
+  # Keep source_gen/build overrides for other generators (freezed, riverpod, etc.)
   source_gen: ^4.1.1
   build: ^4.0.0
 
