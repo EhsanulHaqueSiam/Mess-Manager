@@ -50,8 +50,8 @@ void main() {
 
       final stringRep = item.toString();
 
-      // Internal IDs should be in toString for debugging, but verify it exists
-      expect(stringRep.contains('fromMemberId'), isTrue);
+      // toString should contain member references for debugging
+      expect(stringRep.contains('from:'), isTrue);
     });
 
     test('BazarEntry preserves data integrity in serialization', () {

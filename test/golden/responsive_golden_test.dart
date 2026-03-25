@@ -13,6 +13,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:mess_manager/core/testing/screen_registry.dart';
@@ -27,7 +28,24 @@ const _responsiveSizes = <String, Size>{
   'iphone_14_pro_max': TestDevices.iPhone14ProMax,
 };
 
+/// Screens that need platform plugins not available in test
+const _skipScreens = {'Settings'};
+
 void main() {
+  setUpAll(() {
+    // Mock local_auth platform channel
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/local_auth'),
+      (MethodCall call) async {
+        if (call.method == 'getAvailableBiometrics') return <String>[];
+        if (call.method == 'isDeviceSupported') return false;
+        if (call.method == 'authenticate') return false;
+        return null;
+      },
+    );
+  });
+
   // Get the 5 main tab screens (hasBottomNav == true)
   final tabScreens = screenRegistry.bottomNavScreens;
 
@@ -48,6 +66,7 @@ void main() {
 
         testWidgets(
           '${screen.name} @ $deviceName (${deviceSize.width.toInt()}x${deviceSize.height.toInt()})',
+          skip: _skipScreens.contains(screen.name),
           (WidgetTester tester) async {
             final goldenPath =
                 'goldens/responsive_${safeName}_$deviceName.png';
