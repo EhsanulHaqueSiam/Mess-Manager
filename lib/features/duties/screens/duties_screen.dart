@@ -167,19 +167,14 @@ class _DutiesScreenState extends ConsumerState<DutiesScreen> {
                         child: BackdropFilter(
                           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
                           child: Material(
-                            color: Colors.white.withValues(alpha: 0.03),
+                            color: Colors.transparent,
                             child: InkWell(
                               onTap: () => _showAddScheduleSheet(context),
                               borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
                               child: Container(
                                 width: 40,
                                 height: 40,
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.06),
-                                  ),
-                                  borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                                ),
+                                decoration: AppSpacing.accentCard(accent: AppColors.info),
                                 child: Icon(
                                   LucideIcons.plus,
                                   size: 20,
@@ -295,20 +290,7 @@ class _DutiesScreenState extends ConsumerState<DutiesScreen> {
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
           padding: const EdgeInsets.all(AppSpacing.lg),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-            gradient: LinearGradient(
-              colors: [
-                AppColors.primary.withValues(alpha: 0.6),
-                AppColors.primaryLight.withValues(alpha: 0.3),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.3),
-            ),
-          ),
+          decoration: AppSpacing.gradientCard(gradient: AppColors.gradientDuty),
           child: Column(
             children: [
               Row(
@@ -403,11 +385,7 @@ class _DutiesScreenState extends ConsumerState<DutiesScreen> {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.03),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          ),
+          decoration: AppSpacing.accentCard(accent: AppColors.info),
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
             child: Center(
@@ -441,11 +419,7 @@ class _DutiesScreenState extends ConsumerState<DutiesScreen> {
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
           padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.03),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          ),
+          decoration: AppSpacing.accentCard(accent: AppColors.info),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -566,13 +540,7 @@ class _DutiesScreenState extends ConsumerState<DutiesScreen> {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.03),
-            border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.3),
-            ),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          ),
+          decoration: AppSpacing.accentCard(accent: AppColors.primary),
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
             child: Column(
@@ -647,13 +615,7 @@ class _DutiesScreenState extends ConsumerState<DutiesScreen> {
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: Container(
             padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
-              border: Border.all(
-                color: statusColor.withValues(alpha: 0.2),
-              ),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            ),
+            decoration: AppSpacing.accentCard(accent: statusColor),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -835,11 +797,7 @@ class _DutiesScreenState extends ConsumerState<DutiesScreen> {
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: Container(
             padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            ),
+            decoration: AppSpacing.accentCard(accent: color),
             child: Row(
               children: [
                 CircleAvatar(
@@ -892,6 +850,7 @@ class _DutiesScreenState extends ConsumerState<DutiesScreen> {
     DutyType.bazarDuty => AppColors.bazarColor,
     DutyType.garbageDisposal => AppColors.moneyNegative,
     DutyType.cooking => AppColors.secondary,
+    DutyType.custom => AppColors.info,
   };
 
   IconData _getDutyIcon(DutyType type) => switch (type) {
@@ -900,6 +859,7 @@ class _DutiesScreenState extends ConsumerState<DutiesScreen> {
     DutyType.bazarDuty => LucideIcons.shoppingCart,
     DutyType.garbageDisposal => LucideIcons.trash2,
     DutyType.cooking => LucideIcons.chefHat,
+    DutyType.custom => LucideIcons.clipboardList,
   };
 
   String _getDutyName(DutyType type) => switch (type) {
@@ -908,6 +868,7 @@ class _DutiesScreenState extends ConsumerState<DutiesScreen> {
     DutyType.bazarDuty => 'Bazar Duty',
     DutyType.garbageDisposal => 'Garbage Disposal',
     DutyType.cooking => 'Cooking',
+    DutyType.custom => 'Custom',
   };
 
   Future<void> _quickSetup(List members) async {
@@ -1064,7 +1025,7 @@ class _AddScheduleSheetState extends ConsumerState<_AddScheduleSheet> {
                 .map(
                   (type) => ChoiceChip(
                     selected: _selectedType == type,
-                    label: Text(_getDutyName(type)),
+                    label: Text(_getDutyName2(type)),
                     onSelected: (_) {
                       HapticService.selectionTick();
                       setState(() => _selectedType = type);
@@ -1139,12 +1100,13 @@ class _AddScheduleSheetState extends ConsumerState<_AddScheduleSheet> {
     );
   }
 
-  String _getDutyName(DutyType type) => switch (type) {
+  String _getDutyName2(DutyType type) => switch (type) {
     DutyType.roomCleaning => 'Room Cleaning',
     DutyType.diningCleanup => 'Dining Cleanup',
     DutyType.bazarDuty => 'Bazar Duty',
     DutyType.garbageDisposal => 'Garbage',
     DutyType.cooking => 'Cooking',
+    DutyType.custom => 'Custom',
   };
 
   void _create() {

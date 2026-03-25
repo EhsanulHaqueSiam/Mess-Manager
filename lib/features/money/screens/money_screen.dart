@@ -257,13 +257,7 @@ class MoneyScreen extends ConsumerWidget {
           child: Container(
             width: 40,
             height: 40,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.06),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.08),
-              ),
-            ),
+            decoration: AppSpacing.accentCard(accent: AppColors.accentWarm, radius: 12),
             child: Icon(icon,
                 color: Colors.white.withValues(alpha: 0.7), size: 18),
           ),
@@ -332,20 +326,7 @@ class MoneyScreen extends ConsumerWidget {
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: Container(
           padding: const EdgeInsets.all(AppSpacing.lg),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                accentColor.withValues(alpha: 0.15),
-                accentColor.withValues(alpha: 0.05),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-            border: Border.all(
-              color: accentColor.withValues(alpha: 0.2),
-            ),
-          ),
+          decoration: AppSpacing.gradientCard(gradient: AppColors.gradientMoney),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -474,6 +455,8 @@ class MoneyScreen extends ConsumerWidget {
           return 'Garbage';
         case DutyType.cooking:
           return 'Cooking';
+        case DutyType.custom:
+          return 'Custom';
       }
     }
 
@@ -483,13 +466,7 @@ class MoneyScreen extends ConsumerWidget {
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
           padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.03),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.05),
-            ),
-          ),
+          decoration: AppSpacing.accentCard(accent: AppColors.accentWarm),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -606,17 +583,13 @@ class MoneyScreen extends ConsumerWidget {
     final isReceiver = tx.toMemberId == currentMemberId;
     final isSender = tx.fromMemberId == currentMemberId;
 
-    Color statusBorderColor = Colors.white.withValues(alpha: 0.05);
-    switch (tx.status) {
-      case TransactionStatus.pending:
-        statusBorderColor = AppColors.warning.withValues(alpha: 0.2);
-      case TransactionStatus.accepted:
-        statusBorderColor = AppColors.info.withValues(alpha: 0.2);
-      case TransactionStatus.rejected:
-        statusBorderColor = AppColors.error.withValues(alpha: 0.2);
-      case TransactionStatus.settled:
-        statusBorderColor = Colors.white.withValues(alpha: 0.05);
-    }
+    final Color txAccent = switch (tx.status) {
+      TransactionStatus.pending => AppColors.warning,
+      TransactionStatus.accepted => AppColors.info,
+      TransactionStatus.rejected => AppColors.error,
+      TransactionStatus.settled => AppColors.accentWarm,
+      _ => AppColors.accentWarm,
+    };
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -626,11 +599,7 @@ class MoneyScreen extends ConsumerWidget {
           filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
           child: Container(
             padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-              border: Border.all(color: statusBorderColor),
-            ),
+            decoration: AppSpacing.accentCard(accent: txAccent),
             child: Column(
               children: [
                 // Header row

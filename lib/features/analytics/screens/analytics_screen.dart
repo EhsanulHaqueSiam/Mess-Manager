@@ -10,6 +10,7 @@ import 'package:gap/gap.dart';
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/widgets/app_components.dart';
 import 'package:mess_manager/core/services/export_service.dart';
+import 'package:mess_manager/core/services/haptic_service.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
 import 'package:mess_manager/features/analytics/providers/analytics_provider.dart';
 import 'package:mess_manager/features/analytics/providers/price_trend_provider.dart';
@@ -28,11 +29,7 @@ class AnalyticsScreen extends ConsumerWidget {
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
           padding: padding ?? const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.03),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          ),
+          decoration: AppSpacing.accentCard(accent: AppColors.primaryLight),
           child: child,
         ),
       ),
@@ -172,6 +169,7 @@ class AnalyticsScreen extends ConsumerWidget {
                           tooltip: 'Export',
                           color: const Color(0xFF0D1520),
                           onSelected: (value) {
+                            HapticService.lightTap();
                             if (value == 'csv') {
                               _exportCsv(context, summary, weeklyTrend);
                             } else if (value == 'pdf') {
@@ -355,11 +353,7 @@ class AnalyticsScreen extends ConsumerWidget {
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
           padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.03),
-            border: Border.all(color: color.withValues(alpha: 0.15)),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          ),
+          decoration: AppSpacing.accentCard(accent: color),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -688,11 +682,7 @@ class AnalyticsScreen extends ConsumerWidget {
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
           padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.03),
-            border: Border.all(color: AppColors.info.withValues(alpha: 0.15)),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          ),
+          decoration: AppSpacing.accentCard(accent: AppColors.info),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -756,13 +746,7 @@ class AnalyticsScreen extends ConsumerWidget {
             filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
             child: Container(
               padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.03),
-                border: Border.all(
-                  color: AppColors.warning.withValues(alpha: 0.15),
-                ),
-                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-              ),
+              decoration: AppSpacing.accentCard(accent: AppColors.warning),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

@@ -98,10 +98,11 @@ GoRouter createAppRouter(WidgetRef ref) {
           return AppRoutes.login;
         }
 
-        // If logged in and on login/signup, redirect to dashboard
+        // If logged in and on login/signup/mess-selection, redirect to dashboard
         if (isLoggedIn &&
             (state.matchedLocation == AppRoutes.login ||
-                state.matchedLocation == AppRoutes.signup)) {
+                state.matchedLocation == AppRoutes.signup ||
+                state.matchedLocation == AppRoutes.messSelection)) {
           return AppRoutes.dashboard;
         }
 

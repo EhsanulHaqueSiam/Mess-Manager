@@ -12,6 +12,7 @@ import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/widgets/app_components.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
 import 'package:mess_manager/core/services/export_service.dart';
+import 'package:mess_manager/core/services/haptic_service.dart';
 import 'package:mess_manager/features/balance/providers/balance_provider.dart';
 import 'package:mess_manager/features/settlement/providers/settlement_provider.dart';
 
@@ -122,14 +123,7 @@ class MonthSummaryScreen extends ConsumerWidget {
                             child: Container(
                               width: 40,
                               height: 40,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.06),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color:
-                                      Colors.white.withValues(alpha: 0.08),
-                                ),
-                              ),
+                              decoration: AppSpacing.accentCard(accent: AppColors.moneyPositive, radius: 12),
                               child: Icon(
                                 LucideIcons.arrowLeft,
                                 color:
@@ -202,14 +196,7 @@ class MonthSummaryScreen extends ConsumerWidget {
                             child: Container(
                               width: 40,
                               height: 40,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.06),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color:
-                                      Colors.white.withValues(alpha: 0.08),
-                                ),
-                              ),
+                              decoration: AppSpacing.accentCard(accent: AppColors.moneyPositive, radius: 12),
                               child: Icon(
                                 LucideIcons.share2,
                                 color:
@@ -219,16 +206,19 @@ class MonthSummaryScreen extends ConsumerWidget {
                             ),
                           ),
                         ),
-                        onSelected: (value) => _handleExport(
-                          context,
-                          ref,
-                          value,
-                          balances,
-                          summary,
-                          members,
-                          settlementBalances,
-                          payments,
-                        ),
+                        onSelected: (value) {
+                          HapticService.lightTap();
+                          _handleExport(
+                            context,
+                            ref,
+                            value,
+                            balances,
+                            summary,
+                            members,
+                            settlementBalances,
+                            payments,
+                          );
+                        },
                         itemBuilder: (context) => [
                           PopupMenuItem(
                             value: 'print',
@@ -495,13 +485,7 @@ class MonthSummaryScreen extends ConsumerWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.03),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.05),
-            ),
-          ),
+          decoration: AppSpacing.accentCard(accent: AppColors.moneyPositive, radius: AppSpacing.radiusMd),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -701,13 +685,7 @@ class MonthSummaryScreen extends ConsumerWidget {
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
           padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.03),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.05),
-            ),
-          ),
+          decoration: AppSpacing.accentCard(accent: AppColors.moneyPositive, radius: AppSpacing.radiusMd),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -785,13 +763,7 @@ class MonthSummaryScreen extends ConsumerWidget {
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
           padding: const EdgeInsets.all(AppSpacing.lg),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.03),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.05),
-            ),
-          ),
+          decoration: AppSpacing.accentCard(accent: AppColors.moneyPositive, radius: AppSpacing.radiusMd),
           child: Column(
             children: [
               Text(

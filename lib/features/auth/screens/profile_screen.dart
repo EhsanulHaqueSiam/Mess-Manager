@@ -55,7 +55,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _pickProfileImage() async {
-    HapticService.lightTap();
+    HapticService.modalOpen();
 
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
@@ -72,7 +72,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(AppSpacing.radiusLg),
               ),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+              border: Border.all(color: AppColors.primaryLight.withValues(alpha: 0.18)),
             ),
             child: SafeArea(
               child: Wrap(
@@ -342,11 +342,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: Container(
                 padding: const EdgeInsets.all(AppSpacing.lg),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.04),
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-                ),
+                decoration: AppSpacing.accentCard(accent: AppColors.primaryLight, radius: AppSpacing.radiusLg),
                 child: Column(
                   children: [
                     TextFormField(
@@ -452,11 +448,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
           child: Container(
             padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-            ),
+            decoration: AppSpacing.accentCard(accent: AppColors.primaryLight, radius: AppSpacing.radiusMd),
             child: Row(
               children: [
                 Container(
@@ -504,11 +496,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                decoration: BoxDecoration(
-                  color: AppColors.error.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                  border: Border.all(color: AppColors.error.withValues(alpha: 0.15)),
-                ),
+                decoration: AppSpacing.accentCard(accent: AppColors.error, radius: AppSpacing.radiusMd),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -547,11 +535,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
             child: Container(
               padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.03),
-                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-              ),
+              decoration: AppSpacing.accentCard(accent: AppColors.primaryLight, radius: AppSpacing.radiusMd),
               child: Row(
                 children: [
                   Container(

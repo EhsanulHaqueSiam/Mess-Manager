@@ -289,6 +289,47 @@ class DescoService {
     return [];
   }
 
+  /// Get daily consumption data (for charts/graphs)
+  static Future<List<DescoDailyConsumption>> getDailyConsumption({
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    try {
+      final fromStr =
+          '${from.year}-${from.month.toString().padLeft(2, '0')}-${from.day.toString().padLeft(2, '0')}';
+      final toStr =
+          '${to.year}-${to.month.toString().padLeft(2, '0')}-${to.day.toString().padLeft(2, '0')}';
+
+      final response = await api.getDailyConsumption(
+        accountNo,
+        meterNo,
+        fromStr,
+        toStr,
+      );
+
+      if (response.isSuccess && response.data != null) {
+        final rawList = response.data as List? ?? [];
+        final list = rawList
+            .map((e) => DescoDailyConsumption.fromJson(e))
+            .toList()
+          ..sort((a, b) => a.date.compareTo(b.date));
+
+        // Calculate daily usage from cumulative readings
+        for (int i = 1; i < list.length; i++) {
+          final diff = list[i].consumedUnit - list[i - 1].consumedUnit;
+          list[i] = DescoDailyConsumption(
+            date: list[i].date,
+            consumedTaka: list[i].consumedTaka,
+            consumedUnit: list[i].consumedUnit,
+            dailyUsageUnit: diff > 0 ? diff : 0,
+          );
+        }
+        return list;
+      }
+    } catch (_) {}
+    return [];
+  }
+
   /// Get customer location (cached indefinitely - doesn't change)
   static Future<DescoLocation?> getLocation({bool forceRefresh = false}) async {
     if (!forceRefresh) {
@@ -467,6 +508,29 @@ class DescoBalance {
     'customerName': customerName,
     'isEstimated': isEstimated,
   };
+}
+
+/// DESCO Daily Consumption model
+class DescoDailyConsumption {
+  final DateTime date;
+  final double consumedTaka;
+  final double consumedUnit; // Cumulative meter reading
+  final double? dailyUsageUnit; // Calculated from consecutive days
+
+  DescoDailyConsumption({
+    required this.date,
+    required this.consumedTaka,
+    required this.consumedUnit,
+    this.dailyUsageUnit,
+  });
+
+  factory DescoDailyConsumption.fromJson(Map<String, dynamic> json) {
+    return DescoDailyConsumption(
+      date: DateTime.tryParse(json['date']?.toString() ?? '') ?? DateTime.now(),
+      consumedTaka: (json['consumedTaka'] ?? json['amount'] ?? 0).toDouble(),
+      consumedUnit: (json['consumedUnit'] ?? json['units'] ?? 0).toDouble(),
+    );
+  }
 }
 
 /// DESCO Monthly Consumption model

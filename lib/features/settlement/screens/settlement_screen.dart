@@ -753,14 +753,9 @@ class SettlementScreen extends ConsumerWidget {
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: Container(
             padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-              border: Border.all(
-                color: isPaid
-                    ? AppColors.moneyPositive.withValues(alpha: 0.15)
-                    : Colors.white.withValues(alpha: 0.05),
-              ),
+            decoration: AppSpacing.accentCard(
+              accent: isPaid ? AppColors.moneyPositive : AppColors.moneyNegative,
+              radius: AppSpacing.radiusMd,
             ),
             child: Row(
               children: [
@@ -888,19 +883,16 @@ class SettlementScreen extends ConsumerWidget {
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: Container(
             padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.05),
-              ),
+            decoration: AppSpacing.accentCard(
+              accent: balanceColor,
+              radius: AppSpacing.radiusMd,
             ),
             child: Row(
               children: [
                 AppMemberAvatar(
                   name: name,
                   size: 40,
-                  backgroundColor: balanceColor.withValues(alpha: 0.2),
+                  backgroundColor: balanceColor.withValues(alpha: 0.25),
                 ),
                 const Gap(12),
                 Expanded(
@@ -1329,7 +1321,7 @@ class SettlementScreen extends ConsumerWidget {
           );
 
       if (result.success && result.pdfBytes != null) {
-        HapticService.success();
+        HapticService.celebrate();
         if (context.mounted) {
           showSuccessToast(context, 'Month closed! PDF generated.');
           // Share the PDF

@@ -47,43 +47,39 @@ class AuthState {
 class AuthNotifier extends Notifier<AuthState> {
   @override
   AuthState build() {
-    // Defer auth check to next frame to avoid accessing state before initialization
-    Future.microtask(() => _checkAuth());
-    return const AuthState();
+    // Synchronous check — IsarService is already initialized by the time
+    // providers build. This ensures the router redirect sees the correct
+    // auth state on first evaluation (persistent login).
+    return _loadSavedSession();
   }
 
-  void _checkAuth() {
+  /// Load saved session synchronously from local DB.
+  /// Returns authenticated state if session exists, unauthenticated otherwise.
+  AuthState _loadSavedSession() {
     try {
       final userData = IsarService.getSetting<Map<String, dynamic>>(
         'current_user',
       );
       if (userData != null) {
-        try {
-          final user = AuthUser.fromJson(userData);
-          final messes = _loadMesses();
-          final currentMess = messes.firstWhere(
-            (m) => m.id == user.currentMessId,
-            orElse: () =>
-                messes.isNotEmpty ? messes.first : _createDefaultMess(),
-          );
+        final user = AuthUser.fromJson(userData);
+        final messes = _loadMesses();
+        final currentMess = messes.firstWhere(
+          (m) => m.id == user.currentMessId,
+          orElse: () =>
+              messes.isNotEmpty ? messes.first : _createDefaultMess(),
+        );
 
-          state = state.copyWith(
-            status: AuthStatus.authenticated,
-            user: user,
-            currentMess: currentMess,
-            availableMesses: messes,
-          );
-        } catch (_) {
-          state = state.copyWith(status: AuthStatus.unauthenticated);
-        }
-      } else {
-        state = state.copyWith(status: AuthStatus.unauthenticated);
+        return AuthState(
+          status: AuthStatus.authenticated,
+          user: user,
+          currentMess: currentMess,
+          availableMesses: messes,
+        );
       }
     } catch (e) {
-      // On web or any error, default to unauthenticated
-      debugPrint('AuthProvider._checkAuth error: $e');
-      state = state.copyWith(status: AuthStatus.unauthenticated);
+      debugPrint('AuthProvider._loadSavedSession error: $e');
     }
+    return const AuthState(status: AuthStatus.unauthenticated);
   }
 
   List<Mess> _loadMesses() {
@@ -109,16 +105,15 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   /// Sign up with email and password
-  /// Creates a pending approval request instead of direct authentication
+  /// Anyone can sign up freely — no approval needed for account creation.
+  /// Approval is only required when joining a specific mess.
   Future<bool> signUp({
     required String email,
     required String password,
     required String name,
     String? phone,
-    String? inviteCode,
   }) async {
     try {
-      // Create user record (but mark as pending)
       final user = AuthUser(
         id: 'user_${DateTime.now().millisecondsSinceEpoch}',
         email: email,
@@ -127,23 +122,14 @@ class AuthNotifier extends Notifier<AuthState> {
         createdAt: DateTime.now(),
       );
 
-      // Save user data for later (when approved)
       IsarService.saveSetting('current_user', user.toJson());
 
-      // Create pending approval request
-      ref
-          .read(approvalProvider.notifier)
-          .createRequest(
-            email: email,
-            name: name,
-            phone: phone,
-            inviteCode: inviteCode,
-          );
-
-      // Set state to pending approval (not fully authenticated)
+      // Fully authenticated — mess joining requires separate approval
       state = state.copyWith(
-        status: AuthStatus.pendingApproval,
+        status: AuthStatus.authenticated,
         user: user,
+        availableMesses: _loadMesses(),
+        currentMess: _createDefaultMess(),
         error: null,
       );
       return true;
@@ -227,7 +213,8 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(user: updatedUser);
   }
 
-  /// Create a new mess
+  /// Create a new mess — user becomes super admin.
+  /// Single mess membership: replaces any existing mess.
   Future<Mess> createMess({
     required String name,
     required String address,
@@ -242,10 +229,10 @@ class AuthNotifier extends Notifier<AuthState> {
       inviteCode: _generateInviteCode(),
     );
 
-    final messes = [...state.availableMesses, mess];
+    // Single mess only — replace any existing
+    final messes = [mess];
     _saveMesses(messes);
 
-    // Update user's current mess
     final updatedUser = AuthUser(
       id: state.user!.id,
       email: state.user!.email,
@@ -306,8 +293,8 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(user: updatedUser, currentMess: mess);
   }
 
-  /// Join mess by invite code
-  /// Tries local lookup first, then falls back to Firestore for remote messes
+  /// Join mess by invite code.
+  /// Single mess membership: leaves current mess and joins the new one.
   Future<bool> joinMess(String inviteCode) async {
     final normalizedCode = inviteCode.toUpperCase().trim();
 
@@ -317,7 +304,6 @@ class AuthNotifier extends Notifier<AuthState> {
         .firstOrNull;
 
     if (localMess != null) {
-      // Local mess found - add user to members
       final updatedMess = Mess(
         id: localMess.id,
         name: localMess.name,
@@ -328,10 +314,8 @@ class AuthNotifier extends Notifier<AuthState> {
         inviteCode: localMess.inviteCode,
       );
 
-      final messes = state.availableMesses.map((m) {
-        return m.id == localMess.id ? updatedMess : m;
-      }).toList();
-
+      // Single mess only — replace all with this one
+      final messes = [updatedMess];
       _saveMesses(messes);
       await selectMess(localMess.id);
       _createMemberProfile();
@@ -345,13 +329,11 @@ class AuthNotifier extends Notifier<AuthState> {
         throw Exception('Invalid invite code');
       }
 
-      // Fetch the mess data from Firestore
       final messData = await FirestoreService.getMess(messId);
       if (messData == null) {
         throw Exception('Could not load mess data');
       }
 
-      // Convert Firestore data to Mess model
       final remoteMess = Mess(
         id: messId,
         name: messData['name'] as String? ?? 'Unnamed Mess',
@@ -363,15 +345,12 @@ class AuthNotifier extends Notifier<AuthState> {
         inviteCode: messData['inviteCode'] as String?,
       );
 
-      // Add to local messes
-      final messes = [...state.availableMesses, remoteMess];
+      // Single mess only — replace all with this one
+      final messes = [remoteMess];
       _saveMesses(messes);
 
-      // Select the new mess
       state = state.copyWith(availableMesses: messes);
       await selectMess(messId);
-
-      // Create Member profile for the user in the new mess
       _createMemberProfile();
 
       debugPrint('Joined remote mess via Firestore: ${remoteMess.name}');

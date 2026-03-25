@@ -57,7 +57,13 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
     final chatState = ref.watch(chatbotProvider);
     final chatNotifier = ref.read(chatbotProvider.notifier);
 
-    ref.listen(chatbotProvider, (_, state) => _scrollToBottom());
+    ref.listen(chatbotProvider, (prev, state) {
+      _scrollToBottom();
+      // Haptic tick when AI response arrives (loading -> not loading with new message)
+      if (prev != null && prev.isLoading && !state.isLoading && state.messages.isNotEmpty) {
+        HapticService.selectionTick();
+      }
+    });
 
     return Scaffold(
       backgroundColor: const Color(0xFF0A0E1A),
@@ -234,13 +240,7 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
               child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.03),
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.06),
-                  ),
-                ),
+                decoration: AppSpacing.accentCard(accent: AppColors.accent, radius: AppSpacing.radiusSm),
                 child: IconButton(
                   icon: Icon(
                     LucideIcons.trash2,
@@ -408,8 +408,8 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
                 ),
                 decoration: BoxDecoration(
                   color: isUser
-                      ? AppColors.primary.withValues(alpha: 0.15)
-                      : Colors.white.withValues(alpha: 0.03),
+                      ? AppColors.accent.withValues(alpha: 0.12)
+                      : AppColors.accent.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(16),
                     topRight: const Radius.circular(16),
@@ -418,9 +418,16 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
                   ),
                   border: Border.all(
                     color: isUser
-                        ? AppColors.primary.withValues(alpha: 0.2)
-                        : Colors.white.withValues(alpha: 0.05),
+                        ? AppColors.accent.withValues(alpha: 0.22)
+                        : AppColors.accent.withValues(alpha: 0.12),
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.accent.withValues(alpha: 0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Text(
                   message.text,
@@ -501,13 +508,7 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
                   horizontal: AppSpacing.md,
                   vertical: AppSpacing.sm,
                 ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.03),
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.05),
-                  ),
-                ),
+                decoration: AppSpacing.accentCard(accent: AppColors.accent),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [

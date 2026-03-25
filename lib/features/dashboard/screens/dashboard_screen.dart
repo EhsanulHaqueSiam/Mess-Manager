@@ -13,6 +13,7 @@ import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
 import 'package:mess_manager/core/providers/smart_suggestions_provider.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
+import 'package:mess_manager/core/models/meal.dart';
 import 'package:mess_manager/features/meals/providers/meals_provider.dart';
 import 'package:mess_manager/features/bazar/providers/bazar_provider.dart';
 import 'package:mess_manager/features/balance/providers/balance_provider.dart';
@@ -23,9 +24,7 @@ import 'package:mess_manager/shared/widgets/party_splitter_sheet.dart';
 import 'package:mess_manager/shared/widgets/test_mode_switcher.dart';
 import 'package:mess_manager/features/dashboard/widgets/notification_alerts.dart';
 import 'package:mess_manager/features/dashboard/widgets/meal_rate_breakdown_card.dart';
-import 'package:mess_manager/features/money/widgets/add_transaction_sheet.dart';
-import 'package:mess_manager/core/widgets/speed_dial_fab.dart';
-import 'package:mess_manager/core/providers/role_provider.dart';
+import 'package:mess_manager/core/widgets/quick_input_widgets.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -60,7 +59,7 @@ class DashboardScreen extends ConsumerWidget {
           SafeArea(
             child: RefreshIndicator(
               onRefresh: () async {
-                HapticService.lightTap();
+                HapticService.pullToRefresh();
                 ref.invalidate(mealsProvider);
                 ref.invalidate(bazarEntriesProvider);
                 ref.invalidate(membersProvider);
@@ -100,7 +99,7 @@ class DashboardScreen extends ConsumerWidget {
                     const Gap(24),
                     _sectionLabel(context, 'Quick actions'),
                     const Gap(12),
-                    _buildQuickActions(context),
+                    _buildQuickActions(context, ref),
                     const Gap(28),
                     _sectionLabel(context, 'Explore'),
                     const Gap(12),
@@ -113,7 +112,9 @@ class DashboardScreen extends ConsumerWidget {
                       children: [
                         Expanded(child: _sectionLabel(context, 'Activity')),
                         GestureDetector(
-                          onTap: () {},
+                          onTap: () {
+                            HapticService.lightTap();
+                          },
                           child: Text(
                             'See all',
                             style: AppTypography.labelSmall.copyWith(
@@ -144,7 +145,6 @@ class DashboardScreen extends ConsumerWidget {
           ),
         ],
       ),
-      floatingActionButton: _buildSpeedDial(context, ref),
     );
   }
 
@@ -210,7 +210,12 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   Widget _buildProfileOrb(BuildContext context) {
-    return Container(
+    return GestureDetector(
+      onTap: () {
+        HapticService.lightTap();
+        context.push(AppRoutes.profile);
+      },
+      child: Container(
       padding: const EdgeInsets.all(2.5),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
@@ -265,7 +270,8 @@ class DashboardScreen extends ConsumerWidget {
             ),
             child: child,
           ),
-        );
+        ),
+    );
   }
 
   // ──────────────────── Month Context ────────────────────
@@ -428,21 +434,22 @@ class DashboardScreen extends ConsumerWidget {
   }) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-          color: color.withValues(alpha: 0.06),
-          border: Border.all(color: color.withValues(alpha: 0.1)),
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+        decoration: AppSpacing.accentCard(accent: color),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(5),
+              padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+                gradient: LinearGradient(
+                  colors: [
+                    color.withValues(alpha: 0.25),
+                    color.withValues(alpha: 0.10),
+                  ],
+                ),
               ),
-              child: Icon(icon, color: color, size: 12),
+              child: Icon(icon, color: color, size: 13),
             ),
             const Gap(6),
             Expanded(
@@ -570,20 +577,22 @@ class DashboardScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-                // Holographic gradient layers
+                // Vibrant gradient hero — blue to teal
                 gradient: LinearGradient(
                   colors: [
-                    Colors.white.withValues(alpha: 0.10),
-                    Colors.white.withValues(alpha: 0.03),
-                    AppColors.primaryLight.withValues(alpha: 0.03),
+                    isPositive
+                        ? const Color(0xFF0D9488) // Teal
+                        : const Color(0xFFBE123C), // Rose
+                    isPositive
+                        ? const Color(0xFF0EA5E9) // Sky blue
+                        : const Color(0xFFE11D48), // Red
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  stops: const [0.0, 0.5, 1.0],
                 ),
                 border: Border.all(
                   width: 1.2,
-                  color: Colors.white.withValues(alpha: 0.12),
+                  color: Colors.white.withValues(alpha: 0.20),
                 ),
               ),
               child: Stack(
@@ -926,33 +935,93 @@ class DashboardScreen extends ConsumerWidget {
 
   // ──────────────────── Quick Actions ────────────────────
 
-  Widget _buildQuickActions(BuildContext context) {
-    final actions = [
-      ('Add Meal', LucideIcons.plus, AppColors.mealColor,
-          () => _showAddMealSheet(context)),
-      ('Money', LucideIcons.arrowLeftRight, AppColors.accentWarm,
-          () => context.push(AppRoutes.money)),
-      ('Split', LucideIcons.partyPopper, AppColors.accent,
-          () => _showPartySplitter(context)),
-    ];
+  Widget _buildQuickActions(BuildContext context, WidgetRef ref) {
+    // Current member's today meal count
+    final meals = ref.watch(mealsProvider);
+    final currentMemberId = ref.watch(currentMemberIdProvider);
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final myTodayMeals = meals.where((m) {
+      final d = m.createdAt;
+      return m.memberId == currentMemberId &&
+          d != null &&
+          !d.isBefore(todayStart);
+    }).fold<int>(0, (sum, m) => sum + m.count);
 
-    return Row(
-      children: actions.asMap().entries.map((entry) {
-        final i = entry.key;
-        final (label, icon, color, onTap) = entry.value;
-        return Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(left: i > 0 ? 10 : 0),
-            child: _QuickActionPill(
-              label: label,
-              icon: icon,
-              color: color,
-              onTap: onTap,
-              delay: i * 80,
+    return Column(
+      children: [
+        // Full-width inline meal counter
+        InlineMealCounter(
+          count: myTodayMeals,
+          onCountChanged: (newCount) {
+            HapticService.lightTap();
+            final diff = newCount - myTodayMeals;
+            if (diff > 0) {
+              // Add meals
+              ref.read(mealsProvider.notifier).addMeal(
+                    Meal(
+                      id: 'meal_${currentMemberId}_${now.millisecondsSinceEpoch}',
+                      memberId: currentMemberId,
+                      date: now,
+                      count: diff,
+                      createdAt: now,
+                    ),
+                  );
+            } else if (diff < 0) {
+              // Remove today's meals for this member (most recent first)
+              final todayMealEntries = meals
+                  .where((m) {
+                    final d = m.createdAt;
+                    return m.memberId == currentMemberId &&
+                        d != null &&
+                        !d.isBefore(todayStart);
+                  })
+                  .toList()
+                ..sort((a, b) =>
+                    (b.createdAt ?? now).compareTo(a.createdAt ?? now));
+
+              var toRemove = -diff;
+              for (final meal in todayMealEntries) {
+                if (toRemove <= 0) break;
+                if (meal.count <= toRemove) {
+                  ref.read(mealsProvider.notifier).removeMeal(meal.id);
+                  toRemove -= meal.count;
+                } else {
+                  ref.read(mealsProvider.notifier).updateMeal(
+                        meal.copyWith(count: meal.count - toRemove),
+                      );
+                  toRemove = 0;
+                }
+              }
+            }
+          },
+        ),
+        const Gap(10),
+        // Money & Split pills in a row below
+        Row(
+          children: [
+            Expanded(
+              child: _QuickActionPill(
+                label: 'Money',
+                icon: LucideIcons.arrowLeftRight,
+                color: AppColors.accentWarm,
+                onTap: () => context.push(AppRoutes.money),
+                delay: 80,
+              ),
             ),
-          ),
-        );
-      }).toList(),
+            const Gap(10),
+            Expanded(
+              child: _QuickActionPill(
+                label: 'Split',
+                icon: LucideIcons.partyPopper,
+                color: AppColors.accent,
+                onTap: () => _showPartySplitter(context),
+                delay: 160,
+              ),
+            ),
+          ],
+        ),
+      ],
     ).animate().fadeIn(delay: 200.ms, duration: 500.ms).slideY(begin: 0.06);
   }
 
@@ -1222,47 +1291,6 @@ class DashboardScreen extends ConsumerWidget {
         .slideX(begin: 0.04);
   }
 
-  // ──────────────────── Speed Dial FAB ────────────────────
-
-  Widget _buildSpeedDial(BuildContext context, WidgetRef ref) {
-    final canMeal = ref.watch(canAddMealProvider);
-    final canBazar = ref.watch(canAddBazarProvider);
-    final canTransaction = ref.watch(canAddTransactionProvider);
-
-    final items = <SpeedDialItem>[
-      SpeedDialItem(
-        label: 'Add Duty',
-        icon: LucideIcons.clipboardList,
-        color: AppColors.success,
-        onPressed: () => context.push(AppRoutes.duties),
-      ),
-      if (canTransaction)
-        SpeedDialItem(
-          label: 'Add Money',
-          icon: LucideIcons.banknote,
-          color: AppColors.warning,
-          onPressed: () => _showAddMoneySheet(context),
-        ),
-      if (canBazar)
-        SpeedDialItem(
-          label: 'Add Bazar',
-          icon: LucideIcons.shoppingCart,
-          color: AppColors.bazarColor,
-          onPressed: () => _showAddBazarSheet(context),
-        ),
-      if (canMeal)
-        SpeedDialItem(
-          label: 'Add Meal',
-          icon: LucideIcons.utensils,
-          color: AppColors.mealColor,
-          onPressed: () => _showAddMealSheet(context),
-        ),
-    ];
-
-    if (items.length <= 1) return const SizedBox.shrink();
-    return SpeedDialFAB(items: items);
-  }
-
   // ──────────────────── Helpers ────────────────────
 
   String _getGreeting() {
@@ -1298,15 +1326,6 @@ class DashboardScreen extends ConsumerWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => const AddBazarSheet(),
-    );
-  }
-
-  void _showAddMoneySheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => const AddTransactionSheet(),
     );
   }
 
@@ -1698,18 +1717,7 @@ class _ModuleCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
         child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                color.withValues(alpha: 0.07),
-                color.withValues(alpha: 0.02),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            border: Border.all(color: color.withValues(alpha: 0.12)),
-          ),
+          decoration: AppSpacing.accentCard(accent: color),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

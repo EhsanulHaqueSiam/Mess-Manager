@@ -8,6 +8,7 @@ import 'package:mess_manager/core/models/money_transaction.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
 import 'package:mess_manager/features/money/providers/money_provider.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
+import 'package:mess_manager/core/widgets/quick_input_widgets.dart';
 
 class AddTransactionSheet extends ConsumerStatefulWidget {
   final MoneyTransaction? existingTransaction;
@@ -22,8 +23,10 @@ class AddTransactionSheet extends ConsumerStatefulWidget {
 class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
   late final TextEditingController _amountController;
   late final TextEditingController _descController;
+  late final FocusNode _amountFocusNode;
   String? _fromMemberId;
   String? _toMemberId;
+  double? _selectedPresetAmount;
 
   bool get _isEditing => widget.existingTransaction != null;
 
@@ -37,19 +40,64 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
     _descController = TextEditingController(text: existing?.description ?? '');
     _fromMemberId = existing?.fromMemberId;
     _toMemberId = existing?.toMemberId;
+    _amountFocusNode = FocusNode();
+
+    // Sync preset selection if editing with a preset-matching amount
+    if (existing != null) {
+      final amt = existing.amount;
+      if (const [200, 500, 1000, 2000, 5000].contains(amt.toInt())) {
+        _selectedPresetAmount = amt;
+      }
+    }
+
+    // Listen to manual amount edits to deselect preset chips
+    _amountController.addListener(_onAmountTextChanged);
+
+    // Auto-focus amount field after build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _amountFocusNode.requestFocus();
+    });
+  }
+
+  void _onAmountTextChanged() {
+    final text = _amountController.text;
+    final parsed = double.tryParse(text);
+    if (parsed == null) {
+      if (_selectedPresetAmount != null) {
+        setState(() => _selectedPresetAmount = null);
+      }
+      return;
+    }
+    // If the current text matches a preset, keep it selected; otherwise deselect
+    if (const [200, 500, 1000, 2000, 5000].contains(parsed.toInt()) &&
+        parsed == parsed.toInt().toDouble()) {
+      if (_selectedPresetAmount != parsed) {
+        setState(() => _selectedPresetAmount = parsed);
+      }
+    } else {
+      if (_selectedPresetAmount != null) {
+        setState(() => _selectedPresetAmount = null);
+      }
+    }
   }
 
   @override
   void dispose() {
+    _amountController.removeListener(_onAmountTextChanged);
     _amountController.dispose();
     _descController.dispose();
+    _amountFocusNode.dispose();
     super.dispose();
   }
+
+  double? get _parsedAmount => double.tryParse(_amountController.text);
+  bool get _isLargeAmount => (_parsedAmount ?? 0) > 5000;
 
   @override
   Widget build(BuildContext context) {
     final members = ref.watch(membersProvider);
     final currentId = ref.watch(currentMemberIdProvider);
+    final currentMember = ref.watch(currentMemberProvider);
 
     // Default from to current user
     _fromMemberId ??= currentId;
@@ -61,7 +109,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
       decoration: BoxDecoration(
         color: context.surfaceColor,
         borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(AppSpacing.radiusLg),
+          top: Radius.circular(AppSpacing.radiusXl),
         ),
       ),
       child: SingleChildScrollView(
@@ -101,7 +149,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
             ),
             const Gap(AppSpacing.lg),
 
-            // From Member
+            // From Member — locked info row for current user
             Text(
               'From',
               style: AppTypography.labelMedium.copyWith(
@@ -110,39 +158,58 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
             ),
             const Gap(AppSpacing.xs),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm + 2,
+              ),
               decoration: BoxDecoration(
                 color: context.cardColor,
                 borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _fromMemberId,
-                  isExpanded: true,
-                  dropdownColor: context.cardColor,
-                  items: members
-                      .map(
-                        (m) => DropdownMenuItem(
-                          value: m.id,
-                          child: Text(
-                            m.name,
-                            style: AppTypography.bodyMedium.copyWith(
-                              color: context.textPrimary,
-                            ),
-                          ),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (v) {
-                    HapticService.selectionTick();
-                    setState(() => _fromMemberId = v);
-                  },
+                border: Border.all(
+                  color: AppColors.accentWarm.withValues(alpha: 0.2),
                 ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: AppColors.accentWarm.withValues(alpha: 0.15),
+                    ),
+                    child: Center(
+                      child: Text(
+                        (currentMember?.name.isNotEmpty ?? false)
+                            ? currentMember!.name[0].toUpperCase()
+                            : '?',
+                        style: AppTypography.titleSmall.copyWith(
+                          color: AppColors.accentWarm,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const Gap(AppSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      currentMember?.name ?? 'You',
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: context.textPrimary,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    LucideIcons.lock,
+                    size: 14,
+                    color: context.textMuted,
+                  ),
+                ],
               ),
             ),
             const Gap(AppSpacing.md),
 
-            // To Member
+            // To Member — horizontal avatar picker (1 tap)
             Text(
               'To',
               style: AppTypography.labelMedium.copyWith(
@@ -150,47 +217,37 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
               ),
             ),
             const Gap(AppSpacing.xs),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-              decoration: BoxDecoration(
-                color: context.cardColor,
-                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _toMemberId,
-                  hint: Text(
-                    'Select member',
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: context.textMuted,
-                    ),
-                  ),
-                  isExpanded: true,
-                  dropdownColor: context.cardColor,
-                  items: members
-                      .where((m) => m.id != _fromMemberId)
-                      .map(
-                        (m) => DropdownMenuItem(
-                          value: m.id,
-                          child: Text(
-                            m.name,
-                            style: AppTypography.bodyMedium.copyWith(
-                              color: context.textPrimary,
-                            ),
-                          ),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (v) {
-                    HapticService.selectionTick();
-                    setState(() => _toMemberId = v);
-                  },
-                ),
-              ),
+            MemberAvatarPicker(
+              members: members,
+              selectedMemberId: _toMemberId,
+              excludeMemberId: _fromMemberId,
+              accentColor: AppColors.accentWarm,
+              onMemberSelected: (id) {
+                setState(() => _toMemberId = id);
+              },
             ),
             const Gap(AppSpacing.md),
 
-            // Amount
+            // Quick amount presets
+            Text(
+              'Quick amount',
+              style: AppTypography.labelMedium.copyWith(
+                color: context.textSecondary,
+              ),
+            ),
+            const Gap(AppSpacing.xs),
+            QuickAmountPicker(
+              selectedAmount: _selectedPresetAmount,
+              accentColor: AppColors.accentWarm,
+              presets: const [200, 500, 1000, 2000, 5000],
+              controller: _amountController,
+              onAmountSelected: (amount) {
+                setState(() => _selectedPresetAmount = amount);
+              },
+            ),
+            const Gap(AppSpacing.md),
+
+            // Amount field — prominent displaySmall size
             Text(
               'Amount',
               style: AppTypography.labelMedium.copyWith(
@@ -200,9 +257,11 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
             const Gap(AppSpacing.xs),
             TextField(
               controller: _amountController,
+              focusNode: _amountFocusNode,
               keyboardType: TextInputType.number,
               style: AppTypography.displaySmall.copyWith(
                 color: AppColors.accentWarm,
+                fontFamily: 'JetBrains Mono',
               ),
               decoration: InputDecoration(
                 prefixText: '৳ ',
@@ -210,17 +269,65 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                   color: AppColors.accentWarm,
                 ),
                 hintText: '0',
+                hintStyle: AppTypography.displaySmall.copyWith(
+                  color: context.textMuted.withValues(alpha: 0.3),
+                ),
                 filled: true,
                 fillColor: context.cardColor,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                   borderSide: BorderSide.none,
                 ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                  borderSide: const BorderSide(
+                    color: AppColors.accentWarm,
+                    width: 2,
+                  ),
+                ),
               ),
+              onChanged: (_) => setState(() {}),
             ),
+
+            // Inline large amount warning (replaces confirmation dialog)
+            if (_isLargeAmount) ...[
+              const Gap(AppSpacing.sm),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.sm,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                  border: Border.all(
+                    color: AppColors.warning.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      LucideIcons.alertTriangle,
+                      color: AppColors.warning,
+                      size: 16,
+                    ),
+                    const Gap(AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        'Large transaction — ৳${_parsedAmount?.toStringAsFixed(0) ?? '0'}',
+                        style: AppTypography.labelMedium.copyWith(
+                          color: AppColors.warning,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const Gap(AppSpacing.md),
 
-            // Description
+            // Description with suggestion chips
             Text(
               'Description (optional)',
               style: AppTypography.labelMedium.copyWith(
@@ -228,6 +335,21 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
               ),
             ),
             const Gap(AppSpacing.xs),
+            DescriptionSuggestChips(
+              suggestions: const [
+                'Rent share',
+                'Bazar money',
+                'Bill split',
+                'Loan',
+                'Return',
+              ],
+              accentColor: AppColors.accentWarm,
+              onSelected: (suggestion) {
+                _descController.text = suggestion;
+                setState(() {});
+              },
+            ),
+            const Gap(AppSpacing.sm),
             TextField(
               controller: _descController,
               style: AppTypography.bodyMedium.copyWith(
@@ -252,9 +374,12 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                 onPressed: _canSubmit() ? _submit : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.accentWarm,
+                  disabledBackgroundColor:
+                      AppColors.accentWarm.withValues(alpha: 0.3),
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                    borderRadius:
+                        BorderRadius.circular(AppSpacing.radiusMd),
                   ),
                 ),
                 child: Text(
@@ -292,41 +417,6 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
         ),
       );
       return;
-    }
-
-    // Confirm large amounts (>5,000 BDT for transactions)
-    if (amount > 5000) {
-      HapticService.warning();
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          backgroundColor: context.surfaceColor,
-          title: const Row(
-            children: [
-              Icon(LucideIcons.alertTriangle, color: AppColors.warning),
-              Gap(8),
-              Text('Large Transaction'),
-            ],
-          ),
-          content: Text(
-            'You are about to record a ৳${amount.toStringAsFixed(0)} transaction.\n\nThis is a significant amount. Are you sure?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Review'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.warning,
-              ),
-              child: const Text('Confirm'),
-            ),
-          ],
-        ),
-      );
-      if (confirmed != true || !context.mounted) return;
     }
 
     // Premium haptic for successful transaction

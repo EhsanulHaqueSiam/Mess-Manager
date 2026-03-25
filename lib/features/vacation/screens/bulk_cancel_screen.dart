@@ -291,11 +291,7 @@ class BulkCancelScreen extends ConsumerWidget {
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.03),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          ),
+          decoration: AppSpacing.accentCard(accent: AppColors.error, radius: AppSpacing.radiusMd),
           child: Column(
             children: [
               Icon(
@@ -343,15 +339,7 @@ class BulkCancelScreen extends ConsumerWidget {
         child: Container(
           margin: const EdgeInsets.only(bottom: AppSpacing.sm),
           padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.03),
-            border: Border.all(
-              color: isActive
-                  ? AppColors.warning.withValues(alpha: 0.3)
-                  : Colors.white.withValues(alpha: 0.06),
-            ),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          ),
+          decoration: AppSpacing.accentCard(accent: AppColors.error, radius: AppSpacing.radiusMd),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -441,6 +429,7 @@ class BulkCancelScreen extends ConsumerWidget {
   }
 
   void _showCancelMealsSheet(BuildContext context) {
+    HapticService.modalOpen();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -668,12 +657,7 @@ class _CancelMealsSheetState extends ConsumerState<CancelMealsSheet> {
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: Container(
             padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
-              border:
-                  Border.all(color: Colors.white.withValues(alpha: 0.05)),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            ),
+            decoration: AppSpacing.accentCard(accent: AppColors.error, radius: AppSpacing.radiusMd),
             child: Row(
               children: [
                 const Icon(
@@ -700,11 +684,7 @@ class _CancelMealsSheetState extends ConsumerState<CancelMealsSheet> {
   ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-      ),
+      decoration: AppSpacing.accentCard(accent: AppColors.error, radius: AppSpacing.radiusMd),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<MealType>(
           value: selected,
@@ -739,7 +719,7 @@ class _CancelMealsSheetState extends ConsumerState<CancelMealsSheet> {
   }
 
   void _submit() {
-    HapticService.success();
+    HapticService.warning();
 
     final cancellation = MealCancellation(
       id: 'cancel_${DateTime.now().millisecondsSinceEpoch}',

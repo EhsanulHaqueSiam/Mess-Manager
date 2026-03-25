@@ -343,7 +343,7 @@ class BudgetCard extends ConsumerWidget {
               ),
               const Gap(AppSpacing.lg),
 
-              // Save button
+              // Save button — full width, above FAB zone
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
@@ -356,10 +356,13 @@ class BudgetCard extends ConsumerWidget {
                   },
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                   child: const Text('Save Budget'),
                 ),
               ),
+              // Extra space so FAB doesn't overlap
+              const Gap(60),
             ],
           ),
         ),

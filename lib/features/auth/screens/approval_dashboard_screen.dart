@@ -93,11 +93,7 @@ class ApprovalDashboardScreen extends ConsumerWidget {
   ) {
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
-      decoration: BoxDecoration(
-        color: context.cardColor,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: context.borderColor),
-      ),
+      decoration: AppSpacing.accentCard(accent: AppColors.warning, radius: AppSpacing.radiusMd),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -266,7 +262,7 @@ class ApprovalDashboardScreen extends ConsumerWidget {
                 // Approve
                 FilledButton.icon(
                   onPressed: () {
-                    HapticService.success();
+                    HapticService.bouncyConfirm();
                     ref.read(approvalProvider.notifier).approve(request.id);
                     showSuccessToast(context, '${request.name} approved!');
                   },
@@ -371,7 +367,7 @@ class ApprovalDashboardScreen extends ConsumerWidget {
               .map(
                 (role) => InkWell(
                   onTap: () {
-                    HapticService.success();
+                    HapticService.bouncyConfirm();
                     ref
                         .read(approvalProvider.notifier)
                         .approve(request.id, role: role);

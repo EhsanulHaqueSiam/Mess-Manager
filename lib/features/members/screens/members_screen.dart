@@ -217,13 +217,7 @@ class MembersScreen extends ConsumerWidget {
           child: Container(
             width: 40,
             height: 40,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: color.withValues(alpha: 0.15),
-              ),
-            ),
+            decoration: AppSpacing.accentCard(accent: color, radius: 12),
             child: Icon(icon, color: color, size: 18),
           ),
         ),
@@ -271,18 +265,14 @@ class MembersScreen extends ConsumerWidget {
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: GestureDetector(
             onTap: () => _showAddEditSheet(context, member: member),
-            onLongPress: () => _showMemberActions(context, member),
+            onLongPress: () {
+              HapticService.longPressStart();
+              _showMemberActions(context, member);
+            },
             child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.03),
-                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                border: Border.all(
-                  color: isCurrentUser
-                      ? AppColors.primary.withValues(alpha: 0.3)
-                      : Colors.white.withValues(alpha: 0.05),
-                  width: isCurrentUser ? 1.5 : 1,
-                ),
-              ),
+              decoration: isCurrentUser
+                  ? AppSpacing.accentCard(accent: AppColors.primary)
+                  : AppSpacing.accentCard(accent: AppColors.accentAlt),
               child: Column(
                 children: [
                   // Header Row
@@ -437,14 +427,14 @@ class MembersScreen extends ConsumerWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.all(AppSpacing.md),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.02),
+                        color: AppColors.accentAlt.withValues(alpha: 0.05),
                         borderRadius: const BorderRadius.vertical(
                           bottom:
                               Radius.circular(AppSpacing.radiusMd - 1),
                         ),
                         border: Border(
                           top: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.04),
+                            color: AppColors.accentAlt.withValues(alpha: 0.10),
                           ),
                         ),
                       ),

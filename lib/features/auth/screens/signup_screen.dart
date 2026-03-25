@@ -125,7 +125,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.05),
                   const Gap(4),
                   Text(
-                    'Join your mess community',
+                    'Create your free account',
                     style: AppTypography.bodyMedium.copyWith(
                       color: Colors.white.withValues(alpha: 0.4),
                     ),
@@ -191,14 +191,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                       child: Container(
                         padding: const EdgeInsets.all(AppSpacing.lg),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.04),
-                          borderRadius:
-                              BorderRadius.circular(AppSpacing.radiusLg),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.06),
-                          ),
-                        ),
+                        decoration: AppSpacing.accentCard(accent: AppColors.primary, radius: AppSpacing.radiusLg),
                         child: Form(
                           key: _formKey,
                           child: Column(
@@ -328,13 +321,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           child: Container(
             width: 40,
             height: 40,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.06),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.08),
-              ),
-            ),
+            decoration: AppSpacing.accentCard(accent: AppColors.primary, radius: 12),
             child: Icon(
               LucideIcons.arrowLeft,
               color: Colors.white.withValues(alpha: 0.7),
@@ -416,13 +403,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 14),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.08),
-              ),
-            ),
+            decoration: AppSpacing.accentCard(accent: AppColors.primary, radius: AppSpacing.radiusMd),
             child: _isGoogleLoading
                 ? const Center(
                     child: SizedBox(
@@ -581,7 +562,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   }
 
   Future<void> _signUp() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      HapticService.bouncyError();
+      return;
+    }
 
     HapticService.buttonPress();
     setState(() {
@@ -589,7 +573,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       _errorMessage = null;
     });
 
-    // Use authProvider to create pending approval request
     final success = await ref
         .read(authProvider.notifier)
         .signUp(
@@ -605,8 +588,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
     if (success && mounted) {
       HapticService.success();
-      // Redirect to pending approval screen instead of direct access
-      context.go(AppRoutes.pendingApproval);
+      // Go to mess selection — signup is free, joining a mess needs approval
+      context.go(AppRoutes.messSelection);
     } else if (mounted) {
       HapticService.error();
       setState(() => _errorMessage = 'Signup failed. Please try again.');

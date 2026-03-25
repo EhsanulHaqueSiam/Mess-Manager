@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:mess_manager/core/models/meal.dart';
+import 'package:mess_manager/core/models/mess_settings.dart';
+import 'package:mess_manager/core/providers/mess_settings_provider.dart';
 import 'package:mess_manager/features/vacation/screens/bulk_cancel_screen.dart';
 
 /// Meal Reminder Notification Model
@@ -38,24 +40,32 @@ class MealReminder {
   }
 }
 
-/// Meal Reminder Schedule
-/// Night before (9 PM): Tomorrow's lunch & dinner reminder
-/// Morning 9 AM: Lunch reminder - modify/add guest/keep default
-/// Evening 5 PM: Dinner reminder - modify/add guest/keep default
+/// Meal Reminder Schedule — uses configurable times from MessSettings
 class MealReminderSchedule {
-  // Default reminder times
-  static const nightBeforeTime = TimeOfDay(hour: 21, minute: 0); // 9 PM
-  static const morningLunchTime = TimeOfDay(hour: 9, minute: 0); // 9 AM
-  static const eveningDinnerTime = TimeOfDay(hour: 17, minute: 0); // 5 PM
+  final MessSettings settings;
+
+  const MealReminderSchedule(this.settings);
+
+  /// Convenience: default schedule (for backward compat)
+  static const _defaultSettings = MessSettings();
+
+  TimeOfDay get nightBeforeTime =>
+      TimeOfDay(hour: settings.nightPreviewHour, minute: settings.nightPreviewMinute);
+  TimeOfDay get morningLunchTime =>
+      TimeOfDay(hour: settings.lunchReminderHour, minute: settings.lunchReminderMinute);
+  TimeOfDay get eveningDinnerTime =>
+      TimeOfDay(hour: settings.dinnerReminderHour, minute: settings.dinnerReminderMinute);
+  TimeOfDay get breakfastTime =>
+      TimeOfDay(hour: settings.breakfastReminderHour, minute: settings.breakfastReminderMinute);
 
   /// Get scheduled reminders for a date
-  static List<ScheduledNotification> getRemindersForDate(DateTime date) {
-    return [
+  List<ScheduledNotification> getRemindersForDate(DateTime date) {
+    final reminders = <ScheduledNotification>[
       // Night before - for tomorrow's meals
       ScheduledNotification(
         id: 'night_${date.millisecondsSinceEpoch}',
-        title: 'Tomorrow\'s Meals 🍽️',
-        body: 'Set your lunch & dinner for tomorrow, or keep default',
+        title: 'Tomorrow\'s Meals',
+        body: 'Set your meals for tomorrow, or keep default',
         scheduledTime: _combineDateTime(
           date.subtract(const Duration(days: 1)),
           nightBeforeTime,
@@ -63,27 +73,46 @@ class MealReminderSchedule {
         type: NotificationType.mealPreview,
         icon: LucideIcons.moon,
       ),
-
-      // Morning - lunch reminder
-      ScheduledNotification(
-        id: 'lunch_${date.millisecondsSinceEpoch}',
-        title: 'Lunch Reminder 🥗',
-        body: 'Modify lunch, add guest, or keep default settings',
-        scheduledTime: _combineDateTime(date, morningLunchTime),
-        type: NotificationType.lunchReminder,
-        icon: LucideIcons.sun,
-      ),
-
-      // Evening - dinner reminder
-      ScheduledNotification(
-        id: 'dinner_${date.millisecondsSinceEpoch}',
-        title: 'Dinner Reminder 🍛',
-        body: 'Modify dinner, add guest, or keep default settings',
-        scheduledTime: _combineDateTime(date, eveningDinnerTime),
-        type: NotificationType.dinnerReminder,
-        icon: LucideIcons.sunset,
-      ),
     ];
+
+    // Breakfast reminder (only in 3-meal system)
+    if (settings.breakfastEnabled) {
+      reminders.add(ScheduledNotification(
+        id: 'breakfast_${date.millisecondsSinceEpoch}',
+        title: 'Breakfast Reminder',
+        body: 'Modify breakfast, add guest, or keep default',
+        scheduledTime: _combineDateTime(date, breakfastTime),
+        type: NotificationType.breakfastReminder,
+        icon: LucideIcons.coffee,
+      ));
+    }
+
+    // Lunch reminder
+    reminders.add(ScheduledNotification(
+      id: 'lunch_${date.millisecondsSinceEpoch}',
+      title: 'Lunch Reminder',
+      body: 'Modify lunch, add guest, or keep default settings',
+      scheduledTime: _combineDateTime(date, morningLunchTime),
+      type: NotificationType.lunchReminder,
+      icon: LucideIcons.sun,
+    ));
+
+    // Dinner reminder
+    reminders.add(ScheduledNotification(
+      id: 'dinner_${date.millisecondsSinceEpoch}',
+      title: 'Dinner Reminder',
+      body: 'Modify dinner, add guest, or keep default settings',
+      scheduledTime: _combineDateTime(date, eveningDinnerTime),
+      type: NotificationType.dinnerReminder,
+      icon: LucideIcons.sunset,
+    ));
+
+    return reminders;
+  }
+
+  /// Static convenience for default settings
+  static List<ScheduledNotification> getDefaultRemindersForDate(DateTime date) {
+    return const MealReminderSchedule(_defaultSettings).getRemindersForDate(date);
   }
 
   static DateTime _combineDateTime(DateTime date, TimeOfDay time) {
@@ -112,6 +141,7 @@ class ScheduledNotification {
 
 enum NotificationType {
   mealPreview, // Night before
+  breakfastReminder,
   lunchReminder,
   dinnerReminder,
 }
@@ -191,18 +221,28 @@ class MealReminderNotifier extends Notifier<Map<String, MealReminder>> {
   }
 
   TimeOfDay _getReminderTime(MealType type) {
+    final settings = ref.read(messSettingsProvider);
     return switch (type) {
-      MealType.breakfast => const TimeOfDay(hour: 7, minute: 0),
-      MealType.lunch => MealReminderSchedule.morningLunchTime,
-      MealType.dinner => MealReminderSchedule.eveningDinnerTime,
+      MealType.breakfast => TimeOfDay(
+          hour: settings.breakfastReminderHour,
+          minute: settings.breakfastReminderMinute,
+        ),
+      MealType.lunch => TimeOfDay(
+          hour: settings.lunchReminderHour,
+          minute: settings.lunchReminderMinute,
+        ),
+      MealType.dinner => TimeOfDay(
+          hour: settings.dinnerReminderHour,
+          minute: settings.dinnerReminderMinute,
+        ),
     };
   }
 }
 
 final mealReminderProvider =
-    NotifierProvider<MealReminderNotifier, Map<String, MealReminder>>(() {
-      return MealReminderNotifier();
-    });
+    NotifierProvider<MealReminderNotifier, Map<String, MealReminder>>(
+  MealReminderNotifier.new,
+);
 
 /// Check if meal notifications should be skipped (due to cancellation)
 final shouldSkipMealNotificationProvider =

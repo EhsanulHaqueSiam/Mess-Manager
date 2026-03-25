@@ -100,9 +100,9 @@ class NotificationSettingsScreen extends ConsumerWidget {
                           height: 40,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.white.withValues(alpha: 0.05),
+                            color: AppColors.warning.withValues(alpha: 0.10),
                             border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.08),
+                              color: AppColors.warning.withValues(alpha: 0.18),
                             ),
                           ),
                           child: Icon(
@@ -260,7 +260,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
                                 Switch.adaptive(
                                   value: settings.enabled,
                                   onChanged: (_) {
-                                    HapticService.selectionTick();
+                                    HapticService.toggle();
                                     notifier.toggleAll();
                                   },
                                   activeColor: AppColors.primary,
@@ -376,13 +376,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
               horizontal: AppSpacing.md,
               vertical: AppSpacing.sm + 2,
             ),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.05),
-              ),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            ),
+            decoration: AppSpacing.accentCard(accent: AppColors.warning, radius: AppSpacing.radiusMd),
             child: Row(
               children: [
                 Container(
@@ -427,7 +421,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
                 Switch.adaptive(
                   value: enabled,
                   onChanged: (_) {
-                    HapticService.selectionTick();
+                    HapticService.toggle();
                     onToggle();
                   },
                   activeColor: color,

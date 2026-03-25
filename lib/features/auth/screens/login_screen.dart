@@ -1,25 +1,17 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gap/gap.dart';
 
-import 'package:google_fonts/google_fonts.dart';
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/router/app_router.dart';
 import 'package:mess_manager/core/services/auth_service.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
 import 'package:mess_manager/core/widgets/app_components.dart';
-import 'package:mess_manager/core/database/isar_service.dart';
-import 'package:mess_manager/core/models/member.dart';
-import 'package:mess_manager/core/models/auth_user.dart';
-import 'package:mess_manager/core/services/mock_data_service.dart';
 import 'package:mess_manager/features/auth/providers/auth_provider.dart';
-import 'package:mess_manager/core/providers/members_provider.dart';
-import 'package:mess_manager/core/providers/demo_mode_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -89,11 +81,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   // ── Glass Form Card ──
                   _buildGlassFormCard(),
 
-                  if (kDebugMode) ...[
-                    const Gap(20),
-                    _buildDevModeSection(),
-                  ],
-
                   const Gap(40),
                 ],
               ),
@@ -162,13 +149,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
         child: Container(
           padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            color: Colors.white.withValues(alpha: 0.06),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.1),
-            ),
-          ),
+          decoration: AppSpacing.accentCard(accent: AppColors.primary, radius: 24),
           child: Column(
             children: [
               // ── Google Sign In ──
@@ -320,19 +301,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ],
                     ).animate().fadeIn(delay: 1050.ms),
 
-                    // Skip for demo
-                    if (kDebugMode) ...[
-                      const Gap(10),
-                      TextButton(
-                        onPressed: _skipLogin,
-                        child: Text(
-                          'Continue as Guest (Demo)',
-                          style: AppTypography.labelMedium.copyWith(
-                            color: Colors.white.withValues(alpha: 0.25),
-                          ),
-                        ),
-                      ).animate().fadeIn(delay: 1100.ms),
-                    ],
                   ],
                 ),
               ),
@@ -564,231 +532,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   // ────────────────────────────────────────────────────────────────
-  // DEV MODE SECTION
-  // ────────────────────────────────────────────────────────────────
-
-  Widget _buildDevModeSection() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            color: AppColors.warning.withValues(alpha: 0.04),
-            border: Border.all(
-              color: AppColors.warning.withValues(alpha: 0.15),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.warning.withValues(alpha: 0.06),
-                blurRadius: 20,
-                spreadRadius: -4,
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              // Terminal header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 5,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.warning,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.warning.withValues(alpha: 0.6),
-                          blurRadius: 4,
-                        ),
-                      ],
-                    ),
-                  )
-                      .animate(onPlay: (c) => c.repeat(reverse: true))
-                      .fadeIn(begin: 0.3, duration: 1.seconds),
-                  const Gap(8),
-                  Icon(
-                    LucideIcons.terminal,
-                    size: 13,
-                    color: AppColors.warning.withValues(alpha: 0.7),
-                  ),
-                  const Gap(6),
-                  Text(
-                    'DEV TERMINAL',
-                    style: GoogleFonts.jetBrainsMono(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.warning.withValues(alpha: 0.8),
-                      letterSpacing: 2,
-                    ),
-                  ),
-                ],
-              ),
-              const Gap(10),
-              // Gradient divider
-              Container(
-                height: 1,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.transparent,
-                      AppColors.warning.withValues(alpha: 0.15),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-              const Gap(12),
-              // Role access cards
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                alignment: WrapAlignment.center,
-                children: [
-                  _buildDevRoleChip(
-                    'Super Admin',
-                    MemberRole.superAdmin,
-                    LucideIcons.crown,
-                    AppColors.error,
-                    'LVL 4',
-                  ),
-                  _buildDevRoleChip(
-                    'Admin',
-                    MemberRole.admin,
-                    LucideIcons.shield,
-                    AppColors.warning,
-                    'LVL 3',
-                  ),
-                  _buildDevRoleChip(
-                    'Meal Mgr',
-                    MemberRole.mealManager,
-                    LucideIcons.chefHat,
-                    AppColors.primary,
-                    'LVL 3',
-                  ),
-                  _buildDevRoleChip(
-                    'Member',
-                    MemberRole.member,
-                    LucideIcons.user,
-                    AppColors.success,
-                    'LVL 2',
-                  ),
-                ],
-              ),
-              const Gap(10),
-              Text(
-                'Bypass auth · Seed mock data · Local only',
-                style: GoogleFonts.jetBrainsMono(
-                  fontSize: 9,
-                  color: Colors.white.withValues(alpha: 0.18),
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ).animate().fadeIn(delay: 1200.ms);
-  }
-
-  Widget _buildDevRoleChip(
-    String label,
-    MemberRole role,
-    IconData icon,
-    Color color,
-    String clearance,
-  ) {
-    return GestureDetector(
-      onTap: () => _devLoginAs(role),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: color.withValues(alpha: 0.25),
-              ),
-              color: color.withValues(alpha: 0.06),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: 12, color: color),
-                const Gap(6),
-                Text(
-                  label,
-                  style: AppTypography.labelSmall.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const Gap(6),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(4),
-                    color: color.withValues(alpha: 0.12),
-                  ),
-                  child: Text(
-                    clearance,
-                    style: GoogleFonts.jetBrainsMono(
-                      fontSize: 7,
-                      fontWeight: FontWeight.w600,
-                      color: color.withValues(alpha: 0.7),
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ────────────────────────────────────────────────────────────────
   // AUTH ACTIONS
   // ────────────────────────────────────────────────────────────────
-
-  Future<void> _devLoginAs(MemberRole role) async {
-    HapticService.buttonPress();
-
-    DemoMode.enable();
-    debugPrint('Demo Mode ENABLED - using local mock data only');
-
-    final user = AuthUser(
-      id: 'dev_${role.name}_${DateTime.now().millisecondsSinceEpoch}',
-      email: '${role.name}@dev.test',
-      name: 'Dev ${role.name.toUpperCase()}',
-      createdAt: DateTime.now(),
-    );
-
-    IsarService.saveSetting('current_user', user.toJson());
-    IsarService.saveSetting('current_user_role', role.index);
-
-    MockDataService.reset();
-    await MockDataService.seedAll();
-
-    await ref.read(membersProvider.notifier).refresh();
-
-    await ref
-        .read(authProvider.notifier)
-        .signIn(email: user.email, password: 'dev123');
-
-    if (mounted) {
-      HapticService.success();
-      context.go(AppRoutes.dashboard);
-    }
-  }
 
   Future<void> _signInWithGoogle() async {
     HapticService.buttonPress();
@@ -811,7 +556,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _login() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      HapticService.bouncyError();
+      return;
+    }
 
     HapticService.buttonPress();
     setState(() {
@@ -819,19 +567,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _errorMessage = null;
     });
 
-    final result = await AuthService.signInWithEmail(
+    final success = await ref.read(authProvider.notifier).signIn(
       email: _emailController.text.trim(),
       password: _passwordController.text,
     );
 
     setState(() => _isLoading = false);
 
-    if (result.isSuccess && mounted) {
+    if (success && mounted) {
       HapticService.success();
       context.go(AppRoutes.messSelection);
-    } else if (mounted && result.error != null) {
+    } else if (mounted) {
       HapticService.error();
-      setState(() => _errorMessage = result.error);
+      setState(() => _errorMessage = 'Invalid email or password');
     }
   }
 
@@ -889,15 +637,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  void _skipLogin() async {
-    HapticService.buttonPress();
-    await ref
-        .read(authProvider.notifier)
-        .signIn(email: 'demo@messmanager.com', password: 'demo123');
-    if (mounted) {
-      context.go(AppRoutes.dashboard);
-    }
-  }
 }
 
 // ══════════════════════════════════════════════════════════════════

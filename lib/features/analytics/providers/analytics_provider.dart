@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mess_manager/core/providers/members_provider.dart';
 import 'package:mess_manager/features/meals/providers/meals_provider.dart';
 import 'package:mess_manager/features/bazar/providers/bazar_provider.dart';
 
@@ -144,10 +145,138 @@ final monthComparisonProvider = Provider<MonthComparison>((ref) {
   final totalMeals = ref.watch(totalMealsProvider);
 
   // Simple projection: assume this month continues at current rate
-  // Would compare to previous month data when available
   return MonthComparison(
     currentMonthBazar: totalBazar,
     currentMonthMeals: totalMeals,
-    percentChange: 0, // Would calculate from previous month data
+    percentChange: 0,
+  );
+});
+
+// ═══════════════════════════════════════════════════════════════
+// MEMBER-WISE ANALYTICS
+// ═══════════════════════════════════════════════════════════════
+
+/// Per-member cost breakdown for the current month
+class MemberCostBreakdown {
+  final String memberId;
+  final String name;
+  final int totalMeals; // includes guest meals
+  final double bazarContribution;
+  final double estimatedCost; // meals * mealRate
+  final double netBalance; // bazarContribution - estimatedCost
+
+  const MemberCostBreakdown({
+    required this.memberId,
+    required this.name,
+    required this.totalMeals,
+    required this.bazarContribution,
+    required this.estimatedCost,
+    required this.netBalance,
+  });
+}
+
+/// Member-wise cost breakdown provider
+final memberCostBreakdownProvider = Provider<List<MemberCostBreakdown>>((ref) {
+  final members = ref.watch(membersProvider);
+  final meals = ref.watch(mealsProvider);
+  final bazarEntries = ref.watch(bazarEntriesProvider);
+
+  final now = DateTime.now();
+  final monthMeals = meals
+      .where((m) => m.date.year == now.year && m.date.month == now.month)
+      .toList();
+  final monthBazar = bazarEntries
+      .where((b) => b.date.year == now.year && b.date.month == now.month)
+      .toList();
+
+  final totalBazar = monthBazar.fold(0.0, (sum, b) => sum + b.amount);
+  final totalMealCount = monthMeals.fold(
+    0,
+    (sum, m) => sum + m.count + m.guestCount,
+  );
+  final mealRate = totalMealCount > 0 ? totalBazar / totalMealCount : 0.0;
+
+  return members.where((m) => m.isActive).map((member) {
+    final memberMealCount = monthMeals
+        .where((m) => m.memberId == member.id)
+        .fold(0, (sum, m) => sum + m.count + m.guestCount);
+    final memberBazar = monthBazar
+        .where((b) => b.memberId == member.id)
+        .fold(0.0, (sum, b) => sum + b.amount);
+    final cost = memberMealCount * mealRate;
+
+    return MemberCostBreakdown(
+      memberId: member.id,
+      name: member.name,
+      totalMeals: memberMealCount,
+      bazarContribution: memberBazar,
+      estimatedCost: cost,
+      netBalance: memberBazar - cost,
+    );
+  }).toList()
+    ..sort((a, b) => b.totalMeals.compareTo(a.totalMeals));
+});
+
+/// Current meal rate (bazar / total meals)
+final currentMealRateProvider = Provider<double>((ref) {
+  final meals = ref.watch(mealsProvider);
+  final bazarEntries = ref.watch(bazarEntriesProvider);
+
+  final now = DateTime.now();
+  final monthMeals = meals
+      .where((m) => m.date.year == now.year && m.date.month == now.month);
+  final monthBazar = bazarEntries
+      .where((b) => b.date.year == now.year && b.date.month == now.month);
+
+  final totalBazar = monthBazar.fold(0.0, (sum, b) => sum + b.amount);
+  final totalMealCount = monthMeals.fold(
+    0,
+    (sum, m) => sum + m.count + m.guestCount,
+  );
+
+  return totalMealCount > 0 ? totalBazar / totalMealCount : 0.0;
+});
+
+/// End-of-month forecast based on current spending rate
+class MonthForecast {
+  final double projectedBazar;
+  final double projectedMeals;
+  final double projectedMealRate;
+  final int daysElapsed;
+  final int daysRemaining;
+
+  const MonthForecast({
+    required this.projectedBazar,
+    required this.projectedMeals,
+    required this.projectedMealRate,
+    required this.daysElapsed,
+    required this.daysRemaining,
+  });
+}
+
+final monthForecastProvider = Provider<MonthForecast>((ref) {
+  final totalBazar = ref.watch(totalBazarProvider);
+  final totalMeals = ref.watch(totalMealsProvider);
+
+  final now = DateTime.now();
+  final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
+  final daysElapsed = now.day;
+  final daysRemaining = daysInMonth - daysElapsed;
+
+  final dailyBazarRate = daysElapsed > 0 ? totalBazar / daysElapsed : 0.0;
+  final dailyMealRate = daysElapsed > 0 ? totalMeals / daysElapsed : 0.0;
+
+  final projectedBazar = totalBazar + (dailyBazarRate * daysRemaining);
+  final projectedMeals = totalMeals + (dailyMealRate * daysRemaining);
+  final projectedMealRate = projectedMeals > 0
+      ? projectedBazar / projectedMeals
+      : 0.0;
+
+  return MonthForecast(
+    projectedBazar: projectedBazar,
+    projectedMeals: projectedMeals,
+    projectedMealRate: projectedMealRate,
+    daysElapsed: daysElapsed,
+    daysRemaining: daysRemaining,
   );
 });

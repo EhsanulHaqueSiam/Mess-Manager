@@ -95,6 +95,23 @@ class AppColors {
     Color(0xFFF59E0B),
     Color(0xFFFBBF24),
   ];
+
+  // === Modern Dribbble-Inspired Card Gradients ===
+  // Each feature gets a distinct vibrant gradient background
+  static const gradientMeal = [Color(0xFF7C3AED), Color(0xFFA855F7)]; // Violet
+  static const gradientBazar = [Color(0xFF0891B2), Color(0xFF06B6D4)]; // Cyan
+  static const gradientMoney = [Color(0xFF059669), Color(0xFF10B981)]; // Emerald
+  static const gradientBalance = [Color(0xFF2563EB), Color(0xFF3B82F6)]; // Blue
+  static const gradientDuty = [Color(0xFFD97706), Color(0xFFF59E0B)]; // Amber
+  static const gradientDesco = [Color(0xFFCA8A04), Color(0xFFEAB308)]; // Yellow
+  static const gradientRamadan = [Color(0xFF9333EA), Color(0xFFC084FC)]; // Purple
+  static const gradientSettlement = [Color(0xFFE11D48), Color(0xFFF43F5E)]; // Rose
+
+  // Soft colored card backgrounds (subtle tint on dark)
+  static Color cardTint(Color accent) =>
+      accent.withValues(alpha: 0.08);
+  static Color cardBorder(Color accent) =>
+      accent.withValues(alpha: 0.15);
 }
 
 /// Spacing Tokens (Using 4px grid system)
@@ -172,6 +189,53 @@ class AppSpacing {
       ),
     );
   }
+
+  /// Colored accent card — vibrant tinted background with matching border.
+  /// Use for feature-specific cards (meal stats, bazar summary, etc.)
+  static BoxDecoration accentCard({
+    required Color accent,
+    double radius = radiusMd,
+  }) {
+    return BoxDecoration(
+      borderRadius: BorderRadius.circular(radius),
+      color: accent.withValues(alpha: 0.10),
+      border: Border.all(color: accent.withValues(alpha: 0.18)),
+      boxShadow: [
+        BoxShadow(
+          color: accent.withValues(alpha: 0.08),
+          blurRadius: 12,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    );
+  }
+
+  /// Gradient hero card — full vibrant gradient with soft glow.
+  /// Use for primary stat/balance hero sections.
+  static BoxDecoration gradientCard({
+    required List<Color> gradient,
+    double radius = radiusLg,
+  }) {
+    return BoxDecoration(
+      borderRadius: BorderRadius.circular(radius),
+      gradient: LinearGradient(
+        colors: gradient,
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: gradient.first.withValues(alpha: 0.35),
+          blurRadius: 24,
+          offset: const Offset(0, 8),
+          spreadRadius: -4,
+        ),
+      ],
+    );
+  }
+
+  /// Bento grid — mixed height card layout helper
+  static double bentoHeight(int span) => span == 2 ? 200 : 100;
 }
 
 /// Typography System (2025-2026 Trending Fonts)

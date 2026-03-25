@@ -305,12 +305,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              color: Colors.white.withValues(alpha: 0.04),
-              border:
-                  Border.all(color: Colors.white.withValues(alpha: 0.08)),
-            ),
+            decoration: AppSpacing.accentCard(accent: AppColors.info, radius: 20),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -355,22 +350,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-              gradient: LinearGradient(
-                colors: [
-                  Colors.white.withValues(alpha: 0.08),
-                  Colors.white.withValues(alpha: 0.02),
-                  AppColors.primaryLight.withValues(alpha: 0.03),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.1),
-                width: 1.2,
-              ),
-            ),
+            decoration: AppSpacing.gradientCard(gradient: AppColors.gradientPrimary),
             child: Row(
               children: [
                 // Avatar with gradient ring
@@ -555,12 +535,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             child: Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(14),
-                color: Colors.white.withValues(alpha: 0.04),
-                border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.06)),
-              ),
+              decoration: AppSpacing.accentCard(accent: color, radius: 14),
               child: Row(
                 children: [
                   Container(
@@ -628,12 +603,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           child: Container(
             padding:
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              color: Colors.white.withValues(alpha: 0.04),
-              border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.06)),
-            ),
+            decoration: AppSpacing.accentCard(accent: AppColors.info, radius: 14),
             child: ListTile(
               contentPadding: EdgeInsets.zero,
               leading: Container(
@@ -648,8 +618,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ],
                   ),
                 ),
-                child: Icon(
-                  isDarkMode ? LucideIcons.moon : LucideIcons.sun,
+                child: const Icon(
+                  LucideIcons.moon,
                   color: AppColors.primary,
                   size: 18,
                 ),
@@ -661,36 +631,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
               ),
               subtitle: Text(
-                isDarkMode ? 'Enabled' : 'Disabled',
+                'Always on — Cosmic Bioluminescence',
                 style: AppTypography.bodySmall.copyWith(
                   color: Colors.white.withValues(alpha: 0.35),
                 ),
               ),
-              trailing: ThemeSwitcher(
-                clipper: const ThemeSwitcherCircleClipper(),
-                builder: (ctx) {
-                  return Switch.adaptive(
-                    value: isDarkMode,
-                    onChanged: (_) {
-                      HapticService.toggle();
-                      final themeSwitcher = ThemeSwitcher.of(ctx);
-                      final adaptiveTheme = AdaptiveTheme.of(context);
-                      final newTheme = isDarkMode
-                          ? adaptiveTheme.lightTheme
-                          : adaptiveTheme.darkTheme;
-                      themeSwitcher.changeTheme(theme: newTheme);
-                      adaptiveTheme.toggleThemeMode();
-                    },
-                    activeTrackColor:
-                        AppColors.primary.withValues(alpha: 0.5),
-                    activeThumbColor: AppColors.primary,
-                  );
-                },
+              trailing: Switch.adaptive(
+                value: true,
+                onChanged: null, // Locked to dark
+                activeTrackColor:
+                    AppColors.primary.withValues(alpha: 0.5),
+                activeThumbColor: AppColors.primary,
               ),
-              onTap: () {
-                HapticService.toggle();
-                AdaptiveTheme.of(context).toggleThemeMode();
-              },
             ),
           ),
         ),
@@ -817,12 +769,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           child: Container(
             padding:
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              color: Colors.white.withValues(alpha: 0.04),
-              border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.06)),
-            ),
+            decoration: AppSpacing.accentCard(accent: AppColors.info, radius: 14),
             child: ListTile(
               contentPadding: EdgeInsets.zero,
               leading: Container(
@@ -896,12 +843,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           child: Container(
             padding:
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              color: Colors.white.withValues(alpha: 0.04),
-              border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.06)),
-            ),
+            decoration: AppSpacing.accentCard(accent: AppColors.info, radius: 14),
             child: ListTile(
               contentPadding: EdgeInsets.zero,
               leading: Container(
@@ -1002,12 +944,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(
                   horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(14),
-                color: AppColors.primary.withValues(alpha: 0.06),
-                border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.15)),
-              ),
+              decoration: AppSpacing.accentCard(accent: AppColors.primary, radius: 14),
               child: Row(
                 children: [
                   Container(
@@ -1079,12 +1016,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              color: AppColors.error.withValues(alpha: 0.06),
-              border: Border.all(
-                  color: AppColors.error.withValues(alpha: 0.15)),
-            ),
+            decoration: AppSpacing.accentCard(accent: AppColors.error, radius: 14),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -1791,9 +1723,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ref
                             .read(themeColorProvider.notifier)
                             .setColor(option);
+                        // Rebuild AdaptiveTheme with new seed color
+                        final newTheme = AppTheme.buildDarkTheme(
+                          seedColor: option.effectiveColor,
+                        );
+                        AdaptiveTheme.of(context).setTheme(
+                          light: newTheme,
+                          dark: newTheme,
+                        );
                         Navigator.pop(ctx);
                         showSuccessToast(context,
-                            'Theme color changed! Restart app for full effect.');
+                            'Theme color updated');
                       },
                       child: AnimatedContainer(
                         duration:

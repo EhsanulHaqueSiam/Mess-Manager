@@ -276,11 +276,7 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
           child: Container(
             width: 40,
             height: 40,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.05),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-              borderRadius: BorderRadius.circular(12),
-            ),
+            decoration: AppSpacing.accentCard(accent: AppColors.accent, radius: 12),
             child: Center(
               child: Icon(icon, size: 18, color: Colors.white.withValues(alpha: 0.7)),
             ),
@@ -349,18 +345,7 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
           padding: const EdgeInsets.all(AppSpacing.lg),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            gradient: LinearGradient(
-              colors: [
-                AppColors.primary.withValues(alpha: 0.25),
-                AppColors.primary.withValues(alpha: 0.1),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
-          ),
+          decoration: AppSpacing.gradientCard(gradient: AppColors.gradientRamadan, radius: AppSpacing.radiusMd),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -479,11 +464,7 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.03),
-            border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          ),
+          decoration: AppSpacing.accentCard(accent: AppColors.accent),
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
@@ -514,6 +495,7 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
                       : PopupMenuButton<String>(
                           initialValue: _selectedDistrict,
                           onSelected: (district) {
+                            HapticService.selectionTick();
                             setState(() => _selectedDistrict = district);
                             _loadPrayerTimes();
                           },
@@ -695,11 +677,7 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
-              border: Border.all(color: color.withValues(alpha: 0.15)),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            ),
+            decoration: AppSpacing.accentCard(accent: color),
             child: Column(children: [
               Container(
                 width: 44,
@@ -741,11 +719,7 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
           padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.03),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          ),
+          decoration: AppSpacing.accentCard(accent: AppColors.accent),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -845,11 +819,7 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: Container(
             padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            ),
+            decoration: AppSpacing.accentCard(accent: AppColors.accent),
             child: Row(children: [
               AppMemberAvatar(
                 name: member.name,
@@ -897,11 +867,7 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: Container(
             padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: AppColors.success.withValues(alpha: 0.06),
-              border: Border.all(color: AppColors.success.withValues(alpha: 0.2)),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            ),
+            decoration: AppSpacing.accentCard(accent: AppColors.success),
             child: Row(children: [
               const Icon(LucideIcons.checkCircle, color: AppColors.success, size: 20),
               const Gap(8),
@@ -954,11 +920,7 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: Container(
             padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            ),
+            decoration: AppSpacing.accentCard(accent: AppColors.accent),
             child: Row(children: [
               AppMemberAvatar(
                 name: from.name,

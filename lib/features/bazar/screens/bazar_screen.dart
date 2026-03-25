@@ -37,6 +37,9 @@ class _BazarScreenState extends ConsumerState<BazarScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) HapticService.tabChanged();
+    });
   }
 
   @override
@@ -48,6 +51,7 @@ class _BazarScreenState extends ConsumerState<BazarScreen>
   /// Show export options sheet (CSV/Excel)
   void _showExportOptions(BuildContext context) {
     HapticService.lightTap();
+    try {
     final members = ref.read(membersProvider);
     final balances = ref.read(currentMonthBalancesProvider);
     final mealRate = ref.read(mealRateProvider);
@@ -180,6 +184,11 @@ class _BazarScreenState extends ConsumerState<BazarScreen>
         ),
       ),
     );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Export not available: $e'), backgroundColor: AppColors.error),
+      );
+    }
   }
 
   @override
@@ -323,27 +332,21 @@ class _BazarScreenState extends ConsumerState<BazarScreen>
                         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                         child: Container(
                           height: 48,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.04),
-                            borderRadius:
-                                BorderRadius.circular(AppSpacing.radiusMd),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.06),
-                            ),
+                          decoration: AppSpacing.accentCard(
+                            accent: AppColors.bazarColor,
+                            radius: AppSpacing.radiusMd,
                           ),
                           child: TabBar(
                             controller: _tabController,
-                            labelColor: AppColors.bazarColor,
+                            labelColor: Colors.white,
                             unselectedLabelColor:
                                 Colors.white.withValues(alpha: 0.4),
                             indicatorSize: TabBarIndicatorSize.tab,
                             indicator: BoxDecoration(
-                              color: AppColors.bazarColor.withValues(alpha: 0.12),
                               borderRadius:
                                   BorderRadius.circular(AppSpacing.radiusMd - 2),
-                              border: Border.all(
-                                color:
-                                    AppColors.bazarColor.withValues(alpha: 0.2),
+                              gradient: const LinearGradient(
+                                colors: AppColors.gradientBazar,
                               ),
                             ),
                             dividerColor: Colors.transparent,
@@ -403,7 +406,7 @@ class _BazarScreenState extends ConsumerState<BazarScreen>
           ),
         ],
       ),
-      floatingActionButton: _buildCosmicFAB(context),
+      // FAB now in MainShell (global speed dial)
     );
   }
 
@@ -434,40 +437,7 @@ class _BazarScreenState extends ConsumerState<BazarScreen>
     );
   }
 
-  Widget _buildCosmicFAB(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.bazarColor.withValues(alpha: 0.4),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: FloatingActionButton.extended(
-        onPressed: () {
-          HapticService.buttonPress();
-          showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            backgroundColor: Colors.transparent,
-            builder: (context) => const AddBazarSheet(),
-          );
-        },
-        icon: const Icon(LucideIcons.plus, size: 20),
-        label: const Text('Add Entry'),
-        backgroundColor: AppColors.bazarColor,
-        foregroundColor: Colors.white,
-      ),
-    )
-        .animate(onPlay: (c) => c.repeat())
-        .shimmer(
-          duration: 2.seconds,
-          color: Colors.white.withValues(alpha: 0.15),
-        );
-  }
+
 }
 
 /// Entries Tab - Cosmic Design
