@@ -13,16 +13,18 @@ import 'package:mess_manager/core/models/unified_entry.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
 import 'package:mess_manager/core/services/nlp_categorizer.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
+import 'package:mess_manager/core/widgets/quick_input_widgets.dart';
 import 'package:mess_manager/features/bazar/providers/bazar_provider.dart';
 
-/// Add Entry Sheet - Unified
+/// Streamlined bazar entry sheet — amount-first, fewer taps.
 ///
-/// - NLP auto-detects entry type (meal/bazar/fixed/monthly)
-/// - Photo required for bazar entries
-/// - Receipts optional (multiple allowed)
-/// - Admin/SuperAdmin can select payer
-/// - Supports Simple or Itemized for bazar
-/// - Edit mode: pass existingEntry to pre-fill form
+/// - Amount field autofocused with quick presets
+/// - NLP auto-detects silently (no confirm dialog)
+/// - Compact segmented entry type selector
+/// - Photo recommended, not required
+/// - Inline large-amount warning instead of dialog
+/// - Admin payer via MemberAvatarPicker
+/// - Edit mode fully supported
 class AddBazarSheet extends ConsumerStatefulWidget {
   /// Existing entry for edit mode (null for add mode)
   final BazarEntry? existingEntry;
@@ -37,6 +39,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
   late DateTime _selectedDate;
   final _amountController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _amountFocusNode = FocusNode();
   bool _isItemized = false;
   final List<BazarItem> _items = [];
 
@@ -48,7 +51,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
   bool _isAutoDetected = true;
   double _confidence = 0.5;
 
-  // Photo & Receipt storage (for bazar entries)
+  // Photo & Receipt storage
   final List<String> _photoUrls = [];
   final List<String> _receiptUrls = [];
   final ImagePicker _picker = ImagePicker();
@@ -65,7 +68,6 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
     super.initState();
     _descriptionController.addListener(_onDescriptionChanged);
 
-    // Pre-fill form for edit mode
     if (widget.existingEntry != null) {
       final entry = widget.existingEntry!;
       _selectedDate = entry.date;
@@ -76,10 +78,14 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
       _items.addAll(entry.items);
       _photoUrls.addAll(entry.photoUrls);
       _receiptUrls.addAll(entry.receiptUrls);
-      _selectedType = EntryType.mealBazar; // Bazar entries are always mealBazar
+      _selectedType = EntryType.mealBazar;
       _isAutoDetected = false;
     } else {
       _selectedDate = DateTime.now();
+      // Autofocus amount field after build
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _amountFocusNode.requestFocus();
+      });
     }
   }
 
@@ -100,14 +106,30 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
     _descriptionController.removeListener(_onDescriptionChanged);
     _amountController.dispose();
     _descriptionController.dispose();
+    _amountFocusNode.dispose();
     _itemNameController.dispose();
     _itemPriceController.dispose();
     super.dispose();
   }
 
-  // Photo required only for bazar entries
   bool get _isBazarEntry => _selectedType == EntryType.mealBazar;
-  bool get _hasRequiredPhoto => !_isBazarEntry || _photoUrls.isNotEmpty;
+
+  double get _currentAmount {
+    if (_isItemized) {
+      return _items.fold(0.0, (sum, i) => sum + i.price);
+    }
+    return double.tryParse(_amountController.text) ?? 0;
+  }
+
+  bool get _isLargeAmount => _currentAmount > 10000;
+
+  bool get _canSubmit {
+    if (_isItemized) {
+      return _items.isNotEmpty;
+    } else {
+      return _currentAmount > 0;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -115,23 +137,25 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
     final currentMember = ref.watch(currentMemberProvider);
     final currentId = ref.watch(currentMemberIdProvider);
 
-    // Check if user is admin (can select payer)
-    final isAdmin =
-        currentMember?.role == MemberRole.superAdmin ||
+    final isAdmin = currentMember?.role == MemberRole.superAdmin ||
         currentMember?.role == MemberRole.admin;
 
-    // Initialize payer to current user if not set
     _selectedPayerId ??= currentId;
 
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        AppSpacing.lg,
+      ),
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.9,
+        maxHeight: MediaQuery.of(context).size.height * 0.88,
       ),
       decoration: BoxDecoration(
         color: context.surfaceColor,
         borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(AppSpacing.radiusLg),
+          top: Radius.circular(AppSpacing.radiusXl),
         ),
       ),
       child: SingleChildScrollView(
@@ -139,148 +163,192 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Handle
+            // ── Handle ──
             Center(
               child: Container(
-                width: 40,
+                width: 36,
                 height: 4,
+                margin: const EdgeInsets.only(bottom: AppSpacing.md),
                 decoration: BoxDecoration(
-                  color: context.borderColor,
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.bazarColor.withValues(alpha: 0.4),
+                      AppColors.bazarColor.withValues(alpha: 0.15),
+                    ],
+                  ),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
-            const Gap(AppSpacing.lg),
 
-            // Title
+            // ── Header row ──
             Row(
               children: [
                 const Icon(
                   LucideIcons.shoppingCart,
                   color: AppColors.bazarColor,
-                  size: 24,
+                  size: 22,
                 ),
                 const Gap(AppSpacing.sm),
                 Text(
-                  _isEditMode ? 'Edit Entry' : 'Add Entry',
+                  _isEditMode ? 'Edit entry' : 'Add entry',
                   style: AppTypography.headlineMedium.copyWith(
                     color: context.textPrimary,
                   ),
                 ),
+                const Spacer(),
+                // Date chip
+                GestureDetector(
+                  onTap: _pickDate,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.bazarColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                      border: Border.all(
+                        color: AppColors.bazarColor.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          LucideIcons.calendar,
+                          size: 13,
+                          color: AppColors.bazarColor,
+                        ),
+                        const Gap(4),
+                        Text(
+                          _formatDate(_selectedDate),
+                          style: AppTypography.labelSmall.copyWith(
+                            color: AppColors.bazarColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
-            ).animate().fadeIn(),
-            const Gap(AppSpacing.md),
+            ).animate().fadeIn(duration: 200.ms),
+            const Gap(AppSpacing.md + 4),
 
-            // Admin: Payer Selector / Member: Info text
-            if (isAdmin) ...[
+            // ══════════════════════════════════════════════════════════
+            // 1. AMOUNT FIELD — first, autofocused
+            // ══════════════════════════════════════════════════════════
+            if (!_isItemized) ...[
               Text(
-                'Who Paid',
+                'Amount',
                 style: AppTypography.labelMedium.copyWith(
                   color: context.textSecondary,
                 ),
               ),
-              const Gap(AppSpacing.sm),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: context.cardColor,
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                  border: Border.all(color: context.borderColor),
+              const Gap(AppSpacing.xs),
+              TextField(
+                controller: _amountController,
+                focusNode: _amountFocusNode,
+                keyboardType: TextInputType.number,
+                style: AppTypography.monoLarge.copyWith(
+                  color: context.textPrimary,
+                  fontSize: 24,
                 ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedPayerId,
-                    isExpanded: true,
-                    dropdownColor: context.cardColor,
-                    icon: const Icon(LucideIcons.chevronDown, size: 18),
-                    items: members
-                        .map(
-                          (m) => DropdownMenuItem(
-                            value: m.id,
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 14,
-                                  backgroundColor: AppColors.primary.withValues(
-                                    alpha: 0.2,
-                                  ),
-                                  child: Text(
-                                    m.name.isNotEmpty
-                                        ? m.name[0].toUpperCase()
-                                        : '?',
-                                    style: AppTypography.labelSmall.copyWith(
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                                ),
-                                const Gap(AppSpacing.sm),
-                                Text(
-                                  m.name,
-                                  style: AppTypography.bodyMedium.copyWith(
-                                    color: context.textPrimary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) =>
-                        setState(() => _selectedPayerId = value),
+                onChanged: (_) => setState(() {}),
+                decoration: InputDecoration(
+                  hintText: '0',
+                  hintStyle: AppTypography.monoLarge.copyWith(
+                    color: context.textMuted,
+                    fontSize: 24,
+                  ),
+                  prefixText: '৳ ',
+                  prefixStyle: AppTypography.monoLarge.copyWith(
+                    color: AppColors.bazarColor,
+                    fontSize: 24,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm + 2,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                    borderSide: const BorderSide(
+                      color: AppColors.bazarColor,
+                      width: 2,
+                    ),
                   ),
                 ),
-              ).animate().fadeIn(delay: 100.ms),
-            ] else ...[
-              // Non-admin: Show info text
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.sm),
-                decoration: BoxDecoration(
-                  color: AppColors.info.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                ),
-                child: Row(
+              ).animate().fadeIn(duration: 150.ms),
+
+              // Inline large amount warning
+              if (_isLargeAmount) ...[
+                const Gap(AppSpacing.xs),
+                Row(
                   children: [
-                    const Icon(
-                      LucideIcons.user,
-                      color: AppColors.info,
-                      size: 14,
+                    Icon(
+                      LucideIcons.alertTriangle,
+                      size: 13,
+                      color: AppColors.warning,
                     ),
-                    const Gap(AppSpacing.sm),
-                    Expanded(
-                      child: Text(
-                        'This entry will be added under your name',
-                        style: AppTypography.bodySmall.copyWith(
-                          color: context.textSecondary,
-                        ),
+                    const Gap(4),
+                    Text(
+                      'Large amount -- double-check before submitting',
+                      style: AppTypography.labelSmall.copyWith(
+                        color: AppColors.warning,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
-                ),
-              ).animate().fadeIn(delay: 100.ms),
-            ],
-            const Gap(AppSpacing.lg),
+                ).animate().fadeIn(duration: 150.ms).shakeX(
+                      amount: 2,
+                      duration: 300.ms,
+                    ),
+              ],
+              const Gap(AppSpacing.sm),
 
-            // NLP Entry Type Selector
+              // ── Quick amount presets ──
+              QuickAmountPicker(
+                selectedAmount: double.tryParse(_amountController.text),
+                controller: _amountController,
+                accentColor: AppColors.bazarColor,
+                onAmountSelected: (amount) {
+                  setState(() {
+                    _amountController.text = amount.toStringAsFixed(0);
+                  });
+                },
+              ).animate().fadeIn(delay: 50.ms, duration: 150.ms),
+              const Gap(AppSpacing.md + 4),
+            ] else ...[
+              // ── Itemized mode ──
+              _buildItemizedSection(),
+              const Gap(AppSpacing.md + 4),
+            ],
+
+            // ══════════════════════════════════════════════════════════
+            // 2. DESCRIPTION — with NLP sparkles indicator
+            // ══════════════════════════════════════════════════════════
             Row(
               children: [
                 Text(
-                  'Entry Type',
+                  'Description',
                   style: AppTypography.labelMedium.copyWith(
                     color: context.textSecondary,
                   ),
                 ),
                 if (_isAutoDetected &&
                     _descriptionController.text.isNotEmpty) ...[
-                  const Gap(AppSpacing.sm),
+                  const Gap(6),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 6,
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: _confidence > 0.7
-                          ? AppColors.success.withValues(alpha: 0.2)
-                          : AppColors.warning.withValues(alpha: 0.2),
+                      color: (_confidence > 0.7
+                              ? AppColors.success
+                              : AppColors.warning)
+                          .withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Row(
@@ -288,18 +356,19 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
                       children: [
                         Icon(
                           LucideIcons.sparkles,
-                          size: 12,
+                          size: 11,
                           color: _confidence > 0.7
                               ? AppColors.success
                               : AppColors.warning,
                         ),
-                        const Gap(4),
+                        const Gap(3),
                         Text(
-                          'Auto',
+                          _getTypeLabel(_selectedType),
                           style: AppTypography.labelSmall.copyWith(
                             color: _confidence > 0.7
                                 ? AppColors.success
                                 : AppColors.warning,
+                            fontSize: 10,
                           ),
                         ),
                       ],
@@ -308,223 +377,113 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
                 ],
               ],
             ),
-            const Gap(AppSpacing.sm),
-            Row(
-              children: EntryType.values.map((type) {
-                final isSelected = _selectedType == type;
-                return Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() {
-                      _selectedType = type;
-                      _isAutoDetected = false;
-                    }),
-                    child: Container(
-                      margin: EdgeInsets.only(
-                        right: type != EntryType.values.last
-                            ? AppSpacing.xs
-                            : 0,
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        vertical: AppSpacing.sm,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? _getTypeColor(type).withValues(alpha: 0.2)
-                            : context.cardColor,
-                        borderRadius: BorderRadius.circular(
-                          AppSpacing.radiusSm,
-                        ),
-                        border: Border.all(
-                          color: isSelected
-                              ? _getTypeColor(type)
-                              : context.borderColor.withValues(alpha: 0.5),
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          Icon(
-                            _getTypeIcon(type),
-                            size: 18,
-                            color: isSelected
-                                ? _getTypeColor(type)
-                                : context.textMuted,
-                          ),
-                          const Gap(4),
-                          Text(
-                            _getTypeLabel(type),
-                            style: AppTypography.labelSmall.copyWith(
-                              color: isSelected
-                                  ? _getTypeColor(type)
-                                  : context.textMuted,
-                              fontWeight: isSelected
-                                  ? FontWeight.w600
-                                  : FontWeight.normal,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ).animate().fadeIn(delay: 150.ms),
-            const Gap(AppSpacing.lg),
+            const Gap(AppSpacing.xs),
+            TextField(
+              controller: _descriptionController,
+              style: AppTypography.bodyMedium.copyWith(
+                color: context.textPrimary,
+              ),
+              decoration: InputDecoration(
+                hintText: 'e.g. rice, fish, soap...',
+                hintStyle: AppTypography.bodyMedium.copyWith(
+                  color: context.textMuted,
+                ),
+              ),
+            ).animate().fadeIn(delay: 100.ms, duration: 150.ms),
+            const Gap(AppSpacing.md + 4),
 
-            // Bazar-specific: Simple/Itemized Toggle (only for bazar entries)
+            // ══════════════════════════════════════════════════════════
+            // 3. ENTRY TYPE — compact segmented control
+            // ══════════════════════════════════════════════════════════
+            Text(
+              'Entry type',
+              style: AppTypography.labelMedium.copyWith(
+                color: context.textSecondary,
+              ),
+            ),
+            const Gap(AppSpacing.xs),
+            _buildCompactTypeSelector()
+                .animate()
+                .fadeIn(delay: 150.ms, duration: 150.ms),
+            const Gap(AppSpacing.md + 4),
+
+            // ══════════════════════════════════════════════════════════
+            // 4. SIMPLE / ITEMIZED TOGGLE (bazar only, compact)
+            // ══════════════════════════════════════════════════════════
             if (_isBazarEntry) ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildTypeButton(
-                      icon: LucideIcons.banknote,
-                      label: 'Simple',
-                      isSelected: !_isItemized,
-                      onTap: () => setState(() => _isItemized = false),
-                    ),
-                  ),
-                  const Gap(AppSpacing.sm),
-                  Expanded(
-                    child: _buildTypeButton(
-                      icon: LucideIcons.list,
-                      label: 'Itemized',
-                      isSelected: _isItemized,
-                      onTap: () => setState(() => _isItemized = true),
-                    ),
-                  ),
-                ],
-              ).animate().fadeIn(delay: 200.ms),
-              const Gap(AppSpacing.lg),
-
-              if (!_isItemized) ...[
-                // Simple Mode - Amount
-                Text(
-                  'Amount (৳)',
-                  style: AppTypography.labelMedium.copyWith(
-                    color: context.textSecondary,
-                  ),
-                ),
-                const Gap(AppSpacing.sm),
-                TextField(
-                  controller: _amountController,
-                  keyboardType: TextInputType.number,
-                  style: AppTypography.titleLarge.copyWith(
-                    color: context.textPrimary,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: '0',
-                    prefixText: '৳ ',
-                    prefixStyle: AppTypography.titleLarge.copyWith(
-                      color: AppColors.bazarColor,
-                    ),
-                  ),
-                ).animate().fadeIn(delay: 300.ms),
-              ] else ...[
-                // Itemized Mode
-                _buildItemizedSection(),
-              ],
-              const Gap(AppSpacing.lg),
-
-              // Description
-              Text(
-                'Description (optional)',
-                style: AppTypography.labelMedium.copyWith(
-                  color: context.textSecondary,
-                ),
-              ),
-              const Gap(AppSpacing.sm),
-              TextField(
-                controller: _descriptionController,
-                style: AppTypography.bodyMedium.copyWith(
-                  color: context.textPrimary,
-                ),
-                decoration: const InputDecoration(
-                  hintText: 'What was this for?',
-                ),
-              ).animate().fadeIn(delay: 400.ms),
-              const Gap(AppSpacing.lg),
-
-              // 📸 Photos Section (REQUIRED)
-              _buildPhotoSection(
-                title: 'Bazar Photos',
-                subtitle: 'At least one photo required',
-                icon: LucideIcons.camera,
-                photos: _photoUrls,
-                isRequired: true,
-                onAdd: () => _pickImage(isReceipt: false),
-                onRemove: (index) => setState(() => _photoUrls.removeAt(index)),
-              ),
-              const Gap(AppSpacing.lg),
-
-              // 🧾 Receipts Section (Optional)
-              _buildPhotoSection(
-                title: 'Receipts',
-                subtitle: 'Optional - upload if available',
-                icon: LucideIcons.receipt,
-                photos: _receiptUrls,
-                isRequired: false,
-                onAdd: () => _pickImage(isReceipt: true),
-                onRemove: (index) =>
-                    setState(() => _receiptUrls.removeAt(index)),
-              ),
-            ] else ...[
-              // Non-bazar: Simple amount entry
-              Text(
-                'Amount (৳)',
-                style: AppTypography.labelMedium.copyWith(
-                  color: context.textSecondary,
-                ),
-              ),
-              const Gap(AppSpacing.sm),
-              TextField(
-                controller: _amountController,
-                keyboardType: TextInputType.number,
-                style: AppTypography.titleLarge.copyWith(
-                  color: context.textPrimary,
-                ),
-                decoration: InputDecoration(
-                  hintText: '0',
-                  prefixText: '৳ ',
-                  prefixStyle: AppTypography.titleLarge.copyWith(
-                    color: _getTypeColor(_selectedType),
-                  ),
-                ),
-              ).animate().fadeIn(delay: 200.ms),
-              const Gap(AppSpacing.lg),
-
-              // Description for NLP
-              Text(
-                'Description',
-                style: AppTypography.labelMedium.copyWith(
-                  color: context.textSecondary,
-                ),
-              ),
-              const Gap(AppSpacing.sm),
-              TextField(
-                controller: _descriptionController,
-                style: AppTypography.bodyMedium.copyWith(
-                  color: context.textPrimary,
-                ),
-                decoration: const InputDecoration(
-                  hintText: 'What is this for?',
-                ),
-              ).animate().fadeIn(delay: 250.ms),
+              _buildCompactModeToggle()
+                  .animate()
+                  .fadeIn(delay: 200.ms, duration: 150.ms),
+              const Gap(AppSpacing.md),
             ],
-            const Gap(AppSpacing.xl),
 
-            // Submit Button
+            // ══════════════════════════════════════════════════════════
+            // 5. PHOTO ROW (compact, recommended not required)
+            // ══════════════════════════════════════════════════════════
+            if (_isBazarEntry) ...[
+              _buildCompactPhotoRow()
+                  .animate()
+                  .fadeIn(delay: 250.ms, duration: 150.ms),
+              const Gap(AppSpacing.sm),
+
+              // Receipts row (if any exist, or show add button)
+              if (_receiptUrls.isNotEmpty)
+                _buildCompactReceiptRow()
+                    .animate()
+                    .fadeIn(delay: 280.ms, duration: 150.ms),
+              const Gap(AppSpacing.md),
+            ],
+
+            // ══════════════════════════════════════════════════════════
+            // 6. ADMIN PAYER SELECTOR — avatar picker
+            // ══════════════════════════════════════════════════════════
+            if (isAdmin) ...[
+              Text(
+                'Who paid',
+                style: AppTypography.labelMedium.copyWith(
+                  color: context.textSecondary,
+                ),
+              ),
+              const Gap(AppSpacing.sm),
+              MemberAvatarPicker(
+                members: members,
+                selectedMemberId: _selectedPayerId,
+                accentColor: AppColors.bazarColor,
+                onMemberSelected: (id) {
+                  HapticService.selectionTick();
+                  setState(() => _selectedPayerId = id);
+                },
+              ).animate().fadeIn(delay: 300.ms, duration: 150.ms),
+              const Gap(AppSpacing.md),
+            ],
+
+            // ══════════════════════════════════════════════════════════
+            // 7. SUBMIT BUTTON
+            // ══════════════════════════════════════════════════════════
+            const Gap(AppSpacing.sm),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: _canSubmit ? _submit : null,
-                icon: const Icon(LucideIcons.check, size: 20),
-                label: Text(_getSubmitLabel()),
+                icon: Icon(
+                  _isEditMode ? LucideIcons.save : LucideIcons.check,
+                  size: 20,
+                ),
+                label: Text(
+                  _isEditMode
+                      ? 'Update ${_getTypeLabel(_selectedType)}'
+                      : 'Add ${_getTypeLabel(_selectedType)}',
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _getTypeColor(_selectedType),
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
                   disabledBackgroundColor: context.cardColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                  ),
                 ),
               ),
-            ).animate().fadeIn(delay: 500.ms),
+            ).animate().fadeIn(delay: 350.ms, duration: 200.ms),
             const Gap(AppSpacing.md),
           ],
         ),
@@ -532,12 +491,579 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
     );
   }
 
-  String _getSubmitLabel() {
-    if (_isBazarEntry && !_hasRequiredPhoto) return 'Photo Required';
-    return _isEditMode
-        ? 'Update ${_getTypeLabel(_selectedType)}'
-        : 'Add ${_getTypeLabel(_selectedType)}';
+  // ═══════════════════════════════════════════════════════════════════════════
+  // COMPACT ENTRY TYPE SELECTOR — segmented control
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  Widget _buildCompactTypeSelector() {
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: context.cardColor,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+        border: Border.all(
+          color: context.borderColor.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Row(
+        children: EntryType.values.map((type) {
+          final isSelected = _selectedType == type;
+          final color = _getTypeColor(type);
+          return Expanded(
+            child: GestureDetector(
+              onTap: () {
+                HapticService.selectionTick();
+                setState(() {
+                  _selectedType = type;
+                  _isAutoDetected = false;
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected ? color.withValues(alpha: 0.18) : null,
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusXs),
+                  border: isSelected
+                      ? Border.all(color: color.withValues(alpha: 0.4))
+                      : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      _getTypeIcon(type),
+                      size: 14,
+                      color: isSelected ? color : context.textMuted,
+                    ),
+                    const Gap(5),
+                    Text(
+                      _getTypeLabel(type),
+                      style: AppTypography.labelMedium.copyWith(
+                        color: isSelected ? color : context.textMuted,
+                        fontWeight:
+                            isSelected ? FontWeight.w700 : FontWeight.w400,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
   }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // COMPACT SIMPLE / ITEMIZED TOGGLE
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  Widget _buildCompactModeToggle() {
+    return Row(
+      children: [
+        Text(
+          'Mode',
+          style: AppTypography.labelMedium.copyWith(
+            color: context.textSecondary,
+          ),
+        ),
+        const Spacer(),
+        Container(
+          padding: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            color: context.cardColor,
+            borderRadius: BorderRadius.circular(AppSpacing.radiusXs),
+            border: Border.all(
+              color: context.borderColor.withValues(alpha: 0.3),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildMiniToggle(
+                icon: LucideIcons.banknote,
+                label: 'Simple',
+                isSelected: !_isItemized,
+                onTap: () => setState(() => _isItemized = false),
+              ),
+              _buildMiniToggle(
+                icon: LucideIcons.list,
+                label: 'Itemized',
+                isSelected: _isItemized,
+                onTap: () => setState(() => _isItemized = true),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMiniToggle({
+    required IconData icon,
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        HapticService.selectionTick();
+        onTap();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.bazarColor.withValues(alpha: 0.18)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusXs - 2),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 13,
+              color: isSelected ? AppColors.bazarColor : context.textMuted,
+            ),
+            const Gap(4),
+            Text(
+              label,
+              style: AppTypography.labelSmall.copyWith(
+                color: isSelected ? AppColors.bazarColor : context.textMuted,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // COMPACT PHOTO ROW — single row, not blocking
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  Widget _buildCompactPhotoRow() {
+    final hasPhotos = _photoUrls.isNotEmpty;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm + 2,
+        vertical: AppSpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: context.cardColor,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+        border: Border.all(
+          color: context.borderColor.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Camera button
+          GestureDetector(
+            onTap: () => _pickImage(isReceipt: false),
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.bazarColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(AppSpacing.radiusXs),
+                border: Border.all(
+                  color: AppColors.bazarColor.withValues(alpha: 0.25),
+                ),
+              ),
+              child: const Icon(
+                LucideIcons.camera,
+                color: AppColors.bazarColor,
+                size: 20,
+              ),
+            ),
+          ),
+          const Gap(AppSpacing.sm),
+
+          // Photo previews (scrollable)
+          if (hasPhotos)
+            Expanded(
+              child: SizedBox(
+                height: 44,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _photoUrls.length,
+                  separatorBuilder: (_, i) => const Gap(6),
+                  itemBuilder: (context, index) {
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(
+                            AppSpacing.radiusXs,
+                          ),
+                          child: Image.file(
+                            File(_photoUrls[index]),
+                            width: 44,
+                            height: 44,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, e, s) => Container(
+                              width: 44,
+                              height: 44,
+                              color: context.cardColor,
+                              child: Icon(
+                                LucideIcons.imageOff,
+                                color: context.textMuted,
+                                size: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: -4,
+                          right: -4,
+                          child: GestureDetector(
+                            onTap: () {
+                              HapticService.lightTap();
+                              setState(() => _photoUrls.removeAt(index));
+                            },
+                            child: Container(
+                              width: 18,
+                              height: 18,
+                              decoration: const BoxDecoration(
+                                color: AppColors.error,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                LucideIcons.x,
+                                size: 10,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            )
+          else
+            Expanded(
+              child: Text(
+                'Add photos (recommended)',
+                style: AppTypography.bodySmall.copyWith(
+                  color: context.textMuted,
+                ),
+              ),
+            ),
+
+          // Receipt add button
+          const Gap(AppSpacing.sm),
+          GestureDetector(
+            onTap: () => _pickImage(isReceipt: true),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.04),
+                borderRadius: BorderRadius.circular(AppSpacing.radiusXs),
+                border: Border.all(
+                  color: context.borderColor.withValues(alpha: 0.2),
+                ),
+              ),
+              child: Icon(
+                LucideIcons.receipt,
+                color: context.textMuted,
+                size: 16,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // COMPACT RECEIPT ROW — only shown if receipts exist
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  Widget _buildCompactReceiptRow() {
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      child: SizedBox(
+        height: 40,
+        child: Row(
+          children: [
+            Icon(
+              LucideIcons.receipt,
+              size: 14,
+              color: context.textMuted,
+            ),
+            const Gap(6),
+            Text(
+              'Receipts',
+              style: AppTypography.labelSmall.copyWith(
+                color: context.textMuted,
+              ),
+            ),
+            const Gap(AppSpacing.sm),
+            Expanded(
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: _receiptUrls.length,
+                separatorBuilder: (_, i) => const Gap(6),
+                itemBuilder: (context, index) {
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(
+                          AppSpacing.radiusXs,
+                        ),
+                        child: Image.file(
+                          File(_receiptUrls[index]),
+                          width: 40,
+                          height: 40,
+                          fit: BoxFit.cover,
+                          errorBuilder: (c, e, s) => Container(
+                            width: 40,
+                            height: 40,
+                            color: context.cardColor,
+                            child: Icon(
+                              LucideIcons.imageOff,
+                              color: context.textMuted,
+                              size: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        top: -4,
+                        right: -4,
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticService.lightTap();
+                            setState(() => _receiptUrls.removeAt(index));
+                          },
+                          child: Container(
+                            width: 16,
+                            height: 16,
+                            decoration: const BoxDecoration(
+                              color: AppColors.error,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              LucideIcons.x,
+                              size: 9,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ITEMIZED SECTION
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  Widget _buildItemizedSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Items',
+          style: AppTypography.labelMedium.copyWith(
+            color: context.textSecondary,
+          ),
+        ),
+        const Gap(AppSpacing.sm),
+
+        // Existing items
+        ..._items.asMap().entries.map((entry) {
+          final item = entry.value;
+          return Container(
+            margin: const EdgeInsets.only(bottom: AppSpacing.xs),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm + 2,
+              vertical: AppSpacing.sm,
+            ),
+            decoration: BoxDecoration(
+              color: context.cardColor,
+              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    item.name,
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: context.textPrimary,
+                    ),
+                  ),
+                ),
+                Text(
+                  '৳${item.price.toStringAsFixed(0)}',
+                  style: AppTypography.labelMedium.copyWith(
+                    color: AppColors.bazarColor,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'JetBrains Mono',
+                  ),
+                ),
+                const Gap(4),
+                GestureDetector(
+                  onTap: () {
+                    HapticService.lightTap();
+                    setState(() => _items.removeAt(entry.key));
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Icon(
+                      LucideIcons.x,
+                      size: 14,
+                      color: AppColors.error.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+
+        // Add item row
+        Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: TextField(
+                controller: _itemNameController,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: context.textPrimary,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Item name',
+                  hintStyle: AppTypography.bodyMedium.copyWith(
+                    color: context.textMuted,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.sm,
+                  ),
+                ),
+              ),
+            ),
+            const Gap(AppSpacing.sm),
+            Expanded(
+              child: TextField(
+                controller: _itemPriceController,
+                keyboardType: TextInputType.number,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: context.textPrimary,
+                ),
+                decoration: InputDecoration(
+                  hintText: '৳',
+                  hintStyle: AppTypography.bodyMedium.copyWith(
+                    color: context.textMuted,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.sm,
+                  ),
+                ),
+              ),
+            ),
+            const Gap(AppSpacing.sm),
+            GestureDetector(
+              onTap: _addItem,
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: AppColors.bazarColor,
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusXs),
+                ),
+                child: const Icon(
+                  LucideIcons.plus,
+                  size: 18,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        // Total
+        if (_items.isNotEmpty) ...[
+          const Gap(AppSpacing.sm),
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.sm + 2),
+            decoration: BoxDecoration(
+              color: AppColors.bazarColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+              border: Border.all(
+                color: AppColors.bazarColor.withValues(alpha: 0.2),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Total',
+                  style: AppTypography.titleSmall.copyWith(
+                    color: context.textPrimary,
+                  ),
+                ),
+                Text(
+                  '৳${_items.fold(0.0, (sum, i) => sum + i.price).toStringAsFixed(0)}',
+                  style: AppTypography.titleMedium.copyWith(
+                    color: AppColors.bazarColor,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'JetBrains Mono',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Inline large amount warning for itemized
+          if (_isLargeAmount) ...[
+            const Gap(AppSpacing.xs),
+            Row(
+              children: [
+                Icon(
+                  LucideIcons.alertTriangle,
+                  size: 13,
+                  color: AppColors.warning,
+                ),
+                const Gap(4),
+                Text(
+                  'Large amount -- double-check before submitting',
+                  style: AppTypography.labelSmall.copyWith(
+                    color: AppColors.warning,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ],
+    ).animate().fadeIn(duration: 150.ms);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HELPERS
+  // ═══════════════════════════════════════════════════════════════════════════
 
   Color _getTypeColor(EntryType type) {
     switch (type) {
@@ -572,327 +1098,46 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
     }
   }
 
-  bool get _canSubmit {
-    if (!_hasRequiredPhoto) return false;
-    if (_isItemized) {
-      return _items.isNotEmpty;
-    } else {
-      final amount = double.tryParse(_amountController.text) ?? 0;
-      return amount > 0;
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final dateOnly = DateTime(date.year, date.month, date.day);
+
+    if (dateOnly == today) return 'Today';
+    if (dateOnly == today.subtract(const Duration(days: 1))) return 'Yesterday';
+
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return '${date.day} ${months[date.month - 1]}';
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ACTIONS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  Future<void> _pickDate() async {
+    HapticService.lightTap();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime.now().subtract(const Duration(days: 90)),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+                  primary: AppColors.bazarColor,
+                ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() => _selectedDate = picked);
     }
-  }
-
-  Widget _buildItemizedSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Items',
-          style: AppTypography.labelMedium.copyWith(
-            color: context.textSecondary,
-          ),
-        ),
-        const Gap(AppSpacing.sm),
-        ..._items.asMap().entries.map((entry) {
-          final item = entry.value;
-          return Container(
-            margin: const EdgeInsets.only(bottom: AppSpacing.xs),
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            decoration: BoxDecoration(
-              color: context.cardColor,
-              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    item.name,
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: context.textPrimary,
-                    ),
-                  ),
-                ),
-                Text(
-                  '৳${item.price.toStringAsFixed(0)}',
-                  style: AppTypography.labelMedium.copyWith(
-                    color: AppColors.bazarColor,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(LucideIcons.x, size: 16),
-                  onPressed: () {
-                    HapticService.lightTap();
-                    setState(() => _items.removeAt(entry.key));
-                  },
-                  color: AppColors.error,
-                  iconSize: 16,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 32,
-                    minHeight: 32,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }),
-
-        // Add Item Row
-        Row(
-          children: [
-            Expanded(
-              flex: 2,
-              child: TextField(
-                controller: _itemNameController,
-                style: AppTypography.bodyMedium.copyWith(
-                  color: context.textPrimary,
-                ),
-                decoration: const InputDecoration(
-                  hintText: 'Item name',
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                    vertical: AppSpacing.sm,
-                  ),
-                ),
-              ),
-            ),
-            const Gap(AppSpacing.sm),
-            Expanded(
-              child: TextField(
-                controller: _itemPriceController,
-                keyboardType: TextInputType.number,
-                style: AppTypography.bodyMedium.copyWith(
-                  color: context.textPrimary,
-                ),
-                decoration: const InputDecoration(
-                  hintText: '৳',
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                    vertical: AppSpacing.sm,
-                  ),
-                ),
-              ),
-            ),
-            const Gap(AppSpacing.sm),
-            IconButton.filled(
-              onPressed: _addItem,
-              icon: const Icon(LucideIcons.plus, size: 18),
-              style: IconButton.styleFrom(
-                backgroundColor: AppColors.bazarColor,
-              ),
-            ),
-          ],
-        ),
-        const Gap(AppSpacing.sm),
-
-        // Total
-        if (_items.isNotEmpty)
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: AppColors.bazarColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Total',
-                  style: AppTypography.titleMedium.copyWith(
-                    color: context.textPrimary,
-                  ),
-                ),
-                Text(
-                  '৳${_items.fold(0.0, (sum, i) => sum + i.price).toStringAsFixed(0)}',
-                  style: AppTypography.titleLarge.copyWith(
-                    color: AppColors.bazarColor,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-      ],
-    ).animate().fadeIn(delay: 300.ms);
-  }
-
-  Widget _buildPhotoSection({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required List<String> photos,
-    required bool isRequired,
-    required VoidCallback onAdd,
-    required Function(int) onRemove,
-  }) {
-    final hasPhotos = photos.isNotEmpty;
-    final color = isRequired && !hasPhotos
-        ? AppColors.warning
-        : AppColors.bazarColor;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 18, color: color),
-            const Gap(AppSpacing.sm),
-            Text(
-              title,
-              style: AppTypography.labelMedium.copyWith(
-                color: context.textSecondary,
-              ),
-            ),
-            if (isRequired) ...[
-              const Gap(AppSpacing.xs),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: hasPhotos
-                      ? AppColors.success.withValues(alpha: 0.2)
-                      : AppColors.warning.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  hasPhotos ? '✓' : 'Required',
-                  style: AppTypography.labelSmall.copyWith(
-                    color: hasPhotos ? AppColors.success : AppColors.warning,
-                    fontSize: 10,
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-        const Gap(AppSpacing.xs),
-        Text(
-          subtitle,
-          style: AppTypography.bodySmall.copyWith(
-            color: context.textMuted,
-          ),
-        ),
-        const Gap(AppSpacing.sm),
-        SizedBox(
-          height: 80,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children: [
-              // Add Photo Button
-              GestureDetector(
-                onTap: () {
-                  HapticService.lightTap();
-                  onAdd();
-                },
-                child: Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: context.cardColor,
-                    borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                    border: Border.all(color: color.withValues(alpha: 0.5)),
-                  ),
-                  child: Icon(LucideIcons.plus, color: color, size: 24),
-                ),
-              ),
-              const Gap(AppSpacing.sm),
-              // Photo Previews
-              ...photos.asMap().entries.map(
-                (entry) => Padding(
-                  padding: const EdgeInsets.only(right: AppSpacing.sm),
-                  child: Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(
-                          AppSpacing.radiusSm,
-                        ),
-                        child: Image.file(
-                          File(entry.value),
-                          width: 80,
-                          height: 80,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              Container(
-                                width: 80,
-                                height: 80,
-                                color: context.cardColor,
-                                child: Icon(
-                                  LucideIcons.imageOff,
-                                  color: context.textMuted,
-                                ),
-                              ),
-                        ),
-                      ),
-                      Positioned(
-                        top: 4,
-                        right: 4,
-                        child: GestureDetector(
-                          onTap: () {
-                            HapticService.lightTap();
-                            onRemove(entry.key);
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: AppColors.error,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              LucideIcons.x,
-                              size: 12,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTypeButton({
-    required IconData icon,
-    required String label,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: isSelected ? AppColors.bazarColor : context.cardColor,
-      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-      child: InkWell(
-        onTap: () {
-          HapticService.lightTap();
-          onTap();
-        },
-        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                color: isSelected ? Colors.white : context.textSecondary,
-                size: 18,
-              ),
-              const Gap(AppSpacing.sm),
-              Text(
-                label,
-                style: AppTypography.labelMedium.copyWith(
-                  color: isSelected ? Colors.white : context.textPrimary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   Future<void> _pickImage({required bool isReceipt}) async {
@@ -900,6 +1145,11 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       backgroundColor: context.surfaceColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppSpacing.radiusLg),
+        ),
+      ),
       builder: (context) => Container(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
@@ -911,7 +1161,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
                 color: AppColors.bazarColor,
               ),
               title: Text(
-                'Take Photo',
+                'Take photo',
                 style: TextStyle(color: context.textPrimary),
               ),
               onTap: () => Navigator.pop(context, ImageSource.camera),
@@ -922,7 +1172,7 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
                 color: AppColors.bazarColor,
               ),
               title: Text(
-                'Choose from Gallery',
+                'Choose from gallery',
                 style: TextStyle(color: context.textPrimary),
               ),
               onTap: () => Navigator.pop(context, ImageSource.gallery),
@@ -980,130 +1230,9 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
       if (amount <= 0) return;
     }
 
-    if (!_hasRequiredPhoto) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please add at least one photo'),
-          backgroundColor: AppColors.warning,
-        ),
-      );
-      return;
-    }
-
-    // Low-confidence NLP: Ask "Did you mean X?" for uncertain categorization
-    if (_isAutoDetected && _confidence >= 0.5 && _confidence < 0.7) {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          backgroundColor: context.surfaceColor,
-          title: Row(
-            children: [
-              const Icon(LucideIcons.helpCircle, color: AppColors.warning),
-              const Gap(8),
-              const Text('Confirm Category'),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Did you mean "${_getTypeLabel(_selectedType)}"?',
-                style: AppTypography.titleMedium.copyWith(
-                  color: context.textPrimary,
-                ),
-              ),
-              const Gap(8),
-              Text(
-                'The auto-detection is ${(_confidence * 100).toStringAsFixed(0)}% confident. Please confirm this is the correct category.',
-                style: AppTypography.bodySmall.copyWith(
-                  color: context.textSecondary,
-                ),
-              ),
-              const Gap(16),
-              Wrap(
-                spacing: 8,
-                children: EntryType.values.map((type) {
-                  final isSelected = _selectedType == type;
-                  return ChoiceChip(
-                    label: Text(_getTypeLabel(type)),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      if (selected) {
-                        setState(() {
-                          _selectedType = type;
-                          _isAutoDetected = false;
-                        });
-                        Navigator.pop(ctx, true);
-                      }
-                    },
-                    selectedColor: _getTypeColor(type).withValues(alpha: 0.3),
-                    labelStyle: TextStyle(
-                      color: isSelected
-                          ? _getTypeColor(type)
-                          : context.textSecondary,
-                    ),
-                  );
-                }).toList(),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _getTypeColor(_selectedType),
-              ),
-              child: Text('Use ${_getTypeLabel(_selectedType)}'),
-            ),
-          ],
-        ),
-      );
-      if (confirmed != true) return;
-    }
-
-    // Confirm unusually large amounts (>10,000 BDT)
-    if (amount > 10000) {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          backgroundColor: context.surfaceColor,
-          title: Row(
-            children: [
-              const Icon(LucideIcons.alertTriangle, color: AppColors.warning),
-              const Gap(8),
-              const Text('Large Amount'),
-            ],
-          ),
-          content: Text(
-            'You are about to add ৳${amount.toStringAsFixed(0)}.\n\nThis is an unusually large amount. Are you sure this is correct?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Review'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.warning,
-              ),
-              child: const Text('Confirm'),
-            ),
-          ],
-        ),
-      );
-      if (confirmed != true) return;
-    }
-
     HapticService.success();
 
     if (_isEditMode) {
-      // Update existing entry
       final updatedEntry = widget.existingEntry!.copyWith(
         memberId: _selectedPayerId ?? widget.existingEntry!.memberId,
         date: _selectedDate,
@@ -1126,7 +1255,6 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
         ),
       );
     } else {
-      // Add new entry
       final entry = BazarEntry(
         id: 'bazar_${DateTime.now().millisecondsSinceEpoch}',
         memberId: _selectedPayerId ?? 'current_user',

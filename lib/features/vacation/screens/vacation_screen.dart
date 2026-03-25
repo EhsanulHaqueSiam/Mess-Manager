@@ -11,7 +11,7 @@ import 'package:mess_manager/core/models/meal.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
 import 'package:mess_manager/core/widgets/app_components.dart';
-import 'package:mess_manager/core/widgets/animated_widgets.dart';
+import 'package:mess_manager/core/widgets/quick_input_widgets.dart';
 import 'package:mess_manager/features/vacation/providers/vacation_provider.dart';
 import 'package:mess_manager/features/vacation/providers/fixed_expenses_provider.dart';
 
@@ -220,16 +220,7 @@ class VacationScreen extends ConsumerWidget {
                                   width: double.infinity,
                                   padding: const EdgeInsets.symmetric(
                                       vertical: 40, horizontal: 24),
-                                  decoration: BoxDecoration(
-                                    color:
-                                        Colors.white.withValues(alpha: 0.03),
-                                    border: Border.all(
-                                      color:
-                                          Colors.white.withValues(alpha: 0.05),
-                                    ),
-                                    borderRadius: BorderRadius.circular(
-                                        AppSpacing.radiusMd),
-                                  ),
+                                  decoration: AppSpacing.accentCard(accent: AppColors.moneyPositive),
                                   child: Column(
                                     children: [
                                       Icon(
@@ -482,15 +473,7 @@ class VacationScreen extends ConsumerWidget {
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: Container(
             padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
-              border: Border.all(
-                color: isActive
-                    ? AppColors.success.withValues(alpha: 0.3)
-                    : Colors.white.withValues(alpha: 0.05),
-              ),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            ),
+            decoration: AppSpacing.accentCard(accent: isActive ? AppColors.moneyPositive : AppColors.moneyPositive),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -617,13 +600,7 @@ class VacationScreen extends ConsumerWidget {
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.03),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.05),
-                  ),
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                ),
+                decoration: AppSpacing.accentCard(accent: AppColors.moneyPositive),
                 child: Center(
                   child: Text(
                     'No fixed expenses this month',
@@ -656,13 +633,7 @@ class VacationScreen extends ConsumerWidget {
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: Container(
             padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
-              border: Border.all(
-                color: statusColor.withValues(alpha: 0.3),
-              ),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            ),
+            decoration: AppSpacing.accentCard(accent: statusColor),
             child: Row(
               children: [
                 CircleAvatar(
@@ -726,15 +697,62 @@ class AddVacationSheet extends ConsumerStatefulWidget {
 class _AddVacationSheetState extends ConsumerState<AddVacationSheet> {
   DateTime _startDate = DateTime.now().add(const Duration(days: 1));
   DateTime _endDate = DateTime.now().add(const Duration(days: 3));
-  MealType _lastMealBefore = MealType.lunch;
-  MealType _firstMealAfter = MealType.dinner;
+  MealType _lastMealBefore = MealType.dinner;
+  MealType _firstMealAfter = MealType.breakfast;
   final _reasonController = TextEditingController();
+  int? _selectedPresetDays;
 
   @override
   void dispose() {
     _reasonController.dispose();
     super.dispose();
   }
+
+  int get _vacationDays =>
+      _endDate.difference(_startDate).inDays.clamp(1, 9999);
+
+  String get _durationLabel {
+    final days = _vacationDays;
+    if (days == 1) return '1-day';
+    if (days < 7) return '$days-day';
+    if (days == 7) return '1-week';
+    if (days == 14) return '2-week';
+    if (days >= 28 && days <= 31) return '1-month';
+    return '$days-day';
+  }
+
+  void _onPresetTapped(int days) {
+    final tomorrow = DateTime.now().add(const Duration(days: 1));
+    setState(() {
+      _selectedPresetDays = days;
+      _startDate = tomorrow;
+      _endDate = tomorrow.add(Duration(days: days - 1));
+    });
+  }
+
+  void _cycleMealType({required bool isLastMeal}) {
+    HapticService.selectionTick();
+    const order = [MealType.breakfast, MealType.lunch, MealType.dinner];
+    if (isLastMeal) {
+      final idx = order.indexOf(_lastMealBefore);
+      setState(() => _lastMealBefore = order[(idx + 1) % order.length]);
+    } else {
+      final idx = order.indexOf(_firstMealAfter);
+      setState(() => _firstMealAfter = order[(idx + 1) % order.length]);
+    }
+  }
+
+  String _mealLabel(MealType type) => switch (type) {
+        MealType.breakfast => '\u09B8\u0995\u09BE\u09B2',
+        MealType.lunch => '\u09A6\u09C1\u09AA\u09C1\u09B0',
+        MealType.dinner => '\u09B0\u09BE\u09A4',
+      };
+
+  IconData _mealIcon(MealType type) => switch (type) {
+        MealType.breakfast => LucideIcons.sunrise,
+        MealType.lunch => LucideIcons.sun,
+        MealType.dinner => LucideIcons.moon,
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -753,6 +771,7 @@ class _AddVacationSheetState extends ConsumerState<AddVacationSheet> {
       ),
       child: SingleChildScrollView(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Glass-styled handle bar
             Center(
@@ -794,86 +813,102 @@ class _AddVacationSheetState extends ConsumerState<AddVacationSheet> {
                         fontWeight: FontWeight.bold)),
               ],
             ),
-            const Gap(16),
+            const Gap(20),
 
-            // Start Date
-            SizedBox(
-              width: double.infinity,
-              child: Text('Starting from',
-                  style: AppTypography.bodySmall.copyWith(
-                    color: Colors.white.withValues(alpha: 0.5),
-                  )),
+            // Quick Duration Presets
+            Text('How long?',
+                style: AppTypography.bodySmall.copyWith(
+                  color: Colors.white.withValues(alpha: 0.5),
+                )),
+            const Gap(8),
+            QuickDurationPicker(
+              selectedDays: _selectedPresetDays,
+              onDurationSelected: _onPresetTapped,
+              accentColor: AppColors.success,
             ),
+            const Gap(20),
+
+            // Custom date pickers
+            Text('Or pick custom dates',
+                style: AppTypography.bodySmall.copyWith(
+                  color: Colors.white.withValues(alpha: 0.3),
+                )),
             const Gap(8),
             Row(
               children: [
                 Expanded(
                   child: _buildDatePicker(
-                    'Date',
+                    'Start',
                     _startDate,
-                    (d) => setState(() => _startDate = d),
+                    (d) => setState(() {
+                      _startDate = d;
+                      if (_endDate.isBefore(d)) _endDate = d;
+                      _selectedPresetDays = null;
+                    }),
                   ),
                 ),
-                const Gap(8),
-                Expanded(
-                  child: _buildMealSelector(
-                    'Last meal',
-                    _lastMealBefore,
-                    (m) => setState(() => _lastMealBefore = m),
-                  ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Icon(LucideIcons.arrowRight,
+                      size: 16,
+                      color: Colors.white.withValues(alpha: 0.3)),
                 ),
-              ],
-            ),
-            const Gap(12),
-
-            // End Date
-            SizedBox(
-              width: double.infinity,
-              child: Text('Returning on',
-                  style: AppTypography.bodySmall.copyWith(
-                    color: Colors.white.withValues(alpha: 0.5),
-                  )),
-            ),
-            const Gap(8),
-            Row(
-              children: [
                 Expanded(
                   child: _buildDatePicker(
-                    'Date',
+                    'End',
                     _endDate,
-                    (d) => setState(() => _endDate = d),
-                  ),
-                ),
-                const Gap(8),
-                Expanded(
-                  child: _buildMealSelector(
-                    'First meal',
-                    _firstMealAfter,
-                    (m) => setState(() => _firstMealAfter = m),
+                    (d) => setState(() {
+                      _endDate = d;
+                      _selectedPresetDays = null;
+                    }),
                   ),
                 ),
               ],
             ),
             const Gap(16),
 
-            // Reason
-            SizedBox(
-              width: double.infinity,
-              child: Text('Reason (optional)',
-                  style: AppTypography.bodySmall.copyWith(
-                    color: Colors.white.withValues(alpha: 0.5),
-                  )),
-            ),
+            // Meal type chips (tap-to-cycle)
+            Text('Meal boundaries',
+                style: AppTypography.bodySmall.copyWith(
+                  color: Colors.white.withValues(alpha: 0.5),
+                )),
             const Gap(8),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildMealCycleChip(
+                    label: 'Last meal before',
+                    mealType: _lastMealBefore,
+                    onTap: () => _cycleMealType(isLastMeal: true),
+                  ),
+                ),
+                const Gap(8),
+                Expanded(
+                  child: _buildMealCycleChip(
+                    label: 'First meal after',
+                    mealType: _firstMealAfter,
+                    onTap: () => _cycleMealType(isLastMeal: false),
+                  ),
+                ),
+              ],
+            ),
+            const Gap(16),
+
+            // Compact reason field
             TextField(
               controller: _reasonController,
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.9)),
+              maxLines: 1,
+              style: AppTypography.bodyMedium.copyWith(
+                color: Colors.white.withValues(alpha: 0.9),
+              ),
               decoration: InputDecoration(
-                hintText:
-                    '\u09AC\u09BE\u09DC\u09BF \u09AF\u09BE\u099A\u09CD\u099B\u09BF...',
+                hintText: 'Reason (optional)',
                 hintStyle: TextStyle(
                   color: Colors.white.withValues(alpha: 0.3),
                 ),
+                isDense: true,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 filled: true,
                 fillColor: Colors.white.withValues(alpha: 0.03),
                 border: OutlineInputBorder(
@@ -898,9 +933,9 @@ class _AddVacationSheetState extends ConsumerState<AddVacationSheet> {
             ),
             const Gap(24),
 
-            // Submit
+            // Submit with duration summary
             AppPrimaryButton(
-              text: 'Save Vacation',
+              text: 'Save $_durationLabel Vacation',
               icon: LucideIcons.check,
               onPressed: _submit,
             ),
@@ -918,6 +953,7 @@ class _AddVacationSheetState extends ConsumerState<AddVacationSheet> {
   ) {
     return GestureDetector(
       onTap: () async {
+        HapticService.selectionTick();
         final picked = await showDatePicker(
           context: context,
           initialDate: date,
@@ -932,22 +968,18 @@ class _AddVacationSheetState extends ConsumerState<AddVacationSheet> {
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: Container(
             padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.05),
-              ),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            ),
+            decoration: AppSpacing.accentCard(accent: AppColors.moneyPositive),
             child: Row(
               children: [
                 const Icon(LucideIcons.calendar,
-                    size: 18, color: AppColors.success),
-                const Gap(8),
-                Text('${date.day}/${date.month}/${date.year}',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
-                    )),
+                    size: 16, color: AppColors.success),
+                const Gap(6),
+                Expanded(
+                  child: Text('${date.day}/${date.month}/${date.year}',
+                      style: AppTypography.labelMedium.copyWith(
+                        color: Colors.white.withValues(alpha: 0.9),
+                      )),
+                ),
               ],
             ),
           ),
@@ -956,56 +988,59 @@ class _AddVacationSheetState extends ConsumerState<AddVacationSheet> {
     );
   }
 
-  Widget _buildMealSelector(
-    String label,
-    MealType selected,
-    Function(MealType) onChanged,
-  ) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md, vertical: AppSpacing.xs),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.03),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.05),
+  Widget _buildMealCycleChip({
+    required String label,
+    required MealType mealType,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.success.withValues(alpha: 0.08),
+              border: Border.all(
+                color: AppColors.success.withValues(alpha: 0.2),
+              ),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
             ),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<MealType>(
-              value: selected,
-              isExpanded: true,
-              dropdownColor: const Color(0xFF0D1520),
-              items: MealType.values
-                  .map(
-                    (m) => DropdownMenuItem(
-                      value: m,
-                      child: Text(
-                        _mealLabel(m),
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.9),
-                        ),
-                      ),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (v) => onChanged(v!),
+            child: Row(
+              children: [
+                Icon(_mealIcon(mealType),
+                    size: 16, color: AppColors.success),
+                const Gap(6),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(label,
+                          style: AppTypography.labelSmall.copyWith(
+                            color: Colors.white.withValues(alpha: 0.3),
+                          )),
+                      Text(_mealLabel(mealType),
+                          style: AppTypography.labelMedium.copyWith(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            fontWeight: FontWeight.w600,
+                          )),
+                    ],
+                  ),
+                ),
+                Icon(LucideIcons.refreshCw,
+                    size: 12,
+                    color: Colors.white.withValues(alpha: 0.3)),
+              ],
             ),
           ),
         ),
       ),
     );
   }
-
-  String _mealLabel(MealType type) => switch (type) {
-        MealType.breakfast => '\u09B8\u0995\u09BE\u09B2',
-        MealType.lunch => '\u09A6\u09C1\u09AA\u09C1\u09B0',
-        MealType.dinner => '\u09B0\u09BE\u09A4',
-      };
 
   void _submit() {
     HapticService.success();

@@ -37,6 +37,9 @@ class _MealsScreenState extends ConsumerState<MealsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) HapticService.tabChanged();
+    });
   }
 
   @override
@@ -115,7 +118,7 @@ class _MealsScreenState extends ConsumerState<MealsScreen>
           ),
         ],
       ),
-      floatingActionButton: _buildMealFAB(context),
+      // FAB now in MainShell (global speed dial)
     );
   }
 
@@ -235,17 +238,15 @@ class _MealsScreenState extends ConsumerState<MealsScreen>
   Widget _buildTabBar() {
     return Container(
       height: 44,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: Colors.white.withValues(alpha: 0.05),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+      decoration: AppSpacing.accentCard(
+        accent: AppColors.mealColor,
+        radius: 12,
       ),
       child: TabBar(
         controller: _tabController,
         indicator: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          color: AppColors.mealColor.withValues(alpha: 0.2),
-          border: Border.all(color: AppColors.mealColor.withValues(alpha: 0.3)),
+          gradient: const LinearGradient(colors: AppColors.gradientMeal),
         ),
         indicatorSize: TabBarIndicatorSize.tab,
         dividerHeight: 0,
@@ -276,58 +277,6 @@ class _MealsScreenState extends ConsumerState<MealsScreen>
         unselectedLabelColor: Colors.white.withValues(alpha: 0.4),
       ),
     ).animate().fadeIn(delay: 100.ms);
-  }
-
-  // ────────────────────────────────────────────────────────────────
-  // FAB
-  // ────────────────────────────────────────────────────────────────
-
-  Widget _buildMealFAB(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: LinearGradient(
-          colors: [
-            AppColors.mealColor,
-            AppColors.mealColor.withValues(alpha: 0.8),
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.mealColor.withValues(alpha: 0.4),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: FloatingActionButton.extended(
-        onPressed: () {
-          HapticService.buttonPress();
-          showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            backgroundColor: Colors.transparent,
-            builder: (context) => const AddMealSheet(),
-          );
-        },
-        icon: const Icon(LucideIcons.plus, size: 18, color: Colors.white),
-        label: Text(
-          'Add Meal',
-          style: AppTypography.labelMedium.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-    )
-        .animate(onPlay: (c) => c.repeat())
-        .shimmer(
-          duration: 2.seconds,
-          delay: 3.seconds,
-          color: Colors.white.withValues(alpha: 0.12),
-        );
   }
 
   void _showBulkMealSheet(BuildContext context) {
@@ -567,27 +516,23 @@ class _EntriesTabState extends State<_EntriesTab> {
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            color: color.withValues(alpha: 0.08),
-            border: Border.all(color: color.withValues(alpha: 0.15)),
-          ),
+          decoration: AppSpacing.accentCard(accent: color, radius: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 32,
-                height: 32,
+                width: 34,
+                height: 34,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  gradient: RadialGradient(
+                  borderRadius: BorderRadius.circular(10),
+                  gradient: LinearGradient(
                     colors: [
-                      color.withValues(alpha: 0.3),
-                      color.withValues(alpha: 0.1),
+                      color.withValues(alpha: 0.35),
+                      color.withValues(alpha: 0.15),
                     ],
                   ),
                 ),
-                child: Icon(icon, color: color, size: 16),
+                child: Icon(icon, color: color, size: 17),
               ),
               const Gap(10),
               Text(
@@ -826,8 +771,10 @@ class _EntriesTabState extends State<_EntriesTab> {
                   ) ??
                   false;
               if (confirm) {
+                HapticService.itemDeleted();
                 final deletedMeal = meal;
                 ref.read(mealsProvider.notifier).removeMeal(meal.id);
+                HapticService.undoAvailable();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('${member.name}\'s meal deleted'),

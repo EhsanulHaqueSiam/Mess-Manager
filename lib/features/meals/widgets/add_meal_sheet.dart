@@ -14,11 +14,10 @@ const int kBreakfastDeadlineHour = 8; // 8:00 AM
 const int kLunchDeadlineHour = 12; // 12:00 PM
 const int kDinnerDeadlineHour = 19; // 7:00 PM
 
-/// Add Meal Sheet - Flexible Meal System
+/// Streamlined meal entry sheet.
 ///
-/// Supports both 2-meal (Lunch+Dinner) and 3-meal (Breakfast+Lunch+Dinner) systems
-/// Quick mode: Total count with auto guest detection
-/// Detailed mode: Per-meal breakdown
+/// Large preset buttons as the primary UI. Supports 2-meal and 3-meal systems.
+/// Tap a preset, tap submit. Two taps to log meals.
 class AddMealSheet extends ConsumerStatefulWidget {
   /// Existing meal for edit mode (null for add mode)
   final Meal? existingMeal;
@@ -29,78 +28,54 @@ class AddMealSheet extends ConsumerStatefulWidget {
   ConsumerState<AddMealSheet> createState() => _AddMealSheetState();
 }
 
-class _AddMealSheetState extends ConsumerState<AddMealSheet> {
+class _AddMealSheetState extends ConsumerState<AddMealSheet>
+    with SingleTickerProviderStateMixin {
   late DateTime _selectedDate;
-  bool _isDetailedMode = false;
+  int _totalMeals = 2;
+  bool _is3MealSystem = false;
 
   bool get _isEditMode => widget.existingMeal != null;
+  int get _standardMeals => _is3MealSystem ? 3 : 2;
+
+  int get _guestMeals =>
+      _totalMeals > _standardMeals ? _totalMeals - _standardMeals : 0;
+
+  // Submit button pulse animation
+  late AnimationController _pulseCtrl;
+  late Animation<double> _pulseAnim;
 
   @override
   void initState() {
     super.initState();
     _selectedDate = widget.existingMeal?.date ?? DateTime.now();
     if (widget.existingMeal != null) {
-      _totalMeals = widget.existingMeal!.count;
-      // Set detailed mode values based on meal type
-      switch (widget.existingMeal!.type) {
-        case MealType.breakfast:
-          _breakfastCount = widget.existingMeal!.count;
-          break;
-        case MealType.lunch:
-          _lunchCount = widget.existingMeal!.count;
-          break;
-        case MealType.dinner:
-          _dinnerCount = widget.existingMeal!.count;
-          break;
-      }
-    }
-  }
-
-  // Quick mode - total count
-  int _totalMeals = 2;
-
-  // Detailed mode - per meal
-  int _lunchCount = 1;
-  int _dinnerCount = 1;
-  int _breakfastCount = 0; // For 3-meal system
-
-  // Settings
-  bool _is3MealSystem = false; // Toggle between 2 and 3 meal systems
-
-  int get _standardMeals => _is3MealSystem ? 3 : 2;
-
-  int get _totalFromDetailedMode {
-    return _breakfastCount + _lunchCount + _dinnerCount;
-  }
-
-  int get _guestMeals {
-    final total = _isDetailedMode ? _totalFromDetailedMode : _totalMeals;
-    return total > _standardMeals ? total - _standardMeals : 0;
-  }
-
-  /// Check if a meal type is past its editing deadline
-  bool _isTimeLocked(MealType type) {
-    final now = DateTime.now();
-    // Only enforce time-lock for today's date
-    if (_selectedDate.year != now.year ||
-        _selectedDate.month != now.month ||
-        _selectedDate.day != now.day) {
-      return false;
+      _totalMeals = widget.existingMeal!.count + widget.existingMeal!.guestCount;
     }
 
-    switch (type) {
-      case MealType.breakfast:
-        return now.hour >= kBreakfastDeadlineHour;
-      case MealType.lunch:
-        return now.hour >= kLunchDeadlineHour;
-      case MealType.dinner:
-        return now.hour >= kDinnerDeadlineHour;
-    }
+    _pulseCtrl = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    _pulseAnim = Tween(begin: 1.0, end: 1.04).animate(
+      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pulseCtrl.dispose();
+    super.dispose();
+  }
+
+  void _selectPreset(int count) {
+    HapticService.selectionTick();
+    setState(() => _totalMeals = count);
+    // Pulse the submit button to encourage tapping it
+    _pulseCtrl.forward().then((_) => _pulseCtrl.reverse());
   }
 
   String? get _timeLockWarning {
     final now = DateTime.now();
-    // Only show warning for today
     if (_selectedDate.year != now.year ||
         _selectedDate.month != now.month ||
         _selectedDate.day != now.day) {
@@ -108,11 +83,11 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
     }
 
     if (now.hour >= kDinnerDeadlineHour) {
-      return 'Past 7 PM deadline. All meals locked for today.';
+      return 'All meals locked for today (past 7 PM)';
     } else if (now.hour >= kLunchDeadlineHour) {
-      return 'Past 12 PM. Breakfast & Lunch locked. Only Dinner editable.';
+      return 'Breakfast & Lunch locked (past 12 PM)';
     } else if (now.hour >= kBreakfastDeadlineHour) {
-      return 'Past 8 AM. Breakfast locked. Lunch & Dinner editable.';
+      return 'Breakfast locked (past 8 AM)';
     }
     return null;
   }
@@ -120,671 +95,283 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        AppSpacing.lg,
       ),
       decoration: BoxDecoration(
         color: context.surfaceColor,
         borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(AppSpacing.radiusLg),
+          top: Radius.circular(AppSpacing.radiusXl),
         ),
       ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: context.borderColor,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: context.borderColor,
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const Gap(AppSpacing.lg),
+          ),
+          const Gap(AppSpacing.md),
 
-            // Title and mode toggle
-            Row(
-              children: [
-                Icon(
-                  LucideIcons.utensils,
-                  color: AppColors.mealColor,
-                  size: 24,
-                ),
-                const Gap(AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    'Add Meal',
-                    style: AppTypography.headlineMedium.copyWith(
-                      color: context.textPrimary,
-                    ),
-                  ),
-                ),
-                // Mode toggle
-                _buildModeToggle(),
-              ],
-            ).animate().fadeIn(),
-            const Gap(AppSpacing.md),
-
-            // System info
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.sm),
-              decoration: BoxDecoration(
-                color: AppColors.info.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-              ),
+          // Time-lock warning (compact, single line)
+          if (_timeLockWarning != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(LucideIcons.info, color: AppColors.info, size: 14),
-                  const Gap(AppSpacing.sm),
-                  Expanded(
-                    child: Text(
-                      _is3MealSystem
-                          ? 'Standard: 3 meals (B+L+D). Above 3 = Guests.'
-                          : 'Standard: 2 meals (L+D). Above 2 = Guests.',
-                      style: AppTypography.bodySmall.copyWith(
-                        color: context.textSecondary,
-                      ),
-                    ),
+                  Icon(
+                    LucideIcons.clock,
+                    color: AppColors.warning,
+                    size: 12,
                   ),
-                  // Toggle meal system
-                  GestureDetector(
-                    onTap: () {
-                      HapticService.lightTap();
-                      setState(() => _is3MealSystem = !_is3MealSystem);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: context.cardColor,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        _is3MealSystem ? '3-Meal' : '2-Meal',
-                        style: AppTypography.labelSmall.copyWith(
-                          color: AppColors.mealColor,
-                        ),
-                      ),
+                  const Gap(AppSpacing.xs),
+                  Text(
+                    _timeLockWarning!,
+                    style: AppTypography.labelSmall.copyWith(
+                      color: AppColors.warning,
                     ),
                   ),
                 ],
-              ),
-            ).animate().fadeIn(delay: 100.ms),
+              ).animate().fadeIn(),
+            ),
 
-            // Time-lock warning
-            if (_timeLockWarning != null) ...[
-              const Gap(AppSpacing.sm),
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.sm),
-                decoration: BoxDecoration(
-                  color: AppColors.warning.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                  border: Border.all(
-                    color: AppColors.warning.withValues(alpha: 0.5),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      LucideIcons.clock,
-                      color: AppColors.warning,
-                      size: 14,
-                    ),
-                    const Gap(AppSpacing.sm),
-                    Expanded(
-                      child: Text(
-                        _timeLockWarning!,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: AppColors.warning,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ).animate().fadeIn().shake(
-                delay: 200.ms,
-                hz: 2,
-                offset: const Offset(2, 0),
-              ),
-            ],
-            const Gap(AppSpacing.lg),
+          // Header row: title + 3-meal chip + date chip
+          _buildHeader(),
+          const Gap(AppSpacing.lg),
 
-            // Mode specific input
-            if (_isDetailedMode)
-              _buildDetailedModeInput()
-            else
-              _buildQuickModeInput(),
+          // Preset buttons - the centerpiece
+          _buildPresetButtons(),
+          const Gap(AppSpacing.lg),
 
-            const Gap(AppSpacing.lg),
-
-            // Summary Card
-            _buildSummaryCard(),
-            const Gap(AppSpacing.lg),
-
-            // Date Selector
-            _buildDateSelector(),
-            const Gap(AppSpacing.xl),
-
-            // Submit Button
-            SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: _submit,
-                    icon: const Icon(LucideIcons.check, size: 20),
-                    label: Text(_getSubmitText()),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: AppSpacing.md,
-                      ),
+          // Guest indicator (only when above standard)
+          if (_guestMeals > 0)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.md),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(LucideIcons.users, size: 13, color: AppColors.success),
+                  const Gap(AppSpacing.xs),
+                  Text(
+                    '+$_guestMeals guest meal${_guestMeals > 1 ? 's' : ''}',
+                    style: AppTypography.labelSmall.copyWith(
+                      color: AppColors.success,
                     ),
                   ),
-                )
-                .animate()
-                .fadeIn(delay: 500.ms)
-                .scale(begin: const Offset(0.95, 0.95)),
-            const Gap(AppSpacing.md),
+                ],
+              ).animate().fadeIn(),
+            ),
+
+          // Submit button
+          _buildSubmitButton(),
+          const Gap(AppSpacing.sm),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Row(
+      children: [
+        Icon(LucideIcons.utensils, color: AppColors.mealColor, size: 20),
+        const Gap(AppSpacing.sm),
+        Text(
+          _isEditMode ? 'Edit meal' : 'Add meal',
+          style: AppTypography.headlineMedium.copyWith(
+            color: context.textPrimary,
+          ),
+        ),
+        const Spacer(),
+        // 3-meal system toggle chip
+        GestureDetector(
+          onTap: () {
+            HapticService.lightTap();
+            setState(() => _is3MealSystem = !_is3MealSystem);
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: AppColors.mealColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusXs),
+              border: Border.all(
+                color: AppColors.mealColor.withValues(alpha: 0.25),
+              ),
+            ),
+            child: Text(
+              _is3MealSystem ? '3-meal' : '2-meal',
+              style: AppTypography.labelSmall.copyWith(
+                color: AppColors.mealColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+        const Gap(AppSpacing.sm),
+        // Date chip
+        _buildDateChip(),
+      ],
+    ).animate().fadeIn();
+  }
+
+  Widget _buildDateChip() {
+    return GestureDetector(
+      onTap: _selectDate,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: context.cardColor,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusXs),
+          border: Border.all(color: context.borderColor),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(LucideIcons.calendar, size: 11, color: context.textSecondary),
+            const Gap(4),
+            Text(
+              _formatDate(_selectedDate),
+              style: AppTypography.labelSmall.copyWith(
+                color: context.textPrimary,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildModeToggle() {
-    return Container(
-      decoration: BoxDecoration(
-        color: context.cardColor,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildModeButton('Quick', !_isDetailedMode, () {
-            setState(() => _isDetailedMode = false);
-          }),
-          _buildModeButton('Detailed', _isDetailedMode, () {
-            setState(() => _isDetailedMode = true);
-          }),
-        ],
-      ),
-    );
-  }
+  Widget _buildPresetButtons() {
+    const presets = [0, 1, 2, 3, 5, 10];
 
-  Widget _buildModeButton(String label, bool isSelected, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: () {
-        HapticService.lightTap();
-        onTap();
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.mealColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppSpacing.radiusSm - 2),
-        ),
-        child: Text(
-          label,
-          style: AppTypography.labelSmall.copyWith(
-            color: isSelected ? Colors.white : context.textSecondary,
-          ),
-        ),
-      ),
-    );
-  }
+    return Row(
+      children: presets.map((count) {
+        final isSelected = _totalMeals == count;
+        final isDefault = count == _standardMeals;
+        final label = count == 0 ? 'Off' : '$count';
 
-  /// Quick mode - single number input with +/- buttons
-  Widget _buildQuickModeInput() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Total meals today',
-          style: AppTypography.labelMedium.copyWith(
-            color: context.textSecondary,
-          ),
-        ),
-        const Gap(AppSpacing.md),
-
-        // Counter with +/- buttons
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Decrease
-            _buildCountButton(LucideIcons.minus, () {
-              if (_totalMeals > 0) setState(() => _totalMeals--);
-            }),
-            const Gap(AppSpacing.lg),
-
-            // Count display
-            GestureDetector(
-              onTap: _showCustomNumberPicker,
-              child: Container(
-                width: 100,
-                height: 80,
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(
+              right: count == presets.last ? 0 : AppSpacing.sm,
+            ),
+            child: GestureDetector(
+              onTap: () => _selectPreset(count),
+              child: AnimatedContainer(
+                duration: 200.ms,
+                height: 72,
                 decoration: BoxDecoration(
-                  color: context.cardColor,
+                  color: isSelected
+                      ? AppColors.mealColor
+                      : context.cardColor,
                   borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
                   border: Border.all(
-                    color: AppColors.mealColor.withValues(alpha: 0.5),
+                    color: isSelected
+                        ? AppColors.mealColor
+                        : isDefault
+                            ? AppColors.mealColor.withValues(alpha: 0.6)
+                            : context.borderColor,
+                    width: isDefault && !isSelected ? 1.5 : 1,
                   ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: AppColors.mealColor.withValues(alpha: 0.35),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : null,
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      '$_totalMeals',
-                      style: AppTypography.displayMedium.copyWith(
-                        color: AppColors.mealColor,
-                        fontWeight: FontWeight.w700,
+                      label,
+                      style: (count == 0
+                              ? AppTypography.titleMedium
+                              : AppTypography.displaySmall)
+                          .copyWith(
+                        color: isSelected
+                            ? Colors.white
+                            : isDefault
+                                ? AppColors.mealColor
+                                : context.textPrimary,
+                        fontWeight:
+                            isSelected || isDefault ? FontWeight.w700 : FontWeight.w500,
                       ),
                     ),
-                    Text(
-                      'tap to edit',
-                      style: AppTypography.labelSmall.copyWith(
-                        color: context.textMuted,
+                    if (isDefault && !isSelected)
+                      Text(
+                        'default',
+                        style: AppTypography.labelSmall.copyWith(
+                          color: AppColors.mealColor.withValues(alpha: 0.7),
+                          fontSize: 8,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
             ),
-            const Gap(AppSpacing.lg),
-
-            // Increase
-            _buildCountButton(LucideIcons.plus, () {
-              setState(() => _totalMeals++);
-            }),
-          ],
-        ).animate().fadeIn(delay: 200.ms),
-
-        // Quick presets
-        const Gap(AppSpacing.md),
-        Center(
-          child: Wrap(
-            spacing: AppSpacing.sm,
-            children: [0, 1, 2, 3, 5, 10].map((count) {
-              final isSelected = _totalMeals == count;
-              final isDefault = count == _standardMeals;
-
-              return GestureDetector(
-                onTap: () {
-                  HapticService.selectionTick();
-                  setState(() => _totalMeals = count);
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppColors.mealColor
-                        : context.cardColor,
-                    borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                    border: isDefault && !isSelected
-                        ? Border.all(color: AppColors.mealColor)
-                        : null,
-                  ),
-                  child: Text(
-                    count == 0 ? 'Off' : '$count',
-                    style: TextStyle(
-                      color: isSelected
-                          ? Colors.white
-                          : context.textPrimary,
-                      fontWeight: isDefault
-                          ? FontWeight.w600
-                          : FontWeight.normal,
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
           ),
-        ),
-      ],
-    );
+        );
+      }).toList(),
+    ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.1, end: 0);
   }
 
-  Widget _buildCountButton(IconData icon, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: () {
-        HapticService.numberTick();
-        onTap();
-      },
-      child: Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          color: context.cardColor,
-          shape: BoxShape.circle,
-          border: Border.all(color: context.borderColor),
+  Widget _buildSubmitButton() {
+    final text = _getSubmitText();
+
+    return ScaleTransition(
+      scale: _pulseAnim,
+      child: SizedBox(
+        width: double.infinity,
+        child: FilledButton(
+          onPressed: _submit,
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.mealColor,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            ),
+            textStyle: AppTypography.labelLarge,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                _totalMeals == 0
+                    ? LucideIcons.moonStar
+                    : LucideIcons.check,
+                size: 18,
+              ),
+              const Gap(8),
+              Text(text),
+            ],
+          ),
         ),
-        child: Icon(icon, color: AppColors.mealColor, size: 24),
       ),
-    );
-  }
-
-  /// Detailed mode - per meal input
-  Widget _buildDetailedModeInput() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Meals per type',
-          style: AppTypography.labelMedium.copyWith(
-            color: context.textSecondary,
-          ),
-        ),
-        const Gap(AppSpacing.md),
-
-        if (_is3MealSystem)
-          _buildMealTypeRow(
-            icon: LucideIcons.sunrise,
-            label: 'Breakfast',
-            count: _breakfastCount,
-            onChanged: (v) => setState(() => _breakfastCount = v),
-            color: AppColors.warning,
-            isLocked: _isTimeLocked(MealType.breakfast),
-          ),
-
-        _buildMealTypeRow(
-          icon: LucideIcons.sun,
-          label: 'Lunch',
-          count: _lunchCount,
-          onChanged: (v) => setState(() => _lunchCount = v),
-          color: AppColors.mealColor,
-          isLocked: _isTimeLocked(MealType.lunch),
-        ),
-
-        _buildMealTypeRow(
-          icon: LucideIcons.moon,
-          label: 'Dinner',
-          count: _dinnerCount,
-          onChanged: (v) => setState(() => _dinnerCount = v),
-          color: AppColors.primary,
-          isLocked: _isTimeLocked(MealType.dinner),
-        ),
-      ],
     ).animate().fadeIn(delay: 200.ms);
   }
 
-  Widget _buildMealTypeRow({
-    required IconData icon,
-    required String label,
-    required int count,
-    required ValueChanged<int> onChanged,
-    required Color color,
-    bool isLocked = false,
-  }) {
-    final effectiveColor = isLocked ? context.textMuted : color;
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: context.cardColor,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 20),
-          const Gap(AppSpacing.sm),
-          Expanded(
-            child: Text(
-              label,
-              style: AppTypography.titleSmall.copyWith(
-                color: context.textPrimary,
-              ),
-            ),
-          ),
-          // Stepper
-          Container(
-            decoration: BoxDecoration(
-              color: context.surfaceColor,
-              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(LucideIcons.minus, size: 16),
-                  onPressed: count > 0 && !isLocked
-                      ? () {
-                          HapticService.numberTick();
-                          onChanged(count - 1);
-                        }
-                      : null,
-                  iconSize: 20,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 36,
-                    minHeight: 36,
-                  ),
-                ),
-                Container(
-                  width: 40,
-                  alignment: Alignment.center,
-                  child: Text(
-                    '$count',
-                    style: AppTypography.titleMedium.copyWith(
-                      color: effectiveColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(LucideIcons.plus, size: 16),
-                  onPressed: !isLocked
-                      ? () {
-                          HapticService.numberTick();
-                          onChanged(count + 1);
-                        }
-                      : null,
-                  iconSize: 20,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 36,
-                    minHeight: 36,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (isLocked)
-            Padding(
-              padding: const EdgeInsets.only(left: AppSpacing.xs),
-              child: Icon(
-                LucideIcons.lock,
-                size: 14,
-                color: context.textMuted,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSummaryCard() {
-    final total = _isDetailedMode ? _totalFromDetailedMode : _totalMeals;
-    final ownMeals = total > _standardMeals ? _standardMeals : total;
-
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: context.cardColor,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: context.borderColor.withValues(alpha: 0.5)),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Your meals',
-                style: AppTypography.bodyMedium.copyWith(
-                  color: context.textSecondary,
-                ),
-              ),
-              Text(
-                '$ownMeals',
-                style: AppTypography.titleMedium.copyWith(
-                  color: context.textPrimary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          if (_guestMeals > 0) ...[
-            const Gap(AppSpacing.sm),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    const Icon(
-                      LucideIcons.users,
-                      size: 14,
-                      color: AppColors.success,
-                    ),
-                    const Gap(AppSpacing.xs),
-                    Text(
-                      'Guest meals',
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.success,
-                      ),
-                    ),
-                  ],
-                ),
-                Text(
-                  '$_guestMeals',
-                  style: AppTypography.titleMedium.copyWith(
-                    color: AppColors.success,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ],
-          const Divider(height: AppSpacing.lg),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Total',
-                style: AppTypography.titleSmall.copyWith(
-                  color: context.textPrimary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Text(
-                '$total meals',
-                style: AppTypography.titleMedium.copyWith(
-                  color: AppColors.mealColor,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    ).animate().fadeIn(delay: 300.ms);
-  }
-
-  Widget _buildDateSelector() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Date',
-          style: AppTypography.labelMedium.copyWith(
-            color: context.textSecondary,
-          ),
-        ),
-        const Gap(AppSpacing.sm),
-        GestureDetector(
-          onTap: _selectDate,
-          child: Container(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: context.cardColor,
-              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  LucideIcons.calendar,
-                  color: AppColors.primary,
-                  size: 20,
-                ),
-                const Gap(AppSpacing.sm),
-                Text(
-                  _formatDate(_selectedDate),
-                  style: AppTypography.bodyMedium.copyWith(
-                    color: context.textPrimary,
-                  ),
-                ),
-                const Spacer(),
-                Icon(
-                  LucideIcons.chevronRight,
-                  color: context.textMuted,
-                  size: 18,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    ).animate().fadeIn(delay: 400.ms);
-  }
-
-  void _showCustomNumberPicker() {
-    HapticService.modalOpen();
-    final controller = TextEditingController(text: '$_totalMeals');
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: context.surfaceColor,
-        title: const Text('Enter meal count'),
-        content: TextField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          autofocus: true,
-          decoration: const InputDecoration(hintText: 'e.g. 15'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final value = int.tryParse(controller.text);
-              if (value != null && value >= 0) {
-                setState(() => _totalMeals = value);
-              }
-              Navigator.pop(ctx);
-            },
-            child: const Text('Set'),
-          ),
-        ],
-      ),
-    );
-  }
-
   String _getSubmitText() {
-    final total = _isDetailedMode ? _totalFromDetailedMode : _totalMeals;
-    if (total == 0) return 'Skip Today';
-    if (_guestMeals > 0) return 'Add $total Meals (+$_guestMeals Guest)';
-    return 'Add $total Meal${total > 1 ? 's' : ''}';
+    if (_totalMeals == 0) return 'Skip today';
+    if (_isEditMode) {
+      return 'Save $_totalMeals meal${_totalMeals > 1 ? 's' : ''}';
+    }
+    return 'Add $_totalMeals meal${_totalMeals > 1 ? 's' : ''}';
   }
 
   String _formatDate(DateTime date) {
@@ -820,18 +407,16 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
   }
 
   void _submit() {
-    final total = _isDetailedMode ? _totalFromDetailedMode : _totalMeals;
-    if (total == 0) {
+    if (_totalMeals == 0) {
       Navigator.of(context).pop();
       return;
     }
 
     HapticService.success();
 
-    final ownMeals = total > _standardMeals ? _standardMeals : total;
+    final ownMeals = _totalMeals > _standardMeals ? _standardMeals : _totalMeals;
 
     if (_isEditMode) {
-      // Update existing meal
       final updatedMeal = widget.existingMeal!.copyWith(
         date: _selectedDate,
         count: ownMeals,
@@ -841,18 +426,18 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Meal updated: $total meal${total > 1 ? 's' : ''}'),
+          content:
+              Text('Meal updated: $_totalMeals meal${_totalMeals > 1 ? 's' : ''}'),
           backgroundColor: AppColors.info,
         ),
       );
     } else {
-      // Add new meal
       final meal = Meal(
         id: 'meal_${DateTime.now().millisecondsSinceEpoch}',
-        memberId: 'current_user', // Will use test user or auth user
+        memberId: 'current_user',
         date: _selectedDate,
         count: ownMeals,
-        type: MealType.lunch, // Combined as daily total
+        type: MealType.lunch,
         guestCount: _guestMeals,
         createdAt: DateTime.now(),
       );
@@ -861,7 +446,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Added $total meal${total > 1 ? 's' : ''} for today'),
+          content: Text('Added $_totalMeals meal${_totalMeals > 1 ? 's' : ''} for today'),
           backgroundColor: AppColors.success,
         ),
       );

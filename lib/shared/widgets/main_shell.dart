@@ -1,14 +1,20 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/router/app_router.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
+import 'package:mess_manager/core/widgets/speed_dial_fab.dart';
+import 'package:mess_manager/core/providers/role_provider.dart';
+import 'package:mess_manager/features/meals/widgets/add_meal_sheet.dart';
+import 'package:mess_manager/features/bazar/widgets/add_bazar_sheet.dart';
+import 'package:mess_manager/features/money/widgets/add_transaction_sheet.dart';
 
 /// Main Shell with Floating Glass Navigation Bar
-class MainShell extends StatelessWidget {
+class MainShell extends ConsumerWidget {
   final Widget child;
 
   const MainShell({super.key, required this.child});
@@ -53,7 +59,7 @@ class MainShell extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final selected = _calculateSelectedIndex(context);
 
     return Scaffold(
@@ -62,6 +68,7 @@ class MainShell extends StatelessWidget {
           .animate()
           .fadeIn(duration: 200.ms, curve: Curves.easeOut)
           .slideY(begin: 0.02, end: 0, duration: 200.ms, curve: Curves.easeOut),
+      floatingActionButton: _buildFAB(context, ref, selected),
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -104,6 +111,173 @@ class MainShell extends StatelessWidget {
               .slideY(begin: 0.1, end: 0),
         ),
       ),
+    );
+  }
+
+  // ──────────────────── FAB Logic ────────────────────
+
+  Widget? _buildFAB(BuildContext context, WidgetRef ref, int tabIndex) {
+    final canMeal = ref.watch(canAddMealProvider);
+    final canBazar = ref.watch(canAddBazarProvider);
+    final canTransaction = ref.watch(canAddTransactionProvider);
+
+    switch (tabIndex) {
+      // Dashboard: full speed dial
+      case 0:
+        return _buildSpeedDial(
+          context,
+          canMeal: canMeal,
+          canBazar: canBazar,
+          canTransaction: canTransaction,
+        );
+
+      // Bazar tab: single FAB → open AddBazarSheet
+      case 1:
+        if (!canBazar) return null;
+        return _buildSingleFAB(
+          context,
+          label: 'Add Bazar',
+          icon: LucideIcons.shoppingCart,
+          color: AppColors.bazarColor,
+          onPressed: () => _showAddBazarSheet(context),
+        );
+
+      // Meals tab: single FAB → open AddMealSheet
+      case 2:
+        if (!canMeal) return null;
+        return _buildSingleFAB(
+          context,
+          label: 'Add Meal',
+          icon: LucideIcons.utensils,
+          color: AppColors.mealColor,
+          onPressed: () => _showAddMealSheet(context),
+        );
+
+      // Balance tab: full speed dial
+      case 3:
+        return _buildSpeedDial(
+          context,
+          canMeal: canMeal,
+          canBazar: canBazar,
+          canTransaction: canTransaction,
+        );
+
+      // Settings tab: no FAB
+      default:
+        return null;
+    }
+  }
+
+  Widget? _buildSpeedDial(
+    BuildContext context, {
+    required bool canMeal,
+    required bool canBazar,
+    required bool canTransaction,
+  }) {
+    final items = <SpeedDialItem>[
+      SpeedDialItem(
+        label: 'Add Duty',
+        icon: LucideIcons.clipboardList,
+        color: AppColors.success,
+        onPressed: () => context.push(AppRoutes.duties),
+      ),
+      if (canTransaction)
+        SpeedDialItem(
+          label: 'Add Money',
+          icon: LucideIcons.banknote,
+          color: AppColors.warning,
+          onPressed: () => _showAddMoneySheet(context),
+        ),
+      if (canBazar)
+        SpeedDialItem(
+          label: 'Add Bazar',
+          icon: LucideIcons.shoppingCart,
+          color: AppColors.bazarColor,
+          onPressed: () => _showAddBazarSheet(context),
+        ),
+      if (canMeal)
+        SpeedDialItem(
+          label: 'Add Meal',
+          icon: LucideIcons.utensils,
+          color: AppColors.mealColor,
+          onPressed: () => _showAddMealSheet(context),
+        ),
+    ];
+
+    if (items.length <= 1) return null;
+    return SpeedDialFAB(items: items);
+  }
+
+  Widget _buildSingleFAB(
+    BuildContext context, {
+    required String label,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [color, color.withValues(alpha: 0.8)],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.4),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: FloatingActionButton.extended(
+        heroTag: 'shell_fab_$label',
+        onPressed: () {
+          HapticService.buttonPress();
+          onPressed();
+        },
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        highlightElevation: 0,
+        icon: Icon(icon, size: 20),
+        label: Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.3,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ──────────────────── Sheets ────────────────────
+
+  void _showAddMealSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const AddMealSheet(),
+    );
+  }
+
+  void _showAddBazarSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const AddBazarSheet(),
+    );
+  }
+
+  void _showAddMoneySheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const AddTransactionSheet(),
     );
   }
 }
