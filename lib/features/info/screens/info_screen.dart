@@ -21,6 +21,7 @@ class InfoScreen extends ConsumerWidget {
   const InfoScreen({super.key});
 
   void _showEditSheet(BuildContext context) {
+    HapticService.modalOpen();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -250,13 +251,7 @@ class InfoScreen extends ConsumerWidget {
               child: Container(
                 width: 40,
                 height: 40,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.05),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.08),
-                  ),
-                ),
+                decoration: AppSpacing.accentCard(accent: AppColors.info, radius: AppSpacing.radiusFull),
                 child: Icon(
                   LucideIcons.edit2,
                   size: 18,
@@ -282,11 +277,7 @@ class InfoScreen extends ConsumerWidget {
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: Container(
             padding: padding ?? const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            ),
+            decoration: AppSpacing.accentCard(accent: AppColors.info),
             child: child,
           ),
         ),
@@ -309,18 +300,7 @@ class InfoScreen extends ConsumerWidget {
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: Container(
           padding: const EdgeInsets.all(AppSpacing.lg),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                color.withValues(alpha: 0.1),
-                Colors.white.withValues(alpha: 0.03),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            border: Border.all(color: color.withValues(alpha: 0.15)),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          ),
+          decoration: AppSpacing.accentCard(accent: color),
           child: Row(
             children: [
               // Gradient halo icon

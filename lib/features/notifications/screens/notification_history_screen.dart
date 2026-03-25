@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:mess_manager/core/services/haptic_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -127,13 +127,7 @@ class _NotificationHistoryScreenState
                         child: Container(
                           width: 40,
                           height: 40,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withValues(alpha: 0.05),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.08),
-                            ),
-                          ),
+                          decoration: AppSpacing.accentCard(accent: AppColors.warning, radius: AppSpacing.radiusFull),
                           child: Icon(
                             LucideIcons.arrowLeft,
                             color: Colors.white.withValues(alpha: 0.9),
@@ -194,19 +188,14 @@ class _NotificationHistoryScreenState
                       // Clear all action
                       GestureDetector(
                         onLongPress: () {
+                          HapticService.longPressStart();
                           IsarService.clearNotifications();
-                          HapticFeedback.mediumImpact();
+                          HapticService.itemDeleted();
                         },
                         child: Container(
                           width: 40,
                           height: 40,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withValues(alpha: 0.05),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.08),
-                            ),
-                          ),
+                          decoration: AppSpacing.accentCard(accent: AppColors.warning, radius: AppSpacing.radiusFull),
                           child: IconButton(
                             padding: EdgeInsets.zero,
                             icon: Icon(
@@ -281,9 +270,10 @@ class _NotificationHistoryScreenState
                                     final deletedNotification = n;
 
                                     IsarService.deleteNotification(n.id);
-                                    HapticFeedback.lightImpact();
+                                    HapticService.itemDeleted();
 
                                     // Show undo SnackBar
+                                    HapticService.undoAvailable();
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(
@@ -341,25 +331,9 @@ class _NotificationHistoryScreenState
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.03),
-            border: Border.all(
-              color: isUnread
-                  ? AppColors.primary.withValues(alpha: 0.25)
-                  : Colors.white.withValues(alpha: 0.05),
-              width: isUnread ? 1.5 : 1.0,
-            ),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            boxShadow: isUnread
-                ? [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.08),
-                      blurRadius: 12,
-                      spreadRadius: 0,
-                    ),
-                  ]
-                : null,
-          ),
+          decoration: isUnread
+              ? AppSpacing.accentCard(accent: AppColors.warning)
+              : AppSpacing.accentCard(accent: AppColors.warning),
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.md,
             vertical: AppSpacing.sm + 4,

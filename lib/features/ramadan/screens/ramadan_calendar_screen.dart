@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/models/ramadan.dart';
+import 'package:mess_manager/core/services/haptic_service.dart';
 import 'package:mess_manager/core/services/prayer_times_service.dart';
 import 'package:mess_manager/features/ramadan/providers/ramadan_provider.dart';
 
@@ -167,17 +168,14 @@ class _RamadanCalendarScreenState extends ConsumerState<RamadanCalendarScreen> {
                     child: Row(
                       children: [
                         GestureDetector(
-                          onTap: () => context.pop(),
+                          onTap: () {
+                            HapticService.navigation();
+                            context.pop();
+                          },
                           child: Container(
                             width: 40,
                             height: 40,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.03),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.05),
-                              ),
-                            ),
+                            decoration: AppSpacing.accentCard(accent: AppColors.accent, radius: 12),
                             child: Icon(
                               LucideIcons.arrowLeft,
                               size: 18,
@@ -326,7 +324,10 @@ class _RamadanCalendarScreenState extends ConsumerState<RamadanCalendarScreen> {
                     children: [
                       // Back button
                       GestureDetector(
-                        onTap: () => context.pop(),
+                        onTap: () {
+                          HapticService.navigation();
+                          context.pop();
+                        },
                         child: Container(
                           width: 40,
                           height: 40,
@@ -380,6 +381,7 @@ class _RamadanCalendarScreenState extends ConsumerState<RamadanCalendarScreen> {
                       PopupMenuButton<String>(
                         initialValue: _selectedDistrict,
                         onSelected: (district) {
+                          HapticService.selectionTick();
                           setState(() {
                             _selectedDistrict = district;
                             _prayerTimesCache.clear();
@@ -476,13 +478,7 @@ class _RamadanCalendarScreenState extends ConsumerState<RamadanCalendarScreen> {
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.05),
-              ),
-            ),
+            decoration: AppSpacing.accentCard(accent: AppColors.accent, radius: 14),
             child: Row(
               children: [
                 IconButton(
@@ -495,6 +491,7 @@ class _RamadanCalendarScreenState extends ConsumerState<RamadanCalendarScreen> {
                   ),
                   onPressed: canGoPrev
                       ? () {
+                          HapticService.lightTap();
                           setState(() {
                             _currentMonth = DateTime(
                               _currentMonth.year,
@@ -526,6 +523,7 @@ class _RamadanCalendarScreenState extends ConsumerState<RamadanCalendarScreen> {
                   ),
                   onPressed: canGoNext
                       ? () {
+                          HapticService.lightTap();
                           setState(() {
                             _currentMonth = DateTime(
                               _currentMonth.year,
@@ -690,7 +688,10 @@ class _RamadanCalendarScreenState extends ConsumerState<RamadanCalendarScreen> {
     final prayerTimes = _prayerTimesCache[_dateKey(date)];
 
     return GestureDetector(
-      onTap: () => setState(() => _selectedDate = date),
+      onTap: () {
+        HapticService.selectionTick();
+        setState(() => _selectedDate = date);
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.all(2),
@@ -806,17 +807,17 @@ class _RamadanCalendarScreenState extends ConsumerState<RamadanCalendarScreen> {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.03),
+            color: AppColors.accent.withValues(alpha: 0.08),
             borderRadius:
                 const BorderRadius.vertical(top: Radius.circular(20)),
             border: Border(
               top: BorderSide(
-                color: Colors.white.withValues(alpha: 0.05),
+                color: AppColors.accent.withValues(alpha: 0.18),
               ),
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.3),
+                color: AppColors.accent.withValues(alpha: 0.08),
                 blurRadius: 16,
                 offset: const Offset(0, -4),
               ),
@@ -849,13 +850,7 @@ class _RamadanCalendarScreenState extends ConsumerState<RamadanCalendarScreen> {
                     child: Container(
                       width: 32,
                       height: 32,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.06),
-                        ),
-                      ),
+                      decoration: AppSpacing.accentCard(accent: AppColors.accent, radius: 8),
                       child: Icon(
                         LucideIcons.x,
                         size: 16,

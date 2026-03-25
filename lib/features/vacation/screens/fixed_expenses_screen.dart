@@ -376,6 +376,7 @@ class FixedExpensesScreen extends ConsumerWidget {
         children: [
           SlidableAction(
             onPressed: (_) async {
+              HapticService.swipe();
               final confirm = await _confirmDelete(context);
               if (confirm) {
                 final deletedExpense = expense;
@@ -418,13 +419,7 @@ class FixedExpensesScreen extends ConsumerWidget {
           child: Container(
             margin: const EdgeInsets.only(bottom: AppSpacing.sm),
             padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
-              border: Border.all(
-                color: color.withValues(alpha: 0.2),
-              ),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            ),
+            decoration: AppSpacing.accentCard(accent: AppColors.moneyNegative, radius: AppSpacing.radiusMd),
             child: Row(
               children: [
                 // Icon

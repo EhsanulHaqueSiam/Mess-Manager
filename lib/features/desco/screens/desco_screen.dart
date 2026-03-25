@@ -12,7 +12,6 @@ import 'package:mess_manager/core/services/desco_service.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
 import 'package:mess_manager/core/widgets/app_components.dart';
 import 'package:mess_manager/features/desco/providers/desco_provider.dart';
-import 'package:mess_manager/core/providers/demo_mode_provider.dart';
 
 /// DESCO Screen - Cosmic Bioluminescence Design
 class DescoScreen extends ConsumerStatefulWidget {
@@ -126,44 +125,72 @@ class _DescoScreenState extends ConsumerState<DescoScreen> {
                               .animate(delay: 100.ms)
                               .fadeIn()
                               .slideY(begin: 0.05),
+                          const SizedBox(height: 16),
+
+                          // Last recharge info
+                          _buildLastRechargeRow()
+                              .animate(delay: 150.ms)
+                              .fadeIn()
+                              .slideY(begin: 0.05),
                           const SizedBox(height: 24),
 
-                          // Section label: Monthly Usage
-                          _buildSectionLabel('MONTHLY USAGE'),
+                          // Section: Usage stats grid
+                          _buildSectionLabel('USAGE OVERVIEW'),
                           const SizedBox(height: 12),
-                          _buildSimpleConsumptionChart(consumptionAsync)
+                          _buildUsageStatsGrid()
                               .animate(delay: 200.ms)
                               .fadeIn()
                               .slideY(begin: 0.05),
                           const SizedBox(height: 24),
 
-                          // Section label: Quick Stats
-                          _buildSectionLabel('QUICK STATS'),
+                          // Section: Daily consumption chart
+                          _buildSectionLabel('DAILY CONSUMPTION (30 DAYS)'),
                           const SizedBox(height: 12),
+                          _buildDailyConsumptionChart()
+                              .animate(delay: 250.ms)
+                              .fadeIn()
+                              .slideY(begin: 0.05),
+                          const SizedBox(height: 24),
 
-                          // Stats row
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildSimpleStatCard(
-                                  'Est. Days Left',
-                                  estimatedDays?.toString() ?? '-',
-                                  LucideIcons.calendar,
-                                  AppColors.primary,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildSimpleStatCard(
-                                  'Avg Monthly',
-                                  '${ref.watch(avgMonthlyConsumptionProvider).toStringAsFixed(0)} kWh',
-                                  LucideIcons.activity,
-                                  AppColors.info,
-                                ),
-                              ),
-                            ],
-                          )
+                          // Section: Monthly consumption chart
+                          _buildSectionLabel('MONTHLY USAGE'),
+                          const SizedBox(height: 12),
+                          _buildSimpleConsumptionChart(consumptionAsync)
                               .animate(delay: 300.ms)
+                              .fadeIn()
+                              .slideY(begin: 0.05),
+                          const SizedBox(height: 8),
+                          // Year toggle
+                          Center(
+                            child: GestureDetector(
+                              onTap: () {
+                                HapticService.selectionTick();
+                                setState(() => _showPrevYear = !_showPrevYear);
+                              },
+                              child: Text(
+                                _showPrevYear ? 'Show current year' : 'Show previous year',
+                                style: AppTypography.labelSmall.copyWith(
+                                  color: AppColors.warning.withValues(alpha: 0.6),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Section: Recharge stats
+                          _buildSectionLabel('RECHARGE OVERVIEW'),
+                          const SizedBox(height: 12),
+                          _buildRechargeStatsGrid()
+                              .animate(delay: 350.ms)
+                              .fadeIn()
+                              .slideY(begin: 0.05),
+                          const SizedBox(height: 24),
+
+                          // Section: Recharge history
+                          _buildSectionLabel('RECHARGE HISTORY'),
+                          const SizedBox(height: 12),
+                          _buildRechargeHistory()
+                              .animate(delay: 400.ms)
                               .fadeIn()
                               .slideY(begin: 0.05),
                         ],
@@ -446,6 +473,383 @@ class _DescoScreenState extends ConsumerState<DescoScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ====== Last Recharge Row ======
+  Widget _buildLastRechargeRow() {
+    final lastRecharge = ref.watch(lastRechargeProvider);
+    if (lastRecharge == null) return const SizedBox.shrink();
+
+    final timeAgo = DateTime.now().difference(lastRecharge.date);
+    final timeStr = timeAgo.inDays > 0
+        ? '${timeAgo.inDays}d ago'
+        : timeAgo.inHours > 0
+            ? '${timeAgo.inHours}h ago'
+            : 'Just now';
+
+    return _glassCard(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Icon(LucideIcons.creditCard,
+              size: 16, color: AppColors.success.withValues(alpha: 0.7)),
+          const SizedBox(width: 10),
+          Text('Last recharge',
+              style: AppTypography.bodySmall
+                  .copyWith(color: Colors.white.withValues(alpha: 0.5))),
+          const Spacer(),
+          Text('\u09F3${lastRecharge.amount.toStringAsFixed(0)}',
+              style: AppTypography.labelLarge.copyWith(
+                  color: AppColors.success, fontWeight: FontWeight.bold)),
+          const SizedBox(width: 8),
+          Text(timeStr,
+              style: AppTypography.bodySmall
+                  .copyWith(color: Colors.white.withValues(alpha: 0.3))),
+        ],
+      ),
+    );
+  }
+
+  // ====== Usage Stats Grid (4 cards) ======
+  Widget _buildUsageStatsGrid() {
+    final estimatedDays = ref.watch(descoEstimatedDaysProvider);
+    final usedUnits = ref.watch(usedThisMonthUnitsProvider);
+    final usedBdt = ref.watch(usedThisMonthBdtProvider);
+    final maxLastMonth = ref.watch(maxLoadLastMonthProvider);
+    final maxLastYear = ref.watch(maxLoadLastYearProvider);
+    final avgMonthly = ref.watch(avgMonthlyConsumptionProvider);
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _buildSimpleStatCard(
+                'Est. Days Left',
+                estimatedDays?.toString() ?? '-',
+                LucideIcons.calendar,
+                AppColors.primary,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildSimpleStatCard(
+                'Avg Monthly',
+                '${avgMonthly.toStringAsFixed(0)} kWh',
+                LucideIcons.activity,
+                AppColors.info,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildSimpleStatCard(
+                'Used this month',
+                '${usedUnits.toStringAsFixed(0)} kWh',
+                LucideIcons.gauge,
+                AppColors.warning,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildSimpleStatCard(
+                'Used (BDT)',
+                '\u09F3${usedBdt.toStringAsFixed(0)}',
+                LucideIcons.banknote,
+                AppColors.warning,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildSimpleStatCard(
+                'Max last month',
+                '${maxLastMonth.toStringAsFixed(0)} kWh',
+                LucideIcons.arrowUpRight,
+                AppColors.error,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildSimpleStatCard(
+                'Max last year',
+                '${maxLastYear.toStringAsFixed(0)} kWh',
+                LucideIcons.trendingUp,
+                AppColors.accent,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // ====== Daily Consumption Chart (fl_chart line chart) ======
+  Widget _buildDailyConsumptionChart() {
+    final dailyAsync = ref.watch(descoDailyConsumptionProvider);
+
+    return dailyAsync.when(
+      data: (data) {
+        if (data.isEmpty) {
+          return _glassCard(
+            padding: const EdgeInsets.all(16),
+            child: SizedBox(
+              height: 180,
+              child: Center(
+                child: Text('No daily data available',
+                    style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.5))),
+              ),
+            ),
+          );
+        }
+
+        // Use dailyUsageUnit for the chart (skip first entry which has no delta)
+        final chartData = data.where((d) => d.dailyUsageUnit != null).toList();
+        if (chartData.isEmpty) {
+          return _glassCard(
+            padding: const EdgeInsets.all(16),
+            child: SizedBox(
+              height: 180,
+              child: Center(
+                child: Text('Insufficient data for chart',
+                    style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.5))),
+              ),
+            ),
+          );
+        }
+
+        final maxY = chartData
+            .map((d) => d.dailyUsageUnit!)
+            .reduce((a, b) => a > b ? a : b);
+
+        return _glassCard(
+          padding: const EdgeInsets.fromLTRB(8, 16, 16, 8),
+          child: SizedBox(
+            height: 180,
+            child: LineChart(
+              LineChartData(
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  horizontalInterval: maxY > 0 ? maxY / 4 : 1,
+                  getDrawingHorizontalLine: (value) => FlLine(
+                    color: Colors.white.withValues(alpha: 0.05),
+                    strokeWidth: 1,
+                  ),
+                ),
+                titlesData: FlTitlesData(
+                  show: true,
+                  rightTitles: const AxisTitles(),
+                  topTitles: const AxisTitles(),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 32,
+                      getTitlesWidget: (value, meta) => Text(
+                        value.toInt().toString(),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.3),
+                          fontSize: 9,
+                        ),
+                      ),
+                    ),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      interval: (chartData.length / 5).ceilToDouble(),
+                      getTitlesWidget: (value, meta) {
+                        final i = value.toInt();
+                        if (i < 0 || i >= chartData.length) return const SizedBox.shrink();
+                        return Text(
+                          '${chartData[i].date.day}/${chartData[i].date.month}',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.3),
+                            fontSize: 9,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                borderData: FlBorderData(show: false),
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: chartData.asMap().entries.map((e) {
+                      return FlSpot(
+                        e.key.toDouble(),
+                        e.value.dailyUsageUnit!,
+                      );
+                    }).toList(),
+                    isCurved: true,
+                    color: AppColors.warning,
+                    barWidth: 2,
+                    dotData: const FlDotData(show: false),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          AppColors.warning.withValues(alpha: 0.3),
+                          AppColors.warning.withValues(alpha: 0.0),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+                minY: 0,
+              ),
+            ),
+          ),
+        );
+      },
+      loading: () => _glassCard(
+        child: const SizedBox(
+          height: 180,
+          child: Center(
+            child: CircularProgressIndicator(color: AppColors.warning),
+          ),
+        ),
+      ),
+      error: (e, s) => _glassCard(
+        padding: const EdgeInsets.all(16),
+        child: SizedBox(
+          height: 180,
+          child: Center(
+            child: Text('Error loading daily data',
+                style:
+                    TextStyle(color: Colors.white.withValues(alpha: 0.5))),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ====== Recharge Stats Grid ======
+  Widget _buildRechargeStatsGrid() {
+    final rechargedMonth = ref.watch(rechargedThisMonthProvider);
+    final rechargedYear = ref.watch(totalRechargeThisYearProvider);
+
+    return Row(
+      children: [
+        Expanded(
+          child: _buildSimpleStatCard(
+            'Recharged this month',
+            '\u09F3${rechargedMonth.toStringAsFixed(0)}',
+            LucideIcons.arrowDownCircle,
+            AppColors.success,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildSimpleStatCard(
+            'Recharged this year',
+            '\u09F3${rechargedYear.toStringAsFixed(0)}',
+            LucideIcons.wallet,
+            AppColors.success,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ====== Recharge History List ======
+  Widget _buildRechargeHistory() {
+    final rechargesAsync = ref.watch(descoRechargeProvider);
+
+    return rechargesAsync.when(
+      data: (recharges) {
+        if (recharges.isEmpty) {
+          return _glassCard(
+            padding: const EdgeInsets.all(16),
+            child: Center(
+              child: Text('No recharge history',
+                  style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.5))),
+            ),
+          );
+        }
+
+        final sorted = [...recharges]
+          ..sort((a, b) => b.date.compareTo(a.date));
+        final recent = sorted.take(10).toList();
+
+        return _glassCard(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            children: recent.map((r) {
+              return Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color:
+                            AppColors.success.withValues(alpha: 0.1),
+                      ),
+                      child: const Icon(LucideIcons.arrowDownLeft,
+                          size: 14, color: AppColors.success),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '\u09F3${r.amount.toStringAsFixed(0)}',
+                            style: AppTypography.labelLarge.copyWith(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          if (r.source != null)
+                            Text(
+                              r.source!,
+                              style: AppTypography.bodySmall.copyWith(
+                                color: Colors.white.withValues(alpha: 0.3),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      '${r.date.day}/${r.date.month}/${r.date.year}',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: Colors.white.withValues(alpha: 0.35),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        );
+      },
+      loading: () => const Center(
+        child: CircularProgressIndicator(color: AppColors.warning),
+      ),
+      error: (e, s) => _glassCard(
+        padding: const EdgeInsets.all(16),
+        child: Center(
+          child: Text('Error loading history',
+              style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.5))),
+        ),
       ),
     );
   }
@@ -1274,16 +1678,6 @@ class _MeterSetupSheetState extends ConsumerState<_MeterSetupSheet> {
 
     setState(() => _isLoading = true);
     HapticService.buttonPress();
-
-    // In demo mode, just show success and close
-    if (DemoMode.isEnabled) {
-      await Future.delayed(const Duration(milliseconds: 500));
-      if (mounted) {
-        Navigator.pop(context);
-        showSuccessToast(context, 'Demo: Meter setup saved (simulated)');
-      }
-      return;
-    }
 
     try {
       // First lookup the meter
