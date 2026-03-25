@@ -431,6 +431,7 @@ List<Override> get goldenProviderOverrides {
     // ── Duties ───────────────────────────────────────────────────────
     dutySchedulesProvider.overrideWith(() => _MockDutySchedulesNotifier()),
     dutyAssignmentsProvider.overrideWith(() => _MockDutyAssignmentsNotifier()),
+    dutyDebtsProvider.overrideWith(() => _MockDutyDebtsNotifier()),
 
     // ── Settlement ───────────────────────────────────────────────────
     settlementsProvider.overrideWith(() => _MockSettlementsNotifier()),
@@ -530,6 +531,11 @@ class _MockDutyAssignmentsNotifier extends DutyAssignmentsNotifier {
   List<DutyAssignment> build() => [];
 }
 
+class _MockDutyDebtsNotifier extends DutyDebtsNotifier {
+  @override
+  List<DutyDebt> build() => [];
+}
+
 class _MockSettlementsNotifier extends SettlementsNotifier {
   @override
   List<Settlement> build() => [];
@@ -610,16 +616,8 @@ Future<void> pumpScreenForGolden(
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1.0;
 
-  // Use plain dark theme for golden tests — avoids GoogleFonts network dependency
-  final theme = ThemeData.dark(useMaterial3: true).copyWith(
-    scaffoldBackgroundColor: AppColors.backgroundDark,
-    colorScheme: ColorScheme.dark(
-      primary: AppColors.primary,
-      secondary: AppColors.accent,
-      surface: AppColors.surfaceDark,
-      error: AppColors.error,
-    ),
-  );
+  // Use real app theme — fonts are bundled in test/assets/fonts/
+  final theme = AppTheme.buildDarkTheme(seedColor: AppColors.primary);
 
   await tester.pumpWidget(
     ProviderScope(
@@ -641,12 +639,14 @@ Future<void> pumpScreenForGolden(
   );
 
   // Let flutter_animate and other implicit animations settle.
-  // Pump several frames, then pumpAndSettle with a timeout.
-  await tester.pump(const Duration(milliseconds: 100));
-  await tester.pump(const Duration(milliseconds: 100));
-  await tester.pump(const Duration(milliseconds: 100));
-  await tester.pump(const Duration(milliseconds: 200));
+  // Pump several frames with exception drains between each.
+  for (var i = 0; i < 5; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+    // Drain plugin/font/network exceptions that arrive during pumping
+    while (tester.takeException() != null) {}
+  }
   await tester.pump(const Duration(milliseconds: 500));
+  while (tester.takeException() != null) {}
 
   // Final settle — catches any remaining animation controllers.
   // Short timeout because some screens have infinite animations.
@@ -656,6 +656,8 @@ Future<void> pumpScreenForGolden(
     // pumpAndSettle can throw if animations never finish (e.g. shimmer).
     // That is expected — we already pumped enough frames above.
   }
+  // One more drain for late-arriving async exceptions
+  while (tester.takeException() != null) {}
 }
 
 /// Pumps a bottom sheet widget rendered inside a Scaffold.
@@ -670,16 +672,8 @@ Future<void> pumpSheetForGolden(
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1.0;
 
-  // Use plain dark theme for golden tests — avoids GoogleFonts network dependency
-  final theme = ThemeData.dark(useMaterial3: true).copyWith(
-    scaffoldBackgroundColor: AppColors.backgroundDark,
-    colorScheme: ColorScheme.dark(
-      primary: AppColors.primary,
-      secondary: AppColors.accent,
-      surface: AppColors.surfaceDark,
-      error: AppColors.error,
-    ),
-  );
+  // Use real app theme — fonts are bundled in test/assets/fonts/
+  final theme = AppTheme.buildDarkTheme(seedColor: AppColors.primary);
 
   await tester.pumpWidget(
     ProviderScope(

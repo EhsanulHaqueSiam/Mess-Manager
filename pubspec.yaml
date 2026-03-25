@@ -117,6 +117,36 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
+  assets:
+    - test/assets/fonts/
+
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: test/assets/fonts/Poppins-Regular.ttf
+        - asset: test/assets/fonts/Poppins-Medium.ttf
+          weight: 500
+        - asset: test/assets/fonts/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: test/assets/fonts/Poppins-Bold.ttf
+          weight: 700
+        - asset: test/assets/fonts/Poppins-ExtraBold.ttf
+          weight: 800
+    - family: Inter
+      fonts:
+        - asset: test/assets/fonts/Inter.ttf
+    - family: JetBrains Mono
+      fonts:
+        - asset: test/assets/fonts/JetBrainsMono-Regular.ttf
+        - asset: test/assets/fonts/JetBrainsMono-Medium.ttf
+          weight: 500
+        - asset: test/assets/fonts/JetBrainsMono-SemiBold.ttf
+          weight: 600
+        - asset: test/assets/fonts/JetBrainsMono-Bold.ttf
+          weight: 700
+        - asset: test/assets/fonts/JetBrainsMono-ExtraBold.ttf
+          weight: 800
+
 # Splash Screen Configuration
 flutter_native_splash:
   color: "#1a1a2e"

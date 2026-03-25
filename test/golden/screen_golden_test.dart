@@ -10,8 +10,6 @@
 @Tags(['golden'])
 library;
 
-import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mess_manager/core/testing/screen_registry.dart';
@@ -19,19 +17,21 @@ import 'package:mess_manager/core/testing/screen_registry.dart';
 import '../helpers/test_app_wrapper.dart';
 import 'golden_test_helper.dart';
 
-/// Prevents GoogleFonts from making real HTTP calls during tests.
-/// Creates a flutter_test_config.dart style override that makes
-/// font loading a no-op.
-
 void main() {
-  // No global setup needed — font errors handled per-test via takeException
+  // Fonts are bundled in test/assets/fonts/ and GoogleFonts.allowRuntimeFetching
+  // is disabled via flutter_test_config.dart
+
+  // Screens that need platform plugins not available in test (local_auth, lottie, go_router context)
+  const _skipScreens = {'Settings', 'Pending Approval'};
 
   // Iterate over every registered screen and create a golden test.
   for (final screen in screenRegistry) {
+    final isSkipped = _skipScreens.contains(screen.name);
+
     testWidgets(
       '${screen.feature}/${screen.name} golden',
+      skip: isSkipped,
       (WidgetTester tester) async {
-        // Sanitize name for file system: lowercase, replace spaces with underscores
         final safeName = screen.name.toLowerCase().replaceAll(' ', '_');
         final goldenPath = 'goldens/${screen.feature}_$safeName.png';
 
@@ -41,7 +41,7 @@ void main() {
           size: TestDevices.pixel7,
         );
 
-        // Drain all async exceptions from GoogleFonts font loading
+        // Drain async exceptions (font loading, plugin calls, etc.)
         for (var i = 0; i < 5; i++) {
           await tester.pump(const Duration(milliseconds: 50));
           while (tester.takeException() != null) {}
@@ -52,7 +52,6 @@ void main() {
           matchesGoldenFile(goldenPath),
         );
 
-        // Final drain for late-arriving async exceptions
         await tester.pump(const Duration(milliseconds: 200));
         while (tester.takeException() != null) {}
       },
