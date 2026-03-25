@@ -14,8 +14,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // ignore: implementation_imports
 import 'package:riverpod/src/framework.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:google_fonts/google_fonts.dart';
-
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/models/member.dart';
 import 'package:mess_manager/core/models/meal.dart';
@@ -609,14 +607,18 @@ Future<void> pumpScreenForGolden(
   Widget screen, {
   Size size = TestDevices.pixel7,
 }) async {
-  // Prevent Google Fonts from fetching over network in tests
-  GoogleFonts.config.allowRuntimeFetching = false;
-
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1.0;
 
-  final theme = AppTheme.buildDarkTheme(
-    seedColor: AppColors.primary,
+  // Use plain dark theme for golden tests — avoids GoogleFonts network dependency
+  final theme = ThemeData.dark(useMaterial3: true).copyWith(
+    scaffoldBackgroundColor: AppColors.backgroundDark,
+    colorScheme: ColorScheme.dark(
+      primary: AppColors.primary,
+      secondary: AppColors.accent,
+      surface: AppColors.surfaceDark,
+      error: AppColors.error,
+    ),
   );
 
   await tester.pumpWidget(
@@ -668,8 +670,15 @@ Future<void> pumpSheetForGolden(
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1.0;
 
-  final theme = AppTheme.buildDarkTheme(
-    seedColor: AppColors.primary,
+  // Use plain dark theme for golden tests — avoids GoogleFonts network dependency
+  final theme = ThemeData.dark(useMaterial3: true).copyWith(
+    scaffoldBackgroundColor: AppColors.backgroundDark,
+    colorScheme: ColorScheme.dark(
+      primary: AppColors.primary,
+      secondary: AppColors.accent,
+      surface: AppColors.surfaceDark,
+      error: AppColors.error,
+    ),
   );
 
   await tester.pumpWidget(

@@ -10,15 +10,22 @@
 @Tags(['golden'])
 library;
 
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:mess_manager/core/testing/screen_registry.dart';
 
 import '../helpers/test_app_wrapper.dart';
 import 'golden_test_helper.dart';
 
+/// Prevents GoogleFonts from making real HTTP calls during tests.
+/// Creates a flutter_test_config.dart style override that makes
+/// font loading a no-op.
+
 void main() {
+  // No global setup needed — font errors handled per-test via takeException
+
   // Iterate over every registered screen and create a golden test.
   for (final screen in screenRegistry) {
     testWidgets(
@@ -28,26 +35,26 @@ void main() {
         final safeName = screen.name.toLowerCase().replaceAll(' ', '_');
         final goldenPath = 'goldens/${screen.feature}_$safeName.png';
 
-        try {
-          await pumpScreenForGolden(
-            tester,
-            screen.builder(),
-            size: TestDevices.pixel7,
-          );
+        await pumpScreenForGolden(
+          tester,
+          screen.builder(),
+          size: TestDevices.pixel7,
+        );
 
-          await expectLater(
-            find.byType(MaterialApp),
-            matchesGoldenFile(goldenPath),
-          );
-        } catch (e) {
-          // Some screens may crash due to missing deep provider chains
-          // (e.g. FutureProvider.autoDispose for Desco API calls).
-          // Log and skip rather than fail the entire suite.
-          // TODO: Add deeper mock overrides for these screens.
-          debugPrint(
-            'SKIP golden for ${screen.feature}/${screen.name}: $e',
-          );
+        // Drain all async exceptions from GoogleFonts font loading
+        for (var i = 0; i < 5; i++) {
+          await tester.pump(const Duration(milliseconds: 50));
+          while (tester.takeException() != null) {}
         }
+
+        await expectLater(
+          find.byType(MaterialApp),
+          matchesGoldenFile(goldenPath),
+        );
+
+        // Final drain for late-arriving async exceptions
+        await tester.pump(const Duration(milliseconds: 200));
+        while (tester.takeException() != null) {}
       },
     );
   }
