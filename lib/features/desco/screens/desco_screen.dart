@@ -1494,19 +1494,32 @@ class _MeterSetupSheet extends ConsumerStatefulWidget {
 }
 
 class _MeterSetupSheetState extends ConsumerState<_MeterSetupSheet> {
-  final _meterController = TextEditingController();
-  final _accountController = TextEditingController();
+  final _inputController = TextEditingController();
   bool _isLoading = false;
+  String? _resolvedInfo;
 
   @override
   void dispose() {
-    _meterController.dispose();
-    _accountController.dispose();
+    _inputController.dispose();
     super.dispose();
+  }
+
+  /// Detect input type: 8 digits = account, 12 digits = meter (matches DESCO website logic)
+  String? _detectInputType(String input) {
+    final cleaned = input.trim();
+    if (cleaned.length == 8 && RegExp(r'^\d{8}$').hasMatch(cleaned)) {
+      return 'account';
+    }
+    if (cleaned.length == 12 && RegExp(r'^\d{12}$').hasMatch(cleaned)) {
+      return 'meter';
+    }
+    return null;
   }
 
   @override
   Widget build(BuildContext context) {
+    final inputType = _detectInputType(_inputController.text);
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -1572,21 +1585,46 @@ class _MeterSetupSheetState extends ConsumerState<_MeterSetupSheet> {
                 ),
                 const SizedBox(height: 20),
 
-                // Meter Number
+                // Single input — auto-detects account (8 digits) or meter (12 digits)
                 TextField(
-                  controller: _meterController,
+                  controller: _inputController,
                   style:
                       TextStyle(color: Colors.white.withValues(alpha: 0.9)),
+                  onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
-                    labelText: 'Meter Number',
+                    labelText: 'Account or meter number',
                     labelStyle: TextStyle(
                         color: Colors.white.withValues(alpha: 0.4)),
-                    hintText: 'e.g., 12345678',
+                    hintText: '8-digit account or 12-digit meter',
                     hintStyle: TextStyle(
                         color: Colors.white.withValues(alpha: 0.2)),
-                    prefixIcon: Icon(LucideIcons.hash,
+                    prefixIcon: Icon(
+                        inputType == 'account'
+                            ? LucideIcons.creditCard
+                            : LucideIcons.hash,
                         size: 18,
                         color: Colors.white.withValues(alpha: 0.3)),
+                    suffixIcon: inputType != null
+                        ? Padding(
+                            padding: const EdgeInsets.only(right: 12),
+                            child: Chip(
+                              label: Text(
+                                inputType == 'account' ? 'Account' : 'Meter',
+                                style: TextStyle(
+                                  color: AppColors.warning,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              backgroundColor:
+                                  AppColors.warning.withValues(alpha: 0.15),
+                              side: BorderSide(
+                                  color:
+                                      AppColors.warning.withValues(alpha: 0.3)),
+                              visualDensity: VisualDensity.compact,
+                            ),
+                          )
+                        : null,
                     filled: true,
                     fillColor: Colors.white.withValues(alpha: 0.05),
                     border: OutlineInputBorder(
@@ -1607,42 +1645,45 @@ class _MeterSetupSheetState extends ConsumerState<_MeterSetupSheet> {
                   ),
                   keyboardType: TextInputType.number,
                 ),
-                const SizedBox(height: 12),
-
-                // Account Number
-                TextField(
-                  controller: _accountController,
-                  style:
-                      TextStyle(color: Colors.white.withValues(alpha: 0.9)),
-                  decoration: InputDecoration(
-                    labelText: 'Account Number (optional)',
-                    labelStyle: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.4)),
-                    hintText: 'e.g., ACC-001',
-                    hintStyle: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.2)),
-                    prefixIcon: Icon(LucideIcons.creditCard,
-                        size: 18,
-                        color: Colors.white.withValues(alpha: 0.3)),
-                    filled: true,
-                    fillColor: Colors.white.withValues(alpha: 0.05),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                          color: Colors.white.withValues(alpha: 0.08)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                          color: Colors.white.withValues(alpha: 0.1)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                          color: AppColors.warning.withValues(alpha: 0.5)),
-                    ),
+                const SizedBox(height: 8),
+                Text(
+                  'Enter either your 8-digit account number or 12-digit meter number. '
+                  'The other will be resolved automatically.',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.3),
+                    fontSize: 11,
                   ),
                 ),
+
+                // Resolved info preview
+                if (_resolvedInfo != null) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: AppColors.success.withValues(alpha: 0.08),
+                      border: Border.all(
+                          color: AppColors.success.withValues(alpha: 0.2)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(LucideIcons.checkCircle,
+                            size: 16, color: AppColors.success),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _resolvedInfo!,
+                            style: TextStyle(
+                              color: AppColors.success,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 24),
 
                 // Submit
@@ -1659,7 +1700,7 @@ class _MeterSetupSheetState extends ConsumerState<_MeterSetupSheet> {
                           )
                         : const Icon(LucideIcons.check),
                     label:
-                        Text(_isLoading ? 'Saving...' : 'Save Settings'),
+                        Text(_isLoading ? 'Looking up...' : 'Setup meter'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.warning,
                       foregroundColor: Colors.black,
@@ -1677,29 +1718,45 @@ class _MeterSetupSheetState extends ConsumerState<_MeterSetupSheet> {
   }
 
   void _save() async {
-    if (_meterController.text.isEmpty) {
-      showErrorToast(context, 'Enter meter number');
+    final input = _inputController.text.trim();
+    final type = _detectInputType(input);
+
+    if (input.isEmpty) {
+      showErrorToast(context, 'Enter account or meter number');
+      return;
+    }
+    if (type == null) {
+      showErrorToast(context, 'Enter 8-digit account or 12-digit meter number');
       return;
     }
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _resolvedInfo = null;
+    });
     HapticService.buttonPress();
 
     try {
-      // First lookup the meter
+      // Auto-detect and lookup — API resolves the complementary number
       final info = await DescoService.lookupMeter(
-        inputMeterNo: _meterController.text.trim(),
-        inputAccountNo: _accountController.text.trim().isEmpty
-            ? null
-            : _accountController.text.trim(),
+        inputMeterNo: type == 'meter' ? input : null,
+        inputAccountNo: type == 'account' ? input : null,
       );
 
       if (info == null) {
         if (mounted) {
           setState(() => _isLoading = false);
-          showErrorToast(context, 'Meter not found');
+          showErrorToast(context, 'Account/meter not found');
         }
         return;
+      }
+
+      // Show resolved info briefly
+      if (mounted) {
+        setState(() {
+          _resolvedInfo =
+              'Found: Account ${info.accountNo} / Meter ${info.meterNo}';
+        });
       }
 
       // Setup the meter

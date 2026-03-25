@@ -35,7 +35,9 @@ class ChatbotService {
     }
   }
 
-  /// Start a new chat session with context
+  /// Start a new chat session with context.
+  ///
+  /// If [sheetData] is provided, it's injected as RAG context from Google Sheets.
   void startChat({
     required Member currentMember,
     required double balance,
@@ -43,6 +45,7 @@ class ChatbotService {
     required double mealRate,
     required double bazarTotal,
     required int memberCount,
+    String? sheetData,
   }) {
     if (!_isInitialized || _model == null) return;
 
@@ -53,6 +56,7 @@ class ChatbotService {
       mealRate: mealRate,
       bazarTotal: bazarTotal,
       memberCount: memberCount,
+      sheetData: sheetData,
     );
 
     _chat = _model!.startChat(
@@ -67,7 +71,7 @@ class ChatbotService {
     );
   }
 
-  /// Build system prompt with user context
+  /// Build system prompt with user context and optional sheet data (RAG)
   String _buildSystemPrompt({
     required Member member,
     required double balance,
@@ -75,9 +79,22 @@ class ChatbotService {
     required double mealRate,
     required double bazarTotal,
     required int memberCount,
+    String? sheetData,
   }) {
     final isPositive = balance >= 0;
     final balanceStatus = isPositive ? 'জমা আছে' : 'বাকি আছে';
+
+    final sheetSection = sheetData != null
+        ? '''
+
+GOOGLE SHEETS DATA (verified, trustworthy source):
+$sheetData
+
+Use this sheet data to answer detailed questions about daily entries,
+trends, who bought what, spending patterns, and historical comparisons.
+This data is synced from the official mess records.
+'''
+        : '';
 
     return '''
 You are a helpful mess (shared living) finance assistant named "Area51 AI".
@@ -92,7 +109,7 @@ CONTEXT (Current User):
   - Meal rate: ৳${mealRate.toStringAsFixed(1)}/meal
   - Bazar contribution: ৳${bazarTotal.toStringAsFixed(0)}
   - Total members: $memberCount
-
+$sheetSection
 RULES:
 1. Keep responses SHORT (2-3 sentences max)
 2. Use Bengali-English mix naturally (like Bangladeshi conversation)
@@ -100,7 +117,8 @@ RULES:
 4. Explain finances simply
 5. If balance is negative, explain why kindly
 6. Never make up numbers - use only the context provided
-7. If asked about something you don't know, say so
+7. If sheet data is available, reference specific dates and amounts
+8. If asked about something you don't know, say so
 
 EXAMPLES:
 User: কেন আমার টাকা কমে গেছে?

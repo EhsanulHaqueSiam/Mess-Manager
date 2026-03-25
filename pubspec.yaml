@@ -97,6 +97,11 @@ dependencies:
   home_widget: ^0.7.0            # Home screen widget support
   speech_to_text: ^7.3.0          # Voice entry for meals/bazar
   google_mlkit_text_recognition: ^0.15.0  # Receipt OCR scanner
+  url_launcher: ^6.3.2
+  googleapis: ^16.0.0
+  http: ^1.6.0
+  intl: ^0.20.2
+  shared_preferences: ^2.5.4
 
 dev_dependencies:
   flutter_test:

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mess_manager/core/services/chatbot_service.dart';
+import 'package:mess_manager/core/services/google_sheets_service.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
 import 'package:mess_manager/features/balance/providers/balance_provider.dart';
 import 'package:mess_manager/features/bazar/providers/bazar_provider.dart';
@@ -72,6 +73,14 @@ class ChatbotNotifier extends Notifier<ChatState> {
       final mealCount = (currentBalance?.totalMeals ?? 0.0).toInt();
       final bazarTotal = bazarByMember[currentMember.id] ?? 0.0;
 
+      // Fetch Google Sheets data for RAG context (non-blocking)
+      String? sheetData;
+      try {
+        sheetData = await GoogleSheetsService().readSheetDataForRAG();
+      } catch (_) {
+        // Sheet data is optional — continue without it
+      }
+
       chatService.startChat(
         currentMember: currentMember,
         balance: balance,
@@ -79,6 +88,7 @@ class ChatbotNotifier extends Notifier<ChatState> {
         mealRate: mealRate,
         bazarTotal: bazarTotal,
         memberCount: members.length,
+        sheetData: sheetData,
       );
     }
 

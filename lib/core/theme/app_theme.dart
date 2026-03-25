@@ -106,6 +106,7 @@ class AppColors {
   static const gradientDesco = [Color(0xFFCA8A04), Color(0xFFEAB308)]; // Yellow
   static const gradientRamadan = [Color(0xFF9333EA), Color(0xFFC084FC)]; // Purple
   static const gradientSettlement = [Color(0xFFE11D48), Color(0xFFF43F5E)]; // Rose
+  static const gradientSearch = [Color(0xFFEA580C), Color(0xFFF97316)]; // Orange
 
   // Soft colored card backgrounds (subtle tint on dark)
   static Color cardTint(Color accent) =>

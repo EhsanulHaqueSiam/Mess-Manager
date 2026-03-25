@@ -1039,6 +1039,8 @@ class DashboardScreen extends ConsumerWidget {
       ('Settlement', LucideIcons.receipt, AppColors.moneyNegative,
           AppRoutes.settlement),
       ('Duties', LucideIcons.clipboardList, AppColors.info, AppRoutes.duties),
+      ('Find Mess', LucideIcons.search, AppColors.accentWarm,
+          AppRoutes.messSearch),
       ('Info', LucideIcons.info, AppColors.info, AppRoutes.info),
     ];
 

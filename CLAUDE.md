@@ -57,8 +57,9 @@ Teal-based "Cosmic Bioluminescence" aesthetic:
 ## Android Build
 
 - **Kotlin 2.2** with reflection-based plugin registration in `MainActivity.kt` (bypasses Java/Kotlin interop issue)
-- **Gradle:** 4G heap, G1GC, parallel builds, caching enabled. Excludes `GeneratedPluginRegistrant.java` from javac.
+- **Gradle:** 2G heap, G1GC, 2 parallel workers, caching enabled. Excludes `GeneratedPluginRegistrant.java` from javac.
 - **Release:** R8 minification + proguard rules enabled
+- **Local builds:** Debug only (`flutter build apk --debug`). Release/obfuscated builds run on GitHub Actions CI to avoid local resource exhaustion.
 
 ## Firebase
 

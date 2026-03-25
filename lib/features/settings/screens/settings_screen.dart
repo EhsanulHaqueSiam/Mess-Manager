@@ -19,6 +19,8 @@ import 'package:mess_manager/core/services/backup_service.dart';
 import 'package:mess_manager/features/auth/providers/auth_provider.dart';
 import 'package:mess_manager/core/providers/role_provider.dart';
 import 'package:mess_manager/features/settings/providers/theme_color_provider.dart';
+import 'package:mess_manager/core/providers/google_sheets_provider.dart';
+import 'package:mess_manager/features/settings/widgets/google_sheets_sheet.dart';
 import 'package:flutter/services.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -220,8 +222,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
                 const Gap(20),
 
+                // ── Google Sheets Sync ──
+                _sectionLabel('Google Sheets sync', 13),
+                const Gap(8),
+                _buildGoogleSheetsTile(14),
+                const Gap(20),
+
                 // ── Privacy & Security ──
-                _sectionLabel('Privacy and security', 13),
+                _sectionLabel('Privacy and security', 15),
                 const Gap(8),
                 _buildPrivacyModeTile(14),
                 _buildBiometricLockTile(15),
@@ -510,6 +518,52 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   // ────────────────────────────────────────────────────────────────
+  // GOOGLE SHEETS SYNC
+  // ────────────────────────────────────────────────────────────────
+
+  Widget _buildGoogleSheetsTile(int index) {
+    final sheetsState = ref.watch(googleSheetsProvider);
+    final lastSyncText = sheetsState.lastSync != null
+        ? 'Last sync: ${_formatTime(sheetsState.lastSync!)}'
+        : 'Not synced yet';
+    final subtitle =
+        sheetsState.isEnabled ? lastSyncText : 'Sync data to Google Sheets';
+
+    return _buildGlassTile(
+      icon: LucideIcons.sheet,
+      title: 'Google Sheets',
+      subtitle: subtitle,
+      color: AppColors.success,
+      trailing: sheetsState.isSyncing
+          ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.accent,
+              ),
+            )
+          : sheetsState.isEnabled
+              ? const Icon(Icons.check_circle, color: AppColors.success, size: 18)
+              : null,
+      onTap: () {
+        HapticService.lightTap();
+        GoogleSheetsSheet.show(context);
+      },
+      index: index,
+    );
+  }
+
+  String _formatTime(DateTime dt) {
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+    if (diff.inMinutes < 1) return 'just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    return '${diff.inDays}d ago';
+  }
+
+  // ────────────────────────────────────────────────────────────────
   // GLASS TILE
   // ────────────────────────────────────────────────────────────────
 
@@ -520,6 +574,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     required Color color,
     required int index,
     VoidCallback? onTap,
+    Widget? trailing,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
@@ -572,7 +627,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ],
                     ),
                   ),
-                  Icon(
+                  trailing ?? Icon(
                     LucideIcons.chevronRight,
                     size: 16,
                     color: Colors.white.withValues(alpha: 0.2),

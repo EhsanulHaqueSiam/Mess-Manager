@@ -26,6 +26,8 @@ import 'package:mess_manager/features/auth/screens/profile_screen.dart';
 import 'package:mess_manager/features/notifications/screens/notification_settings_screen.dart';
 import 'package:mess_manager/features/notifications/screens/notification_history_screen.dart';
 import 'package:mess_manager/features/chatbot/screens/chatbot_screen.dart';
+import 'package:mess_manager/features/mess_search/screens/mess_search_screen.dart';
+import 'package:mess_manager/features/mess_search/screens/mess_ad_detail_screen.dart';
 import 'package:mess_manager/features/auth/screens/approval_dashboard_screen.dart';
 import 'package:mess_manager/features/auth/screens/pending_approval_screen.dart';
 import 'package:mess_manager/features/auth/providers/auth_provider.dart';
@@ -51,6 +53,7 @@ class AppRoutes {
   static const fixedExpenses = '/fixed-expenses';
   static const info = '/info';
   static const chatbot = '/chatbot';
+  static const messSearch = '/mess-search';
   static const notifications = '/notifications';
   static const monthSummary = '/month-summary';
 
@@ -148,39 +151,60 @@ GoRouter createAppRouter(WidgetRef ref) {
         builder: (context, state) => const PendingApprovalScreen(),
       ),
 
-      /// Main Shell with Bottom Navigation (only main tabs)
-      ShellRoute(
-        builder: (context, state, child) => MainShell(child: child),
-        routes: [
-          GoRoute(
-            path: AppRoutes.dashboard,
-            name: 'dashboard',
-            pageBuilder: (context, state) =>
-                const NoTransitionPage(child: DashboardScreen()),
+      /// Main Shell with Bottom Navigation — IndexedStack preserves tab state
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            MainShell(navigationShell: navigationShell),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.dashboard,
+                name: 'dashboard',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: DashboardScreen()),
+              ),
+            ],
           ),
-          GoRoute(
-            path: AppRoutes.bazar,
-            name: 'bazar',
-            pageBuilder: (context, state) =>
-                const NoTransitionPage(child: BazarScreen()),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.bazar,
+                name: 'bazar',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: BazarScreen()),
+              ),
+            ],
           ),
-          GoRoute(
-            path: AppRoutes.meals,
-            name: 'meals',
-            pageBuilder: (context, state) =>
-                const NoTransitionPage(child: MealsScreen()),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.meals,
+                name: 'meals',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: MealsScreen()),
+              ),
+            ],
           ),
-          GoRoute(
-            path: AppRoutes.balance,
-            name: 'balance',
-            pageBuilder: (context, state) =>
-                const NoTransitionPage(child: BalanceScreen()),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.balance,
+                name: 'balance',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: BalanceScreen()),
+              ),
+            ],
           ),
-          GoRoute(
-            path: AppRoutes.settings,
-            name: 'settings',
-            pageBuilder: (context, state) =>
-                const NoTransitionPage(child: SettingsScreen()),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.settings,
+                name: 'settings',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: SettingsScreen()),
+              ),
+            ],
           ),
         ],
       ),
@@ -250,6 +274,20 @@ GoRouter createAppRouter(WidgetRef ref) {
         path: AppRoutes.chatbot,
         name: 'chatbot',
         builder: (context, state) => const ChatbotScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.messSearch,
+        name: 'mess-search',
+        builder: (context, state) => const MessSearchScreen(),
+        routes: [
+          GoRoute(
+            path: ':adId',
+            name: 'mess-ad-detail',
+            builder: (context, state) => MessAdDetailScreen(
+              adId: state.pathParameters['adId']!,
+            ),
+          ),
+        ],
       ),
     ],
   );

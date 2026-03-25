@@ -13,40 +13,22 @@ import 'package:mess_manager/features/bazar/widgets/add_bazar_sheet.dart';
 import 'package:mess_manager/features/money/widgets/add_transaction_sheet.dart';
 
 /// Main Shell with Floating Glass Navigation Bar
+/// Uses StatefulNavigationShell for tab state preservation (IndexedStack).
 class MainShell extends ConsumerWidget {
-  final Widget child;
+  final StatefulNavigationShell navigationShell;
 
-  const MainShell({super.key, required this.child});
+  const MainShell({super.key, required this.navigationShell});
 
   int _calculateSelectedIndex(BuildContext context) {
-    final String location = GoRouterState.of(context).uri.path;
-    if (location.startsWith(AppRoutes.bazar)) return 1;
-    if (location.startsWith(AppRoutes.meals)) return 2;
-    if (location.startsWith(AppRoutes.balance)) return 3;
-    if (location.startsWith(AppRoutes.settings)) return 4;
-    return 0; // Dashboard
+    return navigationShell.currentIndex;
   }
 
   void _onItemTapped(BuildContext context, int index) {
     HapticService.navigation();
-
-    switch (index) {
-      case 0:
-        context.go(AppRoutes.dashboard);
-        break;
-      case 1:
-        context.go(AppRoutes.bazar);
-        break;
-      case 2:
-        context.go(AppRoutes.meals);
-        break;
-      case 3:
-        context.go(AppRoutes.balance);
-        break;
-      case 4:
-        context.go(AppRoutes.settings);
-        break;
-    }
+    navigationShell.goBranch(
+      index,
+      initialLocation: index == navigationShell.currentIndex,
+    );
   }
 
   static const _items = <_NavItemData>[
@@ -63,10 +45,7 @@ class MainShell extends ConsumerWidget {
 
     return Scaffold(
       extendBody: true,
-      body: child
-          .animate()
-          .fadeIn(duration: 200.ms, curve: Curves.easeOut)
-          .slideY(begin: 0.02, end: 0, duration: 200.ms, curve: Curves.easeOut),
+      body: navigationShell,
       floatingActionButton: _buildFAB(context, ref, selected),
       bottomNavigationBar: SafeArea(
         child: Padding(
@@ -173,18 +152,37 @@ class MainShell extends ConsumerWidget {
     required bool canBazar,
     required bool canTransaction,
   }) {
-    return FloatingActionButton(
-      heroTag: 'shell_speed_dial',
-      onPressed: () {
-        HapticService.buttonPress();
-        _showQuickActionsSheet(context,
-          canMeal: canMeal,
-          canBazar: canBazar,
-          canTransaction: canTransaction,
-        );
-      },
-      backgroundColor: AppColors.primary,
-      child: const Icon(LucideIcons.plus, size: 24),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: AppColors.gradientCosmic,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.accent.withValues(alpha: 0.35),
+            blurRadius: 16,
+            spreadRadius: -2,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: FloatingActionButton(
+        heroTag: 'shell_speed_dial',
+        onPressed: () {
+          HapticService.buttonPress();
+          _showQuickActionsSheet(context,
+            canMeal: canMeal,
+            canBazar: canBazar,
+            canTransaction: canTransaction,
+          );
+        },
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        child: const Icon(LucideIcons.plus, size: 26, color: Colors.white),
+      ),
     );
   }
 
@@ -197,47 +195,63 @@ class MainShell extends ConsumerWidget {
     showModalBottomSheet(
       context: parentContext,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-        decoration: const BoxDecoration(
-          color: Color(0xFF0D1520),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 36, height: 4,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(2),
+      builder: (ctx) => ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSpacing.radiusXl)),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0D1520).withValues(alpha: 0.95),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(AppSpacing.radiusXl),
               ),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
             ),
-            const SizedBox(height: 20),
-            Text('Quick add', style: AppTypography.headlineSmall.copyWith(
-              color: Colors.white.withValues(alpha: 0.9),
-            )),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                if (canMeal)
-                  _buildQuickAction(ctx, 'Meal', LucideIcons.utensils,
-                      AppColors.mealColor, () => _showAddMealSheet(parentContext)),
-                if (canBazar)
-                  _buildQuickAction(ctx, 'Bazar', LucideIcons.shoppingCart,
-                      AppColors.bazarColor, () => _showAddBazarSheet(parentContext)),
-                if (canTransaction)
-                  _buildQuickAction(ctx, 'Money', LucideIcons.banknote,
-                      AppColors.warning, () => _showAddMoneySheet(parentContext)),
-                _buildQuickAction(ctx, 'Duty', LucideIcons.clipboardList,
-                    AppColors.success, () {
-                  parentContext.push(AppRoutes.duties);
-                }),
+                // Gradient handle
+                Container(
+                  width: 36, height: 4,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(2),
+                    gradient: const LinearGradient(
+                      colors: [AppColors.accent, AppColors.accentAlt],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text('Quick actions', style: AppTypography.headlineSmall.copyWith(
+                  color: Colors.white.withValues(alpha: 0.9),
+                )),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    if (canMeal)
+                      _buildQuickAction(ctx, 'Meal', LucideIcons.utensils,
+                          AppColors.mealColor, () => _showAddMealSheet(parentContext)),
+                    if (canBazar)
+                      _buildQuickAction(ctx, 'Bazar', LucideIcons.shoppingCart,
+                          AppColors.bazarColor, () => _showAddBazarSheet(parentContext)),
+                    if (canTransaction)
+                      _buildQuickAction(ctx, 'Money', LucideIcons.banknote,
+                          AppColors.warning, () => _showAddMoneySheet(parentContext)),
+                    _buildQuickAction(ctx, 'Duty', LucideIcons.clipboardList,
+                        AppColors.success, () {
+                      parentContext.push(AppRoutes.duties);
+                    }),
+                    _buildQuickAction(ctx, 'AI Chat', LucideIcons.bot,
+                        AppColors.accent, () {
+                      parentContext.push(AppRoutes.chatbot);
+                    }),
+                  ],
+                ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -248,19 +262,26 @@ class MainShell extends ConsumerWidget {
     return GestureDetector(
       onTap: () {
         HapticService.lightTap();
-        Navigator.pop(ctx); // Close quick actions sheet
-        onTap(); // Open target using parent context
+        Navigator.pop(ctx);
+        onTap();
       },
       child: SizedBox(
         width: 72,
         child: Column(
           children: [
             Container(
-              width: 52, height: 52,
+              width: 54, height: 54,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(14),
-                color: color.withValues(alpha: 0.15),
-                border: Border.all(color: color.withValues(alpha: 0.3)),
+                borderRadius: BorderRadius.circular(16),
+                color: color.withValues(alpha: 0.12),
+                border: Border.all(color: color.withValues(alpha: 0.25)),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.15),
+                    blurRadius: 10,
+                    spreadRadius: -3,
+                  ),
+                ],
               ),
               child: Icon(icon, color: color, size: 22),
             ),
