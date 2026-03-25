@@ -11,6 +11,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mess_manager/core/testing/screen_registry.dart';
 
@@ -18,11 +19,22 @@ import '../helpers/test_app_wrapper.dart';
 import 'golden_test_helper.dart';
 
 void main() {
-  // Fonts are bundled in test/assets/fonts/ and GoogleFonts.allowRuntimeFetching
-  // is disabled via flutter_test_config.dart
+  setUpAll(() {
+    // Mock local_auth platform channel
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/local_auth'),
+      (MethodCall call) async {
+        if (call.method == 'getAvailableBiometrics') return <String>[];
+        if (call.method == 'isDeviceSupported') return false;
+        if (call.method == 'authenticate') return false;
+        return null;
+      },
+    );
+  });
 
-  // Screens that need platform plugins not available in test (local_auth, lottie, go_router context)
-  const _skipScreens = {'Settings', 'Pending Approval'};
+  // PendingApproval needs Lottie assets + GoRouter context (can't mock easily)
+  const _skipScreens = {'Pending Approval'};
 
   // Iterate over every registered screen and create a golden test.
   for (final screen in screenRegistry) {
