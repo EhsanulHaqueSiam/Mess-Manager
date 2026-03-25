@@ -10,20 +10,16 @@ Smart expense and meal tracking for shared living groups. Built with Flutter.
 ## Screenshots
 
 <p align="center">
-  <img src="screenshots/login.png" width="180" alt="Login" />
   <img src="screenshots/dashboard.png" width="180" alt="Dashboard" />
   <img src="screenshots/meals.png" width="180" alt="Meals" />
   <img src="screenshots/bazar.png" width="180" alt="Bazar" />
+  <img src="screenshots/balance.png" width="180" alt="Balance" />
 </p>
 <p align="center">
-  <img src="screenshots/balance.png" width="180" alt="Balance" />
   <img src="screenshots/analytics.png" width="180" alt="Analytics" />
   <img src="screenshots/settlement.png" width="180" alt="Settlement" />
-  <img src="screenshots/members.png" width="180" alt="Members" />
-</p>
-<p align="center">
   <img src="screenshots/duties.png" width="180" alt="Duties" />
-  <img src="screenshots/chatbot.png" width="180" alt="AI Chatbot" />
+  <img src="screenshots/settings.png" width="180" alt="Settings" />
 </p>
 
 ## Features
