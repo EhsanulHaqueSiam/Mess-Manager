@@ -273,7 +273,7 @@ class _MealsScreenState extends ConsumerState<MealsScreen>
             ),
           ),
         ],
-        labelColor: AppColors.mealColor,
+        labelColor: Colors.white,
         unselectedLabelColor: Colors.white.withValues(alpha: 0.4),
       ),
     ).animate().fadeIn(delay: 100.ms);

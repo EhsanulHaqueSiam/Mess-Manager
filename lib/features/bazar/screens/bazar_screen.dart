@@ -51,6 +51,7 @@ class _BazarScreenState extends ConsumerState<BazarScreen>
   /// Show export options sheet (CSV/Excel)
   void _showExportOptions(BuildContext context) {
     HapticService.lightTap();
+    try {
     final members = ref.read(membersProvider);
     final balances = ref.read(currentMonthBalancesProvider);
     final mealRate = ref.read(mealRateProvider);
@@ -183,6 +184,11 @@ class _BazarScreenState extends ConsumerState<BazarScreen>
         ),
       ),
     );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Export not available: $e'), backgroundColor: AppColors.error),
+      );
+    }
   }
 
   @override

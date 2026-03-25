@@ -419,7 +419,8 @@ class _MessSelectionScreenState extends ConsumerState<MessSelectionScreen> {
     HapticService.buttonPress();
     try {
       await ref.read(authProvider.notifier).joinMess(code);
-      if (mounted) context.go(AppRoutes.dashboard);
+      // Joining a mess requires super admin approval
+      if (mounted) context.go(AppRoutes.pendingApproval);
     } catch (e) {
       if (mounted) showErrorToast(context, 'Invalid invite code');
     }
@@ -434,41 +435,141 @@ class _MessSelectionScreenState extends ConsumerState<MessSelectionScreen> {
     final nameController = TextEditingController();
     final addressController = TextEditingController();
 
-    AppSheet.show(
+    showModalBottomSheet(
       context: context,
-      title: 'Create New Mess',
-      child: Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        child: Column(
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: 'Mess Name', hintText: 'e.g., Area51, Bachelor Pad'),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        final bottomInset = MediaQuery.of(sheetContext).viewInsets.bottom;
+        return Container(
+          padding: EdgeInsets.only(
+            left: AppSpacing.lg,
+            right: AppSpacing.lg,
+            top: AppSpacing.lg,
+            bottom: bottomInset + AppSpacing.lg,
+          ),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0D1520),
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppSpacing.radiusXl),
             ),
-            const Gap(12),
-            TextField(
-              controller: addressController,
-              decoration: const InputDecoration(labelText: 'Address', hintText: 'Dhaka, Bangladesh'),
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const Gap(16),
+                // Title
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(colors: [
+                          AppColors.primary.withValues(alpha: 0.25),
+                          AppColors.primary.withValues(alpha: 0.05),
+                        ]),
+                      ),
+                      child: const Icon(LucideIcons.home, color: AppColors.primary, size: 18),
+                    ),
+                    const Gap(10),
+                    Text(
+                      'Create New Mess',
+                      style: AppTypography.titleLarge.copyWith(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const Gap(20),
+                TextField(
+                  controller: nameController,
+                  autofocus: true,
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.9)),
+                  decoration: InputDecoration(
+                    labelText: 'Mess Name',
+                    labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.4)),
+                    hintText: 'e.g., Area51, Bachelor Pad',
+                    hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
+                    prefixIcon: Icon(LucideIcons.home, size: 18, color: Colors.white.withValues(alpha: 0.3)),
+                    filled: true,
+                    fillColor: Colors.white.withValues(alpha: 0.03),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                      borderSide: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
+                    ),
+                  ),
+                ),
+                const Gap(14),
+                TextField(
+                  controller: addressController,
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.9)),
+                  decoration: InputDecoration(
+                    labelText: 'Address',
+                    labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.4)),
+                    hintText: 'Dhaka, Bangladesh',
+                    hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
+                    prefixIcon: Icon(LucideIcons.mapPin, size: 18, color: Colors.white.withValues(alpha: 0.3)),
+                    filled: true,
+                    fillColor: Colors.white.withValues(alpha: 0.03),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                      borderSide: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
+                    ),
+                  ),
+                ),
+                const Gap(24),
+                AppPrimaryButton(
+                  text: 'Create Mess',
+                  onPressed: () async {
+                    if (nameController.text.trim().isEmpty) return;
+                    HapticService.success();
+                    await ref.read(authProvider.notifier).createMess(
+                          name: nameController.text.trim(),
+                          address: addressController.text.trim(),
+                        );
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      context.go(AppRoutes.dashboard);
+                    }
+                  },
+                ),
+                const Gap(12),
+              ],
             ),
-            const Gap(24),
-            AppPrimaryButton(
-              text: 'Create Mess',
-              onPressed: () async {
-                if (nameController.text.trim().isEmpty) return;
-                HapticService.success();
-                await ref.read(authProvider.notifier).createMess(
-                      name: nameController.text.trim(),
-                      address: addressController.text.trim(),
-                    );
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  context.go(AppRoutes.dashboard);
-                }
-              },
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

@@ -618,8 +618,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ],
                   ),
                 ),
-                child: Icon(
-                  isDarkMode ? LucideIcons.moon : LucideIcons.sun,
+                child: const Icon(
+                  LucideIcons.moon,
                   color: AppColors.primary,
                   size: 18,
                 ),
@@ -631,36 +631,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
               ),
               subtitle: Text(
-                isDarkMode ? 'Enabled' : 'Disabled',
+                'Always on — Cosmic Bioluminescence',
                 style: AppTypography.bodySmall.copyWith(
                   color: Colors.white.withValues(alpha: 0.35),
                 ),
               ),
-              trailing: ThemeSwitcher(
-                clipper: const ThemeSwitcherCircleClipper(),
-                builder: (ctx) {
-                  return Switch.adaptive(
-                    value: isDarkMode,
-                    onChanged: (_) {
-                      HapticService.toggle();
-                      final themeSwitcher = ThemeSwitcher.of(ctx);
-                      final adaptiveTheme = AdaptiveTheme.of(context);
-                      final newTheme = isDarkMode
-                          ? adaptiveTheme.lightTheme
-                          : adaptiveTheme.darkTheme;
-                      themeSwitcher.changeTheme(theme: newTheme);
-                      adaptiveTheme.toggleThemeMode();
-                    },
-                    activeTrackColor:
-                        AppColors.primary.withValues(alpha: 0.5),
-                    activeThumbColor: AppColors.primary,
-                  );
-                },
+              trailing: Switch.adaptive(
+                value: true,
+                onChanged: null, // Locked to dark
+                activeTrackColor:
+                    AppColors.primary.withValues(alpha: 0.5),
+                activeThumbColor: AppColors.primary,
               ),
-              onTap: () {
-                HapticService.toggle();
-                AdaptiveTheme.of(context).toggleThemeMode();
-              },
             ),
           ),
         ),
@@ -1741,9 +1723,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ref
                             .read(themeColorProvider.notifier)
                             .setColor(option);
+                        // Rebuild AdaptiveTheme with new seed color
+                        final newTheme = AppTheme.buildDarkTheme(
+                          seedColor: option.effectiveColor,
+                        );
+                        AdaptiveTheme.of(context).setTheme(
+                          light: newTheme,
+                          dark: newTheme,
+                        );
                         Navigator.pop(ctx);
                         showSuccessToast(context,
-                            'Theme color changed! Restart app for full effect.');
+                            'Theme color updated');
                       },
                       child: AnimatedContainer(
                         duration:

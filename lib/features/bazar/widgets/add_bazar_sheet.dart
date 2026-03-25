@@ -142,15 +142,16 @@ class _AddBazarSheetState extends ConsumerState<AddBazarSheet> {
 
     _selectedPayerId ??= currentId;
 
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     return Container(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         AppSpacing.lg,
         AppSpacing.md,
         AppSpacing.lg,
-        AppSpacing.lg,
+        AppSpacing.lg + bottomInset,
       ),
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.88,
+        maxHeight: MediaQuery.of(context).size.height * 0.92,
       ),
       decoration: BoxDecoration(
         color: context.surfaceColor,

@@ -125,7 +125,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.05),
                   const Gap(4),
                   Text(
-                    'Join your mess community',
+                    'Create your free account',
                     style: AppTypography.bodyMedium.copyWith(
                       color: Colors.white.withValues(alpha: 0.4),
                     ),
@@ -573,7 +573,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       _errorMessage = null;
     });
 
-    // Use authProvider to create pending approval request
     final success = await ref
         .read(authProvider.notifier)
         .signUp(
@@ -589,8 +588,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
     if (success && mounted) {
       HapticService.success();
-      // Redirect to pending approval screen instead of direct access
-      context.go(AppRoutes.pendingApproval);
+      // Go to mess selection — signup is free, joining a mess needs approval
+      context.go(AppRoutes.messSelection);
     } else if (mounted) {
       HapticService.error();
       setState(() => _errorMessage = 'Signup failed. Please try again.');

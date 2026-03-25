@@ -106,7 +106,6 @@ class TestModeSwitcher extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      isScrollControlled: true,
       builder: (sheetContext) => _RoleSwitcherSheet(ref: ref),
     );
   }

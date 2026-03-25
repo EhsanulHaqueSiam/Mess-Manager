@@ -228,14 +228,14 @@ class _PendingApprovalScreenState extends ConsumerState<PendingApprovalScreen> {
     switch (_currentStatus) {
       case ApprovalStatus.rejected:
         description =
-            'Your request to join has been declined. Please contact the mess admin for more information.';
+            'Your request to join this mess has been declined. Please contact the mess super admin.';
         break;
       case ApprovalStatus.approved:
-        description = 'Your account has been approved! Redirecting...';
+        description = 'You\'ve been approved! Redirecting to your mess...';
         break;
       default:
         description =
-            'Your signup request is being reviewed by the mess admin. You\'ll be notified once approved.';
+            'Your request to join the mess is being reviewed by the super admin. You\'ll get access once approved.';
     }
 
     return Text(

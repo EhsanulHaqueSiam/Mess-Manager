@@ -1467,7 +1467,12 @@ class _DescoScreenState extends ConsumerState<DescoScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => const _MeterSetupSheet(),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: const _MeterSetupSheet(),
+      ),
     );
   }
 
@@ -1502,34 +1507,21 @@ class _MeterSetupSheetState extends ConsumerState<_MeterSetupSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-          ),
-          decoration: BoxDecoration(
-            color: const Color(0xFF0D1520).withValues(alpha: 0.95),
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(24)),
-            border: Border(
-              top: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.08), width: 1),
-              left: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.05), width: 1),
-              right: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.05), width: 1),
-            ),
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0D1520),
+        borderRadius:
+            const BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border(
+          top: BorderSide(
+              color: Colors.white.withValues(alpha: 0.08), width: 1),
+        ),
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
               children: [
                 // Gradient handle bar
                 Center(
@@ -1589,15 +1581,23 @@ class _MeterSetupSheetState extends ConsumerState<_MeterSetupSheet> {
                     labelText: 'Meter Number',
                     labelStyle: TextStyle(
                         color: Colors.white.withValues(alpha: 0.4)),
+                    hintText: 'e.g., 12345678',
+                    hintStyle: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.2)),
                     prefixIcon: Icon(LucideIcons.hash,
                         size: 18,
                         color: Colors.white.withValues(alpha: 0.3)),
                     filled: true,
-                    fillColor: Colors.white.withValues(alpha: 0.04),
-                    enabledBorder: OutlineInputBorder(
+                    fillColor: Colors.white.withValues(alpha: 0.05),
+                    border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(
                           color: Colors.white.withValues(alpha: 0.08)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.1)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -1618,15 +1618,23 @@ class _MeterSetupSheetState extends ConsumerState<_MeterSetupSheet> {
                     labelText: 'Account Number (optional)',
                     labelStyle: TextStyle(
                         color: Colors.white.withValues(alpha: 0.4)),
+                    hintText: 'e.g., ACC-001',
+                    hintStyle: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.2)),
                     prefixIcon: Icon(LucideIcons.creditCard,
                         size: 18,
                         color: Colors.white.withValues(alpha: 0.3)),
                     filled: true,
-                    fillColor: Colors.white.withValues(alpha: 0.04),
-                    enabledBorder: OutlineInputBorder(
+                    fillColor: Colors.white.withValues(alpha: 0.05),
+                    border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(
                           color: Colors.white.withValues(alpha: 0.08)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.1)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -1665,8 +1673,6 @@ class _MeterSetupSheetState extends ConsumerState<_MeterSetupSheet> {
               ],
             ),
           ),
-        ),
-      ),
     );
   }
 

@@ -147,42 +147,30 @@ class Area51App extends ConsumerWidget {
     // Create router with auth awareness
     final router = createAppRouter(ref);
 
-    // Determine initial theme for animated_theme_switcher
-    final platformBrightness =
-        WidgetsBinding.instance.platformDispatcher.platformBrightness;
-    final isDark =
-        savedThemeMode == AdaptiveThemeMode.dark ||
-        savedThemeMode == null && platformBrightness == Brightness.dark ||
-        (savedThemeMode == AdaptiveThemeMode.system &&
-            platformBrightness == Brightness.dark);
-
-    // Use DynamicColorBuilder for Android 12+ Material You support
+    // Dark-only — "Cosmic Bioluminescence" requires dark backgrounds.
+    // AdaptiveTheme still manages the ThemeData so seed color changes work.
     return DynamicColorBuilder(
       builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
-        // Build themes using dynamic colors if available and selected, otherwise use user seed color
-        final lightTheme = AppTheme.buildLightTheme(
-          dynamicColorScheme: useSystemColors ? lightDynamic : null,
-          seedColor: seedColor,
-        );
         final darkTheme = AppTheme.buildDarkTheme(
           dynamicColorScheme: useSystemColors ? darkDynamic : null,
           seedColor: seedColor,
         );
 
-        // Wrap with ThemeProvider for animated theme switching
         return ThemeProvider(
-          initTheme: isDark ? darkTheme : lightTheme,
+          initTheme: darkTheme,
           builder: (context, theme) {
             return AdaptiveTheme(
-              light: lightTheme,
+              light: darkTheme,
               dark: darkTheme,
-              initial: savedThemeMode ?? AdaptiveThemeMode.system,
+              initial: AdaptiveThemeMode.dark,
               builder: (adaptiveLight, adaptiveDark) => MaterialApp.router(
                 title: 'Area51 - Mess Manager',
                 debugShowCheckedModeBanner: false,
-                theme: theme, // Use theme from ThemeProvider for animations
+                // Use adaptiveDark so AdaptiveTheme color changes propagate
+                theme: adaptiveDark ?? darkTheme,
+                darkTheme: adaptiveDark ?? darkTheme,
+                themeMode: ThemeMode.dark,
                 routerConfig: router,
-                // Performance optimizations
                 scrollBehavior: SmoothScrollBehavior(),
               ),
             );

@@ -7,7 +7,6 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/router/app_router.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
-import 'package:mess_manager/core/widgets/speed_dial_fab.dart';
 import 'package:mess_manager/core/providers/role_provider.dart';
 import 'package:mess_manager/features/meals/widgets/add_meal_sheet.dart';
 import 'package:mess_manager/features/bazar/widgets/add_bazar_sheet.dart';
@@ -168,44 +167,111 @@ class MainShell extends ConsumerWidget {
     }
   }
 
-  Widget? _buildSpeedDial(
+  Widget _buildSpeedDial(
     BuildContext context, {
     required bool canMeal,
     required bool canBazar,
     required bool canTransaction,
   }) {
-    final items = <SpeedDialItem>[
-      SpeedDialItem(
-        label: 'Add Duty',
-        icon: LucideIcons.clipboardList,
-        color: AppColors.success,
-        onPressed: () => context.push(AppRoutes.duties),
-      ),
-      if (canTransaction)
-        SpeedDialItem(
-          label: 'Add Money',
-          icon: LucideIcons.banknote,
-          color: AppColors.warning,
-          onPressed: () => _showAddMoneySheet(context),
-        ),
-      if (canBazar)
-        SpeedDialItem(
-          label: 'Add Bazar',
-          icon: LucideIcons.shoppingCart,
-          color: AppColors.bazarColor,
-          onPressed: () => _showAddBazarSheet(context),
-        ),
-      if (canMeal)
-        SpeedDialItem(
-          label: 'Add Meal',
-          icon: LucideIcons.utensils,
-          color: AppColors.mealColor,
-          onPressed: () => _showAddMealSheet(context),
-        ),
-    ];
+    return FloatingActionButton(
+      heroTag: 'shell_speed_dial',
+      onPressed: () {
+        HapticService.buttonPress();
+        _showQuickActionsSheet(context,
+          canMeal: canMeal,
+          canBazar: canBazar,
+          canTransaction: canTransaction,
+        );
+      },
+      backgroundColor: AppColors.primary,
+      child: const Icon(LucideIcons.plus, size: 24),
+    );
+  }
 
-    if (items.length <= 1) return null;
-    return SpeedDialFAB(items: items);
+  void _showQuickActionsSheet(
+    BuildContext parentContext, {
+    required bool canMeal,
+    required bool canBazar,
+    required bool canTransaction,
+  }) {
+    showModalBottomSheet(
+      context: parentContext,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+        decoration: const BoxDecoration(
+          color: Color(0xFF0D1520),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 36, height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text('Quick add', style: AppTypography.headlineSmall.copyWith(
+              color: Colors.white.withValues(alpha: 0.9),
+            )),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                if (canMeal)
+                  _buildQuickAction(ctx, 'Meal', LucideIcons.utensils,
+                      AppColors.mealColor, () => _showAddMealSheet(parentContext)),
+                if (canBazar)
+                  _buildQuickAction(ctx, 'Bazar', LucideIcons.shoppingCart,
+                      AppColors.bazarColor, () => _showAddBazarSheet(parentContext)),
+                if (canTransaction)
+                  _buildQuickAction(ctx, 'Money', LucideIcons.banknote,
+                      AppColors.warning, () => _showAddMoneySheet(parentContext)),
+                _buildQuickAction(ctx, 'Duty', LucideIcons.clipboardList,
+                    AppColors.success, () {
+                  parentContext.push(AppRoutes.duties);
+                }),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickAction(BuildContext ctx, String label, IconData icon,
+      Color color, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: () {
+        HapticService.lightTap();
+        Navigator.pop(ctx); // Close quick actions sheet
+        onTap(); // Open target using parent context
+      },
+      child: SizedBox(
+        width: 72,
+        child: Column(
+          children: [
+            Container(
+              width: 52, height: 52,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                color: color.withValues(alpha: 0.15),
+                border: Border.all(color: color.withValues(alpha: 0.3)),
+              ),
+              child: Icon(icon, color: color, size: 22),
+            ),
+            const SizedBox(height: 6),
+            Text(label, style: AppTypography.labelSmall.copyWith(
+              color: Colors.white.withValues(alpha: 0.6),
+            )),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildSingleFAB(

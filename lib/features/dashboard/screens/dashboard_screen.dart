@@ -210,7 +210,12 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   Widget _buildProfileOrb(BuildContext context) {
-    return Container(
+    return GestureDetector(
+      onTap: () {
+        HapticService.lightTap();
+        context.push(AppRoutes.profile);
+      },
+      child: Container(
       padding: const EdgeInsets.all(2.5),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
@@ -265,7 +270,8 @@ class DashboardScreen extends ConsumerWidget {
             ),
             child: child,
           ),
-        );
+        ),
+    );
   }
 
   // ──────────────────── Month Context ────────────────────

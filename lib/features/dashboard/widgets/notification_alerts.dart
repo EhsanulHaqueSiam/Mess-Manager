@@ -51,15 +51,38 @@ Color getAlertColor(AlertType type) {
   }
 }
 
-/// Notification Alerts Area Widget
-class NotificationAlertsArea extends StatelessWidget {
+/// Notification Alerts Area Widget — swipe to dismiss, clear all
+class NotificationAlertsArea extends StatefulWidget {
   final List<DashboardAlert> alerts;
 
   const NotificationAlertsArea({super.key, required this.alerts});
 
   @override
+  State<NotificationAlertsArea> createState() => _NotificationAlertsAreaState();
+}
+
+class _NotificationAlertsAreaState extends State<NotificationAlertsArea> {
+  late List<DashboardAlert> _visibleAlerts;
+
+  @override
+  void initState() {
+    super.initState();
+    _visibleAlerts = List.from(widget.alerts);
+  }
+
+  void _dismissAlert(String id) {
+    HapticService.lightTap();
+    setState(() => _visibleAlerts.removeWhere((a) => a.id == id));
+  }
+
+  void _clearAll() {
+    HapticService.itemDeleted();
+    setState(() => _visibleAlerts.clear());
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (alerts.isEmpty) return const SizedBox.shrink();
+    if (_visibleAlerts.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,17 +109,27 @@ class NotificationAlertsArea extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                '${alerts.length}',
+                '${_visibleAlerts.length}',
                 style: AppTypography.labelSmall.copyWith(
                   color: AppColors.warning,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ),
+            const Spacer(),
+            GestureDetector(
+              onTap: _clearAll,
+              child: Text(
+                'Clear all',
+                style: AppTypography.labelSmall.copyWith(
+                  color: Colors.white.withValues(alpha: 0.3),
+                ),
+              ),
+            ),
           ],
         ),
         const Gap(AppSpacing.sm),
-        ...alerts.asMap().entries.map((entry) {
+        ..._visibleAlerts.asMap().entries.map((entry) {
           return _buildAlertCard(context, entry.value, entry.key);
         }),
       ],
@@ -106,7 +139,21 @@ class NotificationAlertsArea extends StatelessWidget {
   Widget _buildAlertCard(BuildContext context, DashboardAlert alert, int index) {
     final color = getAlertColor(alert.type);
 
-    return Container(
+    return Dismissible(
+      key: Key(alert.id),
+      direction: DismissDirection.endToStart,
+      onDismissed: (_) => _dismissAlert(alert.id),
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+        decoration: BoxDecoration(
+          color: AppColors.error.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        ),
+        child: const Icon(LucideIcons.trash2, color: AppColors.error, size: 20),
+      ),
+      child: Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
@@ -207,6 +254,7 @@ class NotificationAlertsArea extends StatelessWidget {
           ),
         ),
       ),
+    ),
     ).animate(delay: (80 * index).ms).fadeIn().slideX(begin: 0.05);
   }
 

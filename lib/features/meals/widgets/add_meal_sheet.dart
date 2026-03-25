@@ -94,12 +94,13 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet>
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     return Container(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         AppSpacing.lg,
         AppSpacing.md,
         AppSpacing.lg,
-        AppSpacing.lg,
+        AppSpacing.lg + bottomInset,
       ),
       decoration: BoxDecoration(
         color: context.surfaceColor,

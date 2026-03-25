@@ -567,19 +567,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _errorMessage = null;
     });
 
-    final result = await AuthService.signInWithEmail(
+    final success = await ref.read(authProvider.notifier).signIn(
       email: _emailController.text.trim(),
       password: _passwordController.text,
     );
 
     setState(() => _isLoading = false);
 
-    if (result.isSuccess && mounted) {
+    if (success && mounted) {
       HapticService.success();
       context.go(AppRoutes.messSelection);
-    } else if (mounted && result.error != null) {
+    } else if (mounted) {
       HapticService.error();
-      setState(() => _errorMessage = result.error);
+      setState(() => _errorMessage = 'Invalid email or password');
     }
   }
 
