@@ -73,6 +73,7 @@ dependencies:
   printing: ^5.13.0           # Print/Share PDF
   csv: ^6.0.0                 # CSV export
   path_provider: ^2.1.5       # File paths
+  path: ^1.9.0                # Path manipulation
   share_plus: ^12.0.1         # Share files
   flutter_local_notifications: ^19.5.0
   timezone: ^0.10.1
@@ -82,8 +83,7 @@ dependencies:
   dynamic_color: ^1.8.1
   adaptive_theme: ^3.7.2
   animated_theme_switcher: ^2.0.10
-  isar_plus: ^1.2.0
-  isar_plus_flutter_libs: ^1.2.0
+  sqflite: ^2.4.2
   syncfusion_flutter_xlsio: ^32.1.21
   file_picker: ^10.3.8
   timeago: ^3.7.1

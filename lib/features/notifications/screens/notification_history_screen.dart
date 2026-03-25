@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -5,10 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:isar_plus/isar_plus.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mess_manager/core/database/isar_service.dart';
-import 'package:mess_manager/core/database/collections/app_notification_collection.dart';
 import 'package:mess_manager/core/models/app_notification.dart';
 import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/widgets/app_components.dart';
@@ -31,20 +30,20 @@ class _NotificationHistoryScreenState
   @override
   void initState() {
     super.initState();
-    // Watch AppNotificationCollection and map to AppNotification model
-    _notificationsStream = IsarService.instance.appNotificationCollections
-        .where()
-        .watch(fireImmediately: true)
-        .map((event) {
-          final list = event.map((c) => c.toModel()).toList();
-          list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-          return list;
-        });
+    // Seed the stream with current data, then listen for mutations
+    _notificationsStream = _buildNotificationsStream();
 
     // Mark all as read on open
     WidgetsBinding.instance.addPostFrameCallback((_) {
       IsarService.markAllNotificationsAsRead();
     });
+  }
+
+  Stream<List<AppNotification>> _buildNotificationsStream() async* {
+    // Emit current state immediately
+    yield IsarService.getAllNotifications();
+    // Then forward all future changes
+    yield* IsarService.watchNotifications();
   }
 
   @override

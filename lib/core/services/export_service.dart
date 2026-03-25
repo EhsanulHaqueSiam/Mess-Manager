@@ -282,7 +282,7 @@ class ExportService {
       ]);
     }
 
-    return const CsvEncoder().convert(rows);
+    return const ListToCsvConverter().convert(rows);
   }
 
   /// Save CSV to file

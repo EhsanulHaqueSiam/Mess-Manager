@@ -31,11 +31,11 @@ class AutoMonthCloseService {
       autoMonthCloseTask,
       frequency: const Duration(hours: 24),
       constraints: Constraints(
-        networkType: NetworkType.notRequired,
+        networkType: NetworkType.not_required,
         requiresBatteryNotLow: false,
         requiresCharging: false,
       ),
-      existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
+      existingWorkPolicy: ExistingWorkPolicy.keep,
     );
 
     _isInitialized = true;
@@ -101,10 +101,10 @@ class AutoMonthCloseService {
     ];
 
     await plugin.show(
-      id: 1001,
-      title: '📅 Month Closed',
-      body: '${monthNames[month]} $year has been automatically closed. Review the settlement.',
-      notificationDetails: details,
+      1001,
+      '📅 Month Closed',
+      '${monthNames[month]} $year has been automatically closed. Review the settlement.',
+      details,
     );
   }
 }

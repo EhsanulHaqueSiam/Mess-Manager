@@ -13,7 +13,7 @@ import 'package:mess_manager/core/theme/app_theme.dart';
 import 'package:mess_manager/core/router/app_router.dart';
 import 'package:mess_manager/core/services/haptic_service.dart';
 import 'package:mess_manager/core/database/isar_service.dart';
-import 'package:mess_manager/core/database/collections/pending_approval_collection.dart';
+import 'package:mess_manager/core/models/pending_approval.dart';
 import 'package:mess_manager/features/auth/providers/auth_provider.dart';
 
 /// Pending Approval Screen - Cosmic Bioluminescence Design

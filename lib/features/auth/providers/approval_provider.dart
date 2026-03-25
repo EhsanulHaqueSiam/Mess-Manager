@@ -2,10 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mess_manager/core/models/member.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
 import 'package:mess_manager/core/database/isar_service.dart';
-import 'package:mess_manager/core/database/collections/pending_approval_collection.dart';
+import 'package:mess_manager/core/models/pending_approval.dart';
 
 // Re-export for convenience
-export 'package:mess_manager/core/database/collections/pending_approval_collection.dart'
+export 'package:mess_manager/core/models/pending_approval.dart'
     show PendingApproval, ApprovalStatus;
 
 /// Approval state

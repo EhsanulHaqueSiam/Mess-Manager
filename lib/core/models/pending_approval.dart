@@ -1,78 +1,7 @@
-import 'package:isar_plus/isar_plus.dart';
-import '../../models/member.dart';
-
-part 'pending_approval_collection.g.dart';
+import 'member.dart';
 
 /// Approval status enum
 enum ApprovalStatus { pending, approved, rejected }
-
-/// Isar collection for Pending Approval requests
-@collection
-class PendingApprovalCollection {
-  /// Auto-incrementing ID - Isar assigns this automatically
-  late int id;
-
-  @Index(unique: true)
-  late String approvalId;
-
-  late String name;
-  late String email;
-  String? phone;
-  String? inviteCode;
-
-  late DateTime requestedAt;
-
-  /// Role stored as int (enum index)
-  late int requestedRoleIndex;
-
-  String? notes;
-
-  /// Status stored as int (enum index)
-  late int statusIndex;
-
-  DateTime? reviewedAt;
-  String? reviewedBy;
-  String? rejectionReason;
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Model Converters
-  // ─────────────────────────────────────────────────────────────────────────
-
-  /// Convert to PendingApproval model
-  PendingApproval toModel() {
-    return PendingApproval(
-      id: approvalId,
-      name: name,
-      email: email,
-      phone: phone,
-      inviteCode: inviteCode,
-      requestedAt: requestedAt,
-      requestedRole: MemberRole.values[requestedRoleIndex],
-      notes: notes,
-      status: ApprovalStatus.values[statusIndex],
-      reviewedAt: reviewedAt,
-      reviewedBy: reviewedBy,
-      rejectionReason: rejectionReason,
-    );
-  }
-
-  /// Create from PendingApproval model
-  static PendingApprovalCollection fromModel(PendingApproval approval) {
-    return PendingApprovalCollection()
-      ..approvalId = approval.id
-      ..name = approval.name
-      ..email = approval.email
-      ..phone = approval.phone
-      ..inviteCode = approval.inviteCode
-      ..requestedAt = approval.requestedAt
-      ..requestedRoleIndex = approval.requestedRole.index
-      ..notes = approval.notes
-      ..statusIndex = approval.status.index
-      ..reviewedAt = approval.reviewedAt
-      ..reviewedBy = approval.reviewedBy
-      ..rejectionReason = approval.rejectionReason;
-  }
-}
 
 /// Pending member approval request model
 class PendingApproval {

@@ -33,7 +33,7 @@ class MainActivity : FlutterActivity() {
             "es.antonborri.home_widget.HomeWidgetPlugin",
             "io.flutter.plugins.imagepicker.ImagePickerPlugin",
             "dev.flutter.plugins.integration_test.IntegrationTestPlugin",
-            "dev.isar.isar_plus_flutter_libs.IsarPlusFlutterLibsPlugin",
+
             "io.flutter.plugins.localauth.LocalAuthPlugin",
             "dev.steenbakker.mobile_scanner.MobileScannerPlugin",
             "dev.fluttercommunity.plus.packageinfo.PackageInfoPlugin",
