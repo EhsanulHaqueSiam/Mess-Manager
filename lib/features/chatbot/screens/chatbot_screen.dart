@@ -189,6 +189,11 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
       ),
       child: Row(
         children: [
+          IconButton(
+            icon: Icon(LucideIcons.arrowLeft, color: Colors.white.withValues(alpha: 0.9)),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          const Gap(4),
           // Gradient halo icon circle
           Container(
             padding: const EdgeInsets.all(10),

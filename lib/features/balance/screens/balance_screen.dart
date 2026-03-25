@@ -55,9 +55,7 @@ class BalanceScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-            )
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .scaleXY(begin: 0.85, end: 1.15, duration: 6.seconds),
+            ),
           ),
           // Violet accent orb
           Positioned(
@@ -75,9 +73,7 @@ class BalanceScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-            )
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .scaleXY(begin: 0.9, end: 1.1, duration: 7.seconds),
+            ),
           ),
 
           // ── Content ──
@@ -292,9 +288,7 @@ class BalanceScreen extends ConsumerWidget {
                   ),
                 ),
                 child: const Icon(LucideIcons.calculator, color: Colors.white, size: 24),
-              )
-                  .animate(onPlay: (c) => c.repeat(reverse: true))
-                  .scaleXY(begin: 1.0, end: 1.06, duration: 3.seconds),
+              ),
               const Gap(16),
               Expanded(
                 child: Column(

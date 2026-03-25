@@ -71,12 +71,10 @@ class SettlementScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-            )
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .scaleXY(begin: 1.0, end: 1.15, duration: 4.seconds),
+            ),
           ),
 
-          // Breathing accent orb (bottom-left) - violet
+          // Accent orb (bottom-left)
           Positioned(
             bottom: 120,
             left: -40,
@@ -92,9 +90,7 @@ class SettlementScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-            )
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .scaleXY(begin: 0.9, end: 1.1, duration: 5.seconds),
+            ),
           ),
 
           // === Main Content ===
@@ -108,6 +104,11 @@ class SettlementScreen extends ConsumerWidget {
                     children: [
                       Row(
                         children: [
+                          IconButton(
+                            icon: Icon(LucideIcons.arrowLeft, color: Colors.white.withValues(alpha: 0.9)),
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                          const Gap(4),
                           // Gradient icon halo
                           Container(
                             width: 42,

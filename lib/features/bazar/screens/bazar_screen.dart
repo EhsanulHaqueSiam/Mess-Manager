@@ -233,9 +233,7 @@ class _BazarScreenState extends ConsumerState<BazarScreen>
                   ],
                 ),
               ),
-            )
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .scaleXY(begin: 1.0, end: 1.15, duration: 4.seconds),
+            ),
           ),
 
           // Secondary teal orb
@@ -254,9 +252,7 @@ class _BazarScreenState extends ConsumerState<BazarScreen>
                   ],
                 ),
               ),
-            )
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .scaleXY(begin: 0.9, end: 1.1, duration: 5.seconds),
+            ),
           ),
 
           // === Main Content ===

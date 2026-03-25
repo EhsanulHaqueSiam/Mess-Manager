@@ -76,12 +76,10 @@ class AnalyticsScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-            )
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .scaleXY(begin: 0.8, end: 1.2, duration: 4000.ms),
+            ),
           ),
 
-          // Breathing accent orb - bottom left
+          // Accent orb - bottom left
           Positioned(
             bottom: 100,
             left: -60,
@@ -97,9 +95,7 @@ class AnalyticsScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-            )
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .scaleXY(begin: 1.0, end: 1.3, duration: 5000.ms),
+            ),
           ),
 
           // Main content
@@ -113,6 +109,11 @@ class AnalyticsScreen extends ConsumerWidget {
                     // Custom header row
                     Row(
                       children: [
+                        IconButton(
+                          icon: Icon(LucideIcons.arrowLeft, color: Colors.white.withValues(alpha: 0.9)),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                        const Gap(4),
                         // Gradient halo icon
                         Container(
                           width: 40,

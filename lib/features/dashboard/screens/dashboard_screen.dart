@@ -176,13 +176,8 @@ class DashboardScreen extends ConsumerWidget {
                 ),
               )
                   .animate()
-                  .fadeIn(duration: 600.ms)
-                  .slideX(begin: -0.05)
-                  .then()
-                  .shimmer(
-                    duration: 3.seconds,
-                    color: AppColors.accentAlt.withValues(alpha: 0.3),
-                  ),
+                  .fadeIn(duration: 300.ms)
+                  .slideX(begin: -0.03),
               const Gap(4),
               Text(
                 'Area51 Mess',
@@ -193,8 +188,8 @@ class DashboardScreen extends ConsumerWidget {
                 ),
               )
                   .animate()
-                  .fadeIn(delay: 100.ms, duration: 600.ms)
-                  .slideX(begin: -0.03),
+                  .fadeIn(delay: 50.ms, duration: 300.ms)
+                  .slideX(begin: -0.02),
             ],
           ),
         ),
@@ -250,27 +245,7 @@ class DashboardScreen extends ConsumerWidget {
     )
         .animate()
         .scale(
-            delay: 300.ms, duration: 500.ms, curve: Curves.elasticOut)
-        .then()
-        .animate(onPlay: (c) => c.repeat(reverse: true))
-        .custom(
-          duration: 3.seconds,
-          curve: Curves.easeInOut,
-          builder: (context, value, child) => Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primaryLight
-                      .withValues(alpha: 0.2 + value * 0.2),
-                  blurRadius: 12 + value * 8,
-                  spreadRadius: -2,
-                ),
-              ],
-            ),
-            child: child,
-          ),
-        ),
+            delay: 200.ms, duration: 300.ms, curve: Curves.easeOutCubic),
     );
   }
 
@@ -1551,22 +1526,7 @@ class _Orb extends StatelessWidget {
           stops: const [0, 0.35, 0.65, 1],
         ),
       ),
-    )
-        .animate(onPlay: (c) => c.repeat(reverse: true))
-        .scale(
-          begin: const Offset(1, 1),
-          end: const Offset(1.18, 1.18),
-          duration: duration,
-          curve: Curves.easeInOut,
-          delay: delay,
-        )
-        .moveX(
-          begin: 0,
-          end: size * 0.03,
-          duration: duration * 1.3,
-          curve: Curves.easeInOut,
-          delay: delay,
-        );
+    );
   }
 }
 

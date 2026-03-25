@@ -78,12 +78,10 @@ class MonthSummaryScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-            )
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .scaleXY(begin: 1.0, end: 1.15, duration: 4.seconds),
+            ),
           ),
 
-          // Breathing accent orb (bottom-left) - accent
+          // Accent orb (bottom-left)
           Positioned(
             bottom: 120,
             left: -40,
@@ -99,9 +97,7 @@ class MonthSummaryScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-            )
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .scaleXY(begin: 0.9, end: 1.1, duration: 5.seconds),
+            ),
           ),
 
           // === Main Content ===

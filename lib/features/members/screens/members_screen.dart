@@ -95,6 +95,11 @@ class MembersScreen extends ConsumerWidget {
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                   child: Row(
                     children: [
+                      IconButton(
+                        icon: Icon(LucideIcons.arrowLeft, color: Colors.white.withValues(alpha: 0.9)),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      const Gap(4),
                       // Icon with gradient halo
                       Container(
                         width: 42,

@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/physics.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -56,8 +57,9 @@ void main() async {
         }
       }
 
-      // Enable pointer event resampling for high refresh rate displays
-      GestureBinding.instance.resamplingEnabled = true;
+      // Disable pointer resampling — it adds 1 frame of input latency.
+      // Raw input feels snappier, especially for scrolling.
+      GestureBinding.instance.resamplingEnabled = false;
 
       // Use path URL strategy for web (removes # from URLs)
       usePathUrlStrategy();
@@ -115,12 +117,11 @@ void main() async {
   );
 }
 
-/// Custom scroll behavior for smoother scrolling on high refresh rate displays
+/// Snappy scroll behavior — fast deceleration, no bounce, no input lag.
 class SmoothScrollBehavior extends MaterialScrollBehavior {
   @override
   ScrollPhysics getScrollPhysics(BuildContext context) {
-    // Use bouncing scroll physics for a premium iOS-like feel
-    return const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
+    return const _SnappyScrollPhysics(parent: AlwaysScrollableScrollPhysics());
   }
 
   @override
@@ -129,6 +130,37 @@ class SmoothScrollBehavior extends MaterialScrollBehavior {
     PointerDeviceKind.stylus,
     PointerDeviceKind.mouse,
   };
+}
+
+/// Custom scroll physics with higher friction for faster deceleration.
+/// Default Android friction is 0.015 — we use 0.035 for snappier stops.
+class _SnappyScrollPhysics extends ClampingScrollPhysics {
+  const _SnappyScrollPhysics({super.parent});
+
+  @override
+  _SnappyScrollPhysics applyTo(ScrollPhysics? ancestor) {
+    return _SnappyScrollPhysics(parent: buildParent(ancestor));
+  }
+
+  @override
+  double get dragStartDistanceMotionThreshold => 3.5;
+
+  @override
+  Simulation? createBallisticSimulation(
+    ScrollMetrics position,
+    double velocity,
+  ) {
+    if ((velocity.abs() < toleranceFor(position).velocity) ||
+        (velocity > 0.0 && position.pixels >= position.maxScrollExtent) ||
+        (velocity < 0.0 && position.pixels <= position.minScrollExtent)) {
+      return null;
+    }
+    return ClampingScrollSimulation(
+      position: position.pixels,
+      velocity: velocity,
+      friction: 0.035,
+    );
+  }
 }
 
 class Area51App extends ConsumerWidget {

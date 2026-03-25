@@ -212,6 +212,11 @@ class _DescoScreenState extends ConsumerState<DescoScreen> {
       padding: const EdgeInsets.fromLTRB(20, 12, 8, 8),
       child: Row(
         children: [
+          IconButton(
+            icon: Icon(LucideIcons.arrowLeft, color: Colors.white.withValues(alpha: 0.9)),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          const SizedBox(width: 4),
           // Gradient halo icon
           Container(
             width: 42,

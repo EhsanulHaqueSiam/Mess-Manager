@@ -93,9 +93,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ],
                 ),
               ),
-            )
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .scaleXY(begin: 0.9, end: 1.15, duration: 7.seconds),
+            ),
           ),
           Positioned(
             bottom: -40,
@@ -112,10 +110,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ],
                 ),
               ),
-            )
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .scaleXY(
-                    begin: 0.95, end: 1.1, duration: 9.seconds, delay: 2.seconds),
+            ),
           ),
 
           // ── Content ──

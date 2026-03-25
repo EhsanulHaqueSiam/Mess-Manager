@@ -204,6 +204,11 @@ class _RamadanScreenState extends ConsumerState<RamadanScreen> {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
       child: Row(
         children: [
+          IconButton(
+            icon: Icon(LucideIcons.arrowLeft, color: Colors.white.withValues(alpha: 0.9)),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          const Gap(4),
           // Gradient halo icon
           Container(
             width: 40,

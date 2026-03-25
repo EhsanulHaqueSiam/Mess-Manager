@@ -107,6 +107,11 @@ class MoneyScreen extends ConsumerWidget {
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                   child: Row(
                     children: [
+                      IconButton(
+                        icon: Icon(LucideIcons.arrowLeft, color: Colors.white.withValues(alpha: 0.9)),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      const Gap(4),
                       Container(
                         width: 42,
                         height: 42,

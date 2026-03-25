@@ -50,11 +50,12 @@ class MainShell extends ConsumerWidget {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-              child: Container(
+          child: RepaintBoundary(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: Container(
                 height: 64,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
@@ -80,6 +81,7 @@ class MainShell extends ConsumerWidget {
                       onTap: () => _onItemTapped(context, i),
                     );
                   }),
+                ),
                 ),
               ),
             ),
@@ -198,7 +200,7 @@ class MainShell extends ConsumerWidget {
       builder: (ctx) => ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSpacing.radiusXl)),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
             decoration: BoxDecoration(

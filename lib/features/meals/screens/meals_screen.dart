@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -68,7 +67,7 @@ class _MealsScreenState extends ConsumerState<MealsScreen>
               ),
             ),
           ),
-          // Meal-themed accent orb
+          // Meal-themed accent orb (static — no infinite animation)
           Positioned(
             top: -80,
             right: -60,
@@ -85,9 +84,7 @@ class _MealsScreenState extends ConsumerState<MealsScreen>
                   ],
                 ),
               ),
-            )
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .scaleXY(begin: 0.9, end: 1.1, duration: 5.seconds),
+            ),
           ),
 
           // ── Content ──
@@ -179,21 +176,15 @@ class _MealsScreenState extends ConsumerState<MealsScreen>
   Widget _glassIconButton({required IconData icon, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-          child: Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              color: Colors.white.withValues(alpha: 0.06),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-            ),
-            child: Icon(icon, size: 18, color: Colors.white.withValues(alpha: 0.6)),
-          ),
+      child: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          color: Colors.white.withValues(alpha: 0.06),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
         ),
+        child: Icon(icon, size: 18, color: Colors.white.withValues(alpha: 0.6)),
       ),
     );
   }
@@ -444,59 +435,53 @@ class _EntriesTabState extends State<_EntriesTab> {
   // ────────────────────────────────────────────────────────────────
 
   Widget _buildSearchBar() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(14),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: TextField(
-          controller: _searchController,
-          style: AppTypography.bodyMedium.copyWith(color: Colors.white),
-          decoration: InputDecoration(
-            hintText: 'Search by member name...',
-            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.25)),
-            prefixIcon: Icon(
-              LucideIcons.search,
-              size: 18,
-              color: Colors.white.withValues(alpha: 0.3),
-            ),
-            suffixIcon: _searchQuery.isNotEmpty
-                ? IconButton(
-                    icon: Icon(
-                      LucideIcons.x,
-                      size: 16,
-                      color: Colors.white.withValues(alpha: 0.4),
-                    ),
-                    onPressed: () {
-                      _searchController.clear();
-                      setState(() => _searchQuery = '');
-                    },
-                  )
-                : null,
-            filled: true,
-            fillColor: Colors.white.withValues(alpha: 0.05),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(
-                color: AppColors.mealColor.withValues(alpha: 0.5),
-              ),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
+    return TextField(
+      controller: _searchController,
+      style: AppTypography.bodyMedium.copyWith(color: Colors.white),
+      decoration: InputDecoration(
+        hintText: 'Search by member name...',
+        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.25)),
+        prefixIcon: Icon(
+          LucideIcons.search,
+          size: 18,
+          color: Colors.white.withValues(alpha: 0.3),
+        ),
+        suffixIcon: _searchQuery.isNotEmpty
+            ? IconButton(
+                icon: Icon(
+                  LucideIcons.x,
+                  size: 16,
+                  color: Colors.white.withValues(alpha: 0.4),
+                ),
+                onPressed: () {
+                  _searchController.clear();
+                  setState(() => _searchQuery = '');
+                },
+              )
+            : null,
+        filled: true,
+        fillColor: Colors.white.withValues(alpha: 0.05),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(
+            color: AppColors.mealColor.withValues(alpha: 0.5),
           ),
-          onChanged: (value) => setState(() => _searchQuery = value),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
         ),
       ),
-    ).animate().fadeIn(delay: 100.ms);
+      onChanged: (value) => setState(() => _searchQuery = value),
+    );
   }
 
   // ────────────────────────────────────────────────────────────────
@@ -510,47 +495,41 @@ class _EntriesTabState extends State<_EntriesTab> {
     required Color color,
     int delay = 0,
   }) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: AppSpacing.accentCard(accent: color, radius: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  gradient: LinearGradient(
-                    colors: [
-                      color.withValues(alpha: 0.35),
-                      color.withValues(alpha: 0.15),
-                    ],
-                  ),
-                ),
-                child: Icon(icon, color: color, size: 17),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: AppSpacing.accentCard(accent: color, radius: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              gradient: LinearGradient(
+                colors: [
+                  color.withValues(alpha: 0.35),
+                  color.withValues(alpha: 0.15),
+                ],
               ),
-              const Gap(10),
-              Text(
-                value,
-                style: AppTypography.headlineSmall.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                label,
-                style: AppTypography.bodySmall.copyWith(
-                  color: Colors.white.withValues(alpha: 0.4),
-                ),
-              ),
-            ],
+            ),
+            child: Icon(icon, color: color, size: 17),
           ),
-        ),
+          const Gap(10),
+          Text(
+            value,
+            style: AppTypography.headlineSmall.copyWith(
+              color: color,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(
+            label,
+            style: AppTypography.bodySmall.copyWith(
+              color: Colors.white.withValues(alpha: 0.4),
+            ),
+          ),
+        ],
       ),
     ).animate().fadeIn(delay: Duration(milliseconds: delay)).slideY(begin: 0.08);
   }
@@ -597,54 +576,48 @@ class _EntriesTabState extends State<_EntriesTab> {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.white.withValues(alpha: 0.04),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: Colors.white.withValues(alpha: 0.04),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        ),
+        child: Row(
+          children: [
+            AppMemberAvatar(
+              name: member.name,
+              size: 34,
+              backgroundColor: AppColors.mealColor.withValues(alpha: 0.2),
             ),
-            child: Row(
-              children: [
-                AppMemberAvatar(
-                  name: member.name,
-                  size: 34,
-                  backgroundColor: AppColors.mealColor.withValues(alpha: 0.2),
+            const Gap(10),
+            Expanded(
+              child: Text(
+                member.name.toString(),
+                style: AppTypography.bodyMedium.copyWith(
+                  color: Colors.white.withValues(alpha: 0.85),
                 ),
-                const Gap(10),
-                Expanded(
-                  child: Text(
-                    member.name.toString(),
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: Colors.white.withValues(alpha: 0.85),
-                    ),
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '${mealCount.toStringAsFixed(1)} meals',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.mealColor,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      '${mealCount.toStringAsFixed(1)} meals',
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.mealColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      '৳${cost.toStringAsFixed(0)}',
-                      style: AppTypography.labelSmall.copyWith(
-                        color: Colors.white.withValues(alpha: 0.35),
-                      ),
-                    ),
-                  ],
+                Text(
+                  '৳${cost.toStringAsFixed(0)}',
+                  style: AppTypography.labelSmall.copyWith(
+                    color: Colors.white.withValues(alpha: 0.35),
+                  ),
                 ),
               ],
             ),
-          ),
+          ],
         ),
       ),
     ).animate().fadeIn(delay: Duration(milliseconds: 250 + index * 40)).slideX(begin: 0.03);

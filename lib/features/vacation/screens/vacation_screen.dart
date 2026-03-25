@@ -97,6 +97,11 @@ class VacationScreen extends ConsumerWidget {
                   ),
                   child: Row(
                     children: [
+                      IconButton(
+                        icon: Icon(LucideIcons.arrowLeft, color: Colors.white.withValues(alpha: 0.9)),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      const Gap(4),
                       // Gradient halo icon
                       Container(
                         width: 44,
