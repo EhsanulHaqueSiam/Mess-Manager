@@ -5,24 +5,83 @@ Smart expense and meal tracking for shared living groups. Built with Flutter.
 [![Flutter](https://img.shields.io/badge/Flutter-3.41+-02569B?logo=flutter)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.11+-0175C2?logo=dart)](https://dart.dev)
 [![CI/CD](https://github.com/EhsanulHaqueSiam/Mess-Manager/actions/workflows/build.yml/badge.svg)](https://github.com/EhsanulHaqueSiam/Mess-Manager/actions)
+[![Platforms](https://img.shields.io/badge/Platforms-Android%20%7C%20iOS%20%7C%20Web%20%7C%20Linux-green)]()
+
+## Screenshots
+
+<p align="center">
+  <img src="screenshots/login.png" width="180" alt="Login" />
+  <img src="screenshots/dashboard.png" width="180" alt="Dashboard" />
+  <img src="screenshots/meals.png" width="180" alt="Meals" />
+  <img src="screenshots/bazar.png" width="180" alt="Bazar" />
+</p>
+<p align="center">
+  <img src="screenshots/balance.png" width="180" alt="Balance" />
+  <img src="screenshots/analytics.png" width="180" alt="Analytics" />
+  <img src="screenshots/settlement.png" width="180" alt="Settlement" />
+  <img src="screenshots/members.png" width="180" alt="Members" />
+</p>
+<p align="center">
+  <img src="screenshots/duties.png" width="180" alt="Duties" />
+  <img src="screenshots/chatbot.png" width="180" alt="AI Chatbot" />
+</p>
 
 ## Features
 
-**Meals** -- Add meals with 0.5-2x portions, weekly schedules, per-member tracking, bulk entry, Ramadan mode
+### Meal tracking
+- Add meals with 0.5x--2x portion sizes per member
+- Weekly meal schedules with recurring entries
+- Per-member monthly breakdown with cost calculation
+- Bulk entry for fast daily logging
+- Ramadan mode with sehri/iftar meal types and auto-scheduling from Aladhan API
 
-**Bazar** -- Simple or itemized grocery entries, shared shopping list, receipt OCR scanner, budget alerts
+### Bazar (groceries)
+- Simple or itemized grocery entries with category tags
+- Shared shopping list with real-time sync
+- Receipt OCR scanner for quick entry
+- Budget alerts when spending exceeds thresholds
+- Monthly contribution breakdown per member
 
-**Balance** -- Fair cost distribution (meal rate = total bazar / total meals), per-member breakdown, settlement flow
+### Balance and settlement
+- Fair cost distribution: meal rate = total bazar / total meals
+- Per-member balance breakdown (overpaid / underpaid)
+- Monthly settlement flow with optimized payment graph
+- Settlement history and month-end summary reports
+- Export to PDF/CSV
 
-**Money** -- Personal loans between members, transaction history, settlement reports
+### Money management
+- Personal loans and transfers between members
+- Full transaction history with search and filters
+- Settlement integration for clearing debts
 
-**Analytics** -- Spending trends, daily averages, month summaries, price spike alerts
+### Analytics
+- Daily/weekly/monthly spending trends with bar and pie charts
+- Per-member cost comparison
+- Price spike alerts for unusual bazar entries
+- Historical meal rate tracking
 
-**Members** -- 7 roles (superAdmin to guest), role-based access control, vacation tracking
+### Members and roles
+- 7-tier role system: superAdmin, admin, manager, moderator, member, restricted, guest
+- Role-based access control via `RoleGate` widget
+- Vacation tracking with automatic meal exclusion
+- Member approval workflow for new joiners
 
-**Utilities** -- DESCO electricity tracking, duty assignments, fixed expense management
+### Utilities
+- DESCO electricity bill tracking and split
+- Duty rotation scheduler with auto-assignment
+- Fixed expense management (rent, wifi, gas)
+- Push notifications via Firebase Cloud Messaging
 
-**AI** -- Gemini chatbot for expense queries, NLP-based bazar entry categorization, smart suggestions
+### AI assistant
+- Gemini-powered chatbot for expense queries
+- NLP-based bazar entry categorization
+- Smart suggestions for meal scheduling and budgeting
+
+### Design
+- "Cosmic Bioluminescence" dark theme with glassmorphism
+- 120Hz+ high refresh rate support
+- Staggered animations with `flutter_animate`
+- Offline-first architecture with local + cloud sync
 
 ## Tech Stack
 
