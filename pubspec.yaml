@@ -16,8 +16,7 @@ dependencies:
   riverpod_annotation: ^4.0.0
   go_router: ^17.0.1
 
-  # Data Models & Serialization
-  freezed_annotation: ^3.1.0
+  # Data Models & Serialization (native Dart 3 — no codegen needed)
   json_annotation: ^4.9.0
 
   # Modern UI Components (2025-2026 Trending)
@@ -109,19 +108,10 @@ dev_dependencies:
   flutter_native_splash: ^2.4.0   # Splash screen generator
   flutter_launcher_icons: ^0.14.3 # App icon generator
   
-  # Code Generation
+  # Code Generation (only riverpod_generator remains)
   build_runner: ^2.10.4
-  freezed: ^3.2.3
-  json_serializable: ^6.8.0
   riverpod_generator: ^4.0.0+1
-  # Note: isar_community_generator removed due to unresolvable version conflicts
-  # between isar_plus (needs analyzer ^8.4.1) and isar_community_generator (needs analyzer <8.3.0)
-  # Using Hive for now until Isar ecosystem stabilizes
-
-dependency_overrides:
-  # Keep source_gen/build overrides for other generators (freezed, riverpod, etc.)
-  source_gen: ^4.1.1
-  build: ^4.0.0
+  json_serializable: ^6.8.0
 
 
 flutter:
