@@ -78,20 +78,23 @@ class DescoService {
     if (inputAccountNo == null && inputMeterNo == null) return null;
 
     // Validate input format
-    if (inputAccountNo != null && inputAccountNo.length != 8) return null;
-    if (inputMeterNo != null && inputMeterNo.length != 12) return null;
+    if (inputAccountNo != null && inputAccountNo.length != 8) {
+      throw Exception('Account number must be 8 digits');
+    }
+    if (inputMeterNo != null && inputMeterNo.length != 12) {
+      throw Exception('Meter number must be 12 digits');
+    }
 
-    try {
-      final response = await api.getCustomerInfo(
-        accountNo: inputAccountNo,
-        meterNo: inputMeterNo,
-      );
+    final response = await api.getCustomerInfo(
+      accountNo: inputAccountNo,
+      meterNo: inputMeterNo,
+    );
 
-      if (response.isSuccess && response.data != null) {
-        return DescoCustomerInfo.fromJson({'data': response.data});
-      }
-    } catch (_) {}
-    return null;
+    if (response.isSuccess && response.data != null) {
+      return DescoCustomerInfo.fromJson({'data': response.data});
+    }
+
+    throw Exception(response.message ?? 'Customer not found');
   }
 
   /// Setup meter after successful lookup
@@ -463,6 +466,7 @@ enum LowBalanceStatus {
 /// DESCO Balance model
 class DescoBalance {
   final double currentBalance;
+  final double currentMonthConsumption;
   final double lastRechargeAmount;
   final DateTime? lastRechargeDate;
   final DateTime? lastUpdated;
@@ -473,6 +477,7 @@ class DescoBalance {
 
   DescoBalance({
     required this.currentBalance,
+    this.currentMonthConsumption = 0,
     this.lastRechargeAmount = 0,
     this.lastRechargeDate,
     this.lastUpdated,
@@ -487,10 +492,14 @@ class DescoBalance {
     return DescoBalance(
       currentBalance: (data['balance'] ?? data['currentBalance'] ?? 0)
           .toDouble(),
+      currentMonthConsumption:
+          (data['currentMonthConsumption'] ?? 0).toDouble(),
       lastRechargeAmount: (data['lastRechargeAmount'] ?? 0).toDouble(),
       lastRechargeDate: data['lastRechargeDate'] != null
           ? DateTime.tryParse(data['lastRechargeDate'].toString())
-          : null,
+          : (data['readingTime'] != null
+              ? DateTime.tryParse(data['readingTime'].toString())
+              : null),
       lastUpdated: DateTime.now(),
       meterNo: data['meterNo']?.toString(),
       accountNo: data['accountNo']?.toString(),
@@ -500,6 +509,7 @@ class DescoBalance {
 
   Map<String, dynamic> toJson() => {
     'currentBalance': currentBalance,
+    'currentMonthConsumption': currentMonthConsumption,
     'lastRechargeAmount': lastRechargeAmount,
     'lastRechargeDate': lastRechargeDate?.toIso8601String(),
     'lastUpdated': lastUpdated?.toIso8601String(),
@@ -548,8 +558,8 @@ class DescoConsumption {
   });
 
   factory DescoConsumption.fromJson(Map<String, dynamic> json) {
-    final units = (json['units'] ?? json['consumption'] ?? 0).toDouble();
-    final amount = (json['amount'] ?? json['bill'] ?? 0).toDouble();
+    final units = (json['consumedUnit'] ?? json['units'] ?? json['consumption'] ?? 0).toDouble();
+    final amount = (json['consumedTaka'] ?? json['amount'] ?? json['bill'] ?? 0).toDouble();
     return DescoConsumption(
       month: json['month']?.toString() ?? '',
       units: units,
@@ -575,10 +585,12 @@ class DescoRecharge {
 
   factory DescoRecharge.fromJson(Map<String, dynamic> json) {
     return DescoRecharge(
-      date: DateTime.tryParse(json['date']?.toString() ?? '') ?? DateTime.now(),
-      amount: (json['amount'] ?? 0).toDouble(),
-      transactionId: json['transactionId']?.toString(),
-      source: json['source']?.toString(),
+      date: DateTime.tryParse(
+              json['rechargeDate']?.toString() ?? json['date']?.toString() ?? '') ??
+          DateTime.now(),
+      amount: (json['totalAmount'] ?? json['amount'] ?? 0).toDouble(),
+      transactionId: (json['orderID'] ?? json['transactionId'])?.toString(),
+      source: json['rechargeOperator']?.toString(),
     );
   }
 }

@@ -197,19 +197,11 @@ final usedThisMonthUnitsProvider = Provider<double>((ref) {
   );
 });
 
-/// Used this month (BDT)
+/// Used this month (BDT) — uses balance API's currentMonthConsumption for live data
 final usedThisMonthBdtProvider = Provider<double>((ref) {
-  final consumptionAsync = ref.watch(descoConsumptionProvider);
-  return consumptionAsync.when(
-    data: (list) {
-      final now = DateTime.now();
-      final match = list.where((c) {
-        final m = int.tryParse(c.month.split('-').last) ?? 0;
-        return m == now.month;
-      });
-      if (match.isEmpty) return 0.0;
-      return match.first.amount;
-    },
+  final balanceAsync = ref.watch(descoBalanceProvider);
+  return balanceAsync.when(
+    data: (balance) => balance?.currentMonthConsumption ?? 0.0,
     loading: () => 0.0,
     error: (e, s) => 0.0,
   );

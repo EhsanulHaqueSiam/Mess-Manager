@@ -1,16 +1,23 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 
 /// DESCO Prepaid Meter API Client
 /// Uses plain Dio for HTTP requests
 class DescoApi {
   final Dio _dio;
 
-  DescoApi(Dio dio)
-      : _dio = Dio(BaseOptions(
-          baseUrl: 'https://prepaid.desco.org.bd/api',
-          connectTimeout: dio.options.connectTimeout,
-          receiveTimeout: dio.options.receiveTimeout,
-        ));
+  DescoApi(Dio dio) : _dio = dio {
+    _dio.options.baseUrl = 'https://prepaid.desco.org.bd/api';
+
+    // DESCO's SSL cert chain is incomplete — trust their domain explicitly
+    (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
+      final client = HttpClient();
+      client.badCertificateCallback = (cert, host, port) =>
+          host.endsWith('desco.org.bd');
+      return client;
+    };
+  }
 
   /// Get customer info by account or meter number
   /// accountNo = 8 digits, meterNo = 12 digits
