@@ -81,6 +81,45 @@ class DescoApi {
     return DescoApiResponse.fromJson(response.data);
   }
 
+  /// Get daily consumption data (day-by-day usage)
+  Future<DescoApiResponse> getDailyConsumption(
+    String accountNo,
+    String meterNo,
+    String dateFrom, // Format: YYYY-MM-DD
+    String dateTo, // Format: YYYY-MM-DD
+  ) async {
+    final response = await _dio.get(
+      '/tkdes/customer/getCustomerDailyConsumption',
+      queryParameters: {
+        'accountNo': accountNo,
+        'meterNo': meterNo,
+        'dateFrom': dateFrom,
+        'dateTo': dateTo,
+      },
+    );
+    return DescoApiResponse.fromJson(response.data);
+  }
+
+  /// Get minimum recharge amount
+  Future<DescoApiResponse> getMinRecharge(
+    String accountNo,
+    String meterNo,
+  ) async {
+    final dio = Dio(BaseOptions(
+      baseUrl: 'https://smartprepaid.desco.org.bd',
+      connectTimeout: _dio.options.connectTimeout,
+      receiveTimeout: _dio.options.receiveTimeout,
+    ));
+    final response = await dio.get(
+      '/PrePay/v1/customer/min/recharge',
+      queryParameters: {
+        'accountNo': accountNo,
+        'meterNo': meterNo,
+      },
+    );
+    return DescoApiResponse.fromJson(response.data);
+  }
+
   /// Get customer location
   Future<DescoApiResponse> getCustomerLocation(
     String accountNo,
@@ -111,5 +150,5 @@ class DescoApiResponse {
     );
   }
 
-  bool get isSuccess => data != null;
+  bool get isSuccess => data != null && (code == null || code == 200);
 }

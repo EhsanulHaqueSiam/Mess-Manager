@@ -222,11 +222,7 @@ class BalanceScreen extends ConsumerWidget {
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            color: color.withValues(alpha: 0.08),
-            border: Border.all(color: color.withValues(alpha: 0.15)),
-          ),
+          decoration: AppSpacing.accentCard(accent: color, radius: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -276,27 +272,9 @@ class BalanceScreen extends ConsumerWidget {
         filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
         child: Container(
           padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppColors.primary.withValues(alpha: 0.2),
-                AppColors.secondary.withValues(alpha: 0.15),
-                AppColors.primary.withValues(alpha: 0.1),
-              ],
-            ),
-            border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.2),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.15),
-                blurRadius: 24,
-                offset: const Offset(0, 8),
-              ),
-            ],
+          decoration: AppSpacing.gradientCard(
+            gradient: AppColors.gradientBalance,
+            radius: 20,
           ),
           child: Row(
             children: [
@@ -417,10 +395,9 @@ class BalanceScreen extends ConsumerWidget {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              color: Colors.white.withValues(alpha: 0.04),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+            decoration: AppSpacing.accentCard(
+              accent: balanceColor,
+              radius: 16,
             ),
             child: ExpansionTile(
               initiallyExpanded: index == 0,

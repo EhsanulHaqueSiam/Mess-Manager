@@ -284,11 +284,7 @@ class _PendingApprovalScreenState extends ConsumerState<PendingApprovalScreen> {
               filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.04),
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
-                ),
+                decoration: AppSpacing.accentCard(accent: AppColors.info, radius: AppSpacing.radiusMd),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [

@@ -83,6 +83,46 @@ class RamadanSeasonsNotifier extends Notifier<List<RamadanSeason>> {
     _save();
   }
 
+  /// Add an outside member to Ramadan (non-mess participant)
+  Future<void> addOutsideMember(
+    String seasonId, {
+    required String name,
+    String? phone,
+  }) async {
+    state = state.map((s) {
+      if (s.id == seasonId) {
+        final outsideMember = RamadanOutsideMember(
+          id: 'outside_${DateTime.now().millisecondsSinceEpoch}',
+          name: name,
+          phone: phone,
+        );
+        return s.copyWith(
+          outsideMembers: [...s.outsideMembers, outsideMember],
+        );
+      }
+      return s;
+    }).toList();
+    _save();
+  }
+
+  /// Remove an outside member from Ramadan
+  Future<void> removeOutsideMember(
+    String seasonId,
+    String outsideMemberId,
+  ) async {
+    state = state.map((s) {
+      if (s.id == seasonId) {
+        return s.copyWith(
+          outsideMembers: s.outsideMembers
+              .where((m) => m.id != outsideMemberId)
+              .toList(),
+        );
+      }
+      return s;
+    }).toList();
+    _save();
+  }
+
   /// Mark season as fully settled (hides from UI)
   Future<void> markSeasonSettled(String seasonId) async {
     state = state.map((s) {
@@ -272,8 +312,9 @@ final ramadanBalancesProvider = Provider<List<RamadanBalance>>((ref) {
       .fold(0.0, (sum, b) => sum + b.amount);
   final mealRate = totalMeals > 0 ? totalBazar / totalMeals : 0.0;
 
-  // Calculate per-member balances (sponsor pays for their guests)
-  return season.optedInMemberIds.map((memberId) {
+  // Calculate per-member balances (includes outside members)
+  // Sponsor pays for their guests
+  return season.allParticipantIds.map((memberId) {
     final memberMeals = meals
         .where((m) => m.memberId == memberId)
         .fold(0, (sum, m) => sum + m.count + m.guestCount);
@@ -307,8 +348,8 @@ final ramadanMealRateProvider = Provider<double>((ref) {
       .where((b) => b.seasonId == season.id)
       .fold(0.0, (sum, b) => sum + b.amount);
 
-  final totalMeals = meals.fold(0, (sum, m) => sum + m.count);
-  // Protection against divide-by-zero
+  // Include guest meals in total for accurate rate
+  final totalMeals = meals.fold(0, (sum, m) => sum + m.count + m.guestCount);
   if (totalMeals == 0) return 0.0;
   return totalBazar / totalMeals;
 });

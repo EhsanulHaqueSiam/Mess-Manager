@@ -1,10 +1,12 @@
 /// Duty types available in a mess
+/// Use [custom] with DutySchedule.name for user-created duties
 enum DutyType {
   roomCleaning, // Clean rooms
   diningCleanup, // Clean dining area after meals
   bazarDuty, // Go for bazar shopping
   garbageDisposal, // Take out garbage
   cooking, // Cooking duty (if applicable)
+  custom, // User-defined duty — name stored in DutySchedule.name
 }
 
 /// Status of a duty assignment
@@ -208,12 +210,16 @@ class DutyAssignment {
       'DutyAssignment(id: $id, messId: $messId, memberId: $memberId, type: $type, date: $date, status: $status)';
 }
 
-/// Weekly duty schedule configuration
+/// Duty schedule configuration
+/// Members subscribe to duties and rotate among subscribers.
+/// Rotation is fairness-based: next turn goes to member with fewest completions.
 class DutySchedule {
   final String id;
   final String messId;
   final DutyType type;
-  final List<String> rotationOrder; // Member IDs in rotation order
+  final String? name; // Custom name (used when type == custom)
+  final String? createdByMemberId; // Who created this duty
+  final List<String> rotationOrder; // Subscribed member IDs
   final int rotationIntervalDays; // Days per assignment
   final DateTime? lastRotatedAt;
   final bool isActive;
@@ -222,16 +228,23 @@ class DutySchedule {
     required this.id,
     required this.messId,
     required this.type,
+    this.name,
+    this.createdByMemberId,
     required this.rotationOrder,
     this.rotationIntervalDays = 1,
     this.lastRotatedAt,
     this.isActive = true,
   });
 
+  /// Display name: custom name or enum name
+  String get displayName => name ?? type.name;
+
   DutySchedule copyWith({
     String? id,
     String? messId,
     DutyType? type,
+    String? name,
+    String? createdByMemberId,
     List<String>? rotationOrder,
     int? rotationIntervalDays,
     DateTime? lastRotatedAt,
@@ -241,6 +254,8 @@ class DutySchedule {
       id: id ?? this.id,
       messId: messId ?? this.messId,
       type: type ?? this.type,
+      name: name ?? this.name,
+      createdByMemberId: createdByMemberId ?? this.createdByMemberId,
       rotationOrder: rotationOrder ?? this.rotationOrder,
       rotationIntervalDays: rotationIntervalDays ?? this.rotationIntervalDays,
       lastRotatedAt: lastRotatedAt ?? this.lastRotatedAt,
@@ -253,6 +268,8 @@ class DutySchedule {
       id: json['id'] as String? ?? '',
       messId: json['messId'] as String? ?? '',
       type: _dutyTypeFromJson(json['type']),
+      name: json['name'] as String?,
+      createdByMemberId: json['createdByMemberId'] as String?,
       rotationOrder: List<String>.from(json['rotationOrder'] ?? []),
       rotationIntervalDays: (json['rotationIntervalDays'] ?? 1) as int,
       lastRotatedAt: json['lastRotatedAt'] != null
@@ -267,6 +284,8 @@ class DutySchedule {
       'id': id,
       'messId': messId,
       'type': type.name,
+      'name': name,
+      'createdByMemberId': createdByMemberId,
       'rotationOrder': rotationOrder,
       'rotationIntervalDays': rotationIntervalDays,
       'lastRotatedAt': lastRotatedAt?.toIso8601String(),
@@ -282,6 +301,7 @@ class DutySchedule {
           id == other.id &&
           messId == other.messId &&
           type == other.type &&
+          name == other.name &&
           rotationIntervalDays == other.rotationIntervalDays &&
           lastRotatedAt == other.lastRotatedAt &&
           isActive == other.isActive;
@@ -291,6 +311,7 @@ class DutySchedule {
         id,
         messId,
         type,
+        name,
         rotationIntervalDays,
         lastRotatedAt,
         isActive,

@@ -1,39 +1,23 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mess_manager/core/models/default_meal_schedule.dart';
 import 'package:mess_manager/core/providers/members_provider.dart';
+import 'package:mess_manager/core/providers/mess_settings_provider.dart';
 
-/// Generate default schedule for a member (lunch + dinner every day)
-List<DefaultMealSchedule> _generateDefaultScheduleForMember(String memberId) {
+/// Generate default schedule for a member based on mess-wide meal system
+List<DefaultMealSchedule> _generateDefaultScheduleForMember(
+  String memberId, {
+  bool breakfastEnabled = false,
+}) {
   return List.generate(7, (index) {
     final weekday = index + 1; // 1 = Monday
     return DefaultMealSchedule(
       memberId: memberId,
       weekday: weekday,
-      breakfast: false,
+      breakfast: breakfastEnabled,
       lunch: true,
       dinner: true,
     );
   });
-}
-
-/// Generate default schedules for all sample members
-Map<String, List<DefaultMealSchedule>> _generateSampleSchedules() {
-  return {
-    '1': _generateDefaultScheduleForMember('1'), // Siam
-    '2': _generateDefaultScheduleForMember('2'), // Tanmoy
-    '3': _generateDefaultScheduleForMember('3'), // Sarkar
-    '4': [
-      // Shahriyer - only dinner
-      for (int day = 1; day <= 7; day++)
-        DefaultMealSchedule(
-          memberId: '4',
-          weekday: day,
-          breakfast: false,
-          lunch: false,
-          dinner: true,
-        ),
-    ],
-  };
 }
 
 /// Provider for all member schedules
@@ -46,11 +30,30 @@ final mealScheduleProvider =
 class MealScheduleNotifier
     extends Notifier<Map<String, List<DefaultMealSchedule>>> {
   @override
-  Map<String, List<DefaultMealSchedule>> build() => _generateSampleSchedules();
+  Map<String, List<DefaultMealSchedule>> build() {
+    // Watch mess settings to regenerate defaults when meal system changes
+    final messSettings = ref.watch(messSettingsProvider);
+    final members = ref.watch(membersProvider);
+
+    // Generate schedules for all current members
+    final schedules = <String, List<DefaultMealSchedule>>{};
+    for (final member in members) {
+      schedules[member.id] = _generateDefaultScheduleForMember(
+        member.id,
+        breakfastEnabled: messSettings.breakfastEnabled,
+      );
+    }
+    return schedules;
+  }
 
   /// Get schedule for a specific member
   List<DefaultMealSchedule> getScheduleForMember(String memberId) {
-    return state[memberId] ?? _generateDefaultScheduleForMember(memberId);
+    final breakfastOn = ref.read(messSettingsProvider).breakfastEnabled;
+    return state[memberId] ??
+        _generateDefaultScheduleForMember(
+          memberId,
+          breakfastEnabled: breakfastOn,
+        );
   }
 
   /// Update a single day's schedule

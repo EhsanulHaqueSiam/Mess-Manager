@@ -121,9 +121,12 @@ final currentMonthBalancesProvider = Provider<List<MemberBalanceSummary>>((
       .where((m) => m.date.year == year && m.date.month == month)
       .toList();
 
-  // Calculate totals - using meal count field
+  // Calculate totals - include guest meals in ratio
   final totalBazar = monthBazar.fold(0.0, (sum, b) => sum + b.amount);
-  final totalMeals = monthMeals.fold(0, (sum, m) => sum + m.count);
+  final totalMeals = monthMeals.fold(
+    0,
+    (sum, m) => sum + m.count + m.guestCount,
+  );
   final mealRate = totalMeals > 0 ? totalBazar / totalMeals : 0.0;
 
   // Calculate fixed expenses total
@@ -192,9 +195,10 @@ final currentMonthBalancesProvider = Provider<List<MemberBalanceSummary>>((
     final memberBazar = monthBazar
         .where((b) => b.memberId == member.id)
         .fold(0.0, (sum, b) => sum + b.amount);
+    // Member's meals include their guests (they pay for guests they bring)
     final memberMeals = monthMeals
         .where((m) => m.memberId == member.id)
-        .fold(0, (sum, m) => sum + m.count);
+        .fold(0, (sum, m) => sum + m.count + m.guestCount);
 
     final mealCost = memberMeals * mealRate;
 

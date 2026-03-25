@@ -1,6 +1,29 @@
 /// Ramadan meal types
 enum RamadanMealType { sehri, iftar }
 
+/// Outside member for Ramadan (non-mess participant)
+class RamadanOutsideMember {
+  final String id;
+  final String name;
+  final String? phone;
+
+  const RamadanOutsideMember({
+    required this.id,
+    required this.name,
+    this.phone,
+  });
+
+  factory RamadanOutsideMember.fromJson(Map<String, dynamic> json) {
+    return RamadanOutsideMember(
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      phone: json['phone'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'phone': phone};
+}
+
 /// Ramadan Season
 class RamadanSeason {
   final String id;
@@ -9,6 +32,7 @@ class RamadanSeason {
   final DateTime endDate;
   final int year;
   final List<String> optedInMemberIds;
+  final List<RamadanOutsideMember> outsideMembers;
   final bool isActive;
   final bool isSettled;
   final DateTime? createdAt;
@@ -20,10 +44,17 @@ class RamadanSeason {
     required this.endDate,
     required this.year,
     this.optedInMemberIds = const [],
+    this.outsideMembers = const [],
     this.isActive = true,
     this.isSettled = false,
     this.createdAt,
   });
+
+  /// All participant IDs (mess members + outside members)
+  List<String> get allParticipantIds => [
+        ...optedInMemberIds,
+        ...outsideMembers.map((m) => m.id),
+      ];
 
   RamadanSeason copyWith({
     String? id,
@@ -32,6 +63,7 @@ class RamadanSeason {
     DateTime? endDate,
     int? year,
     List<String>? optedInMemberIds,
+    List<RamadanOutsideMember>? outsideMembers,
     bool? isActive,
     bool? isSettled,
     DateTime? createdAt,
@@ -43,6 +75,7 @@ class RamadanSeason {
       endDate: endDate ?? this.endDate,
       year: year ?? this.year,
       optedInMemberIds: optedInMemberIds ?? this.optedInMemberIds,
+      outsideMembers: outsideMembers ?? this.outsideMembers,
       isActive: isActive ?? this.isActive,
       isSettled: isSettled ?? this.isSettled,
       createdAt: createdAt ?? this.createdAt,
@@ -57,6 +90,11 @@ class RamadanSeason {
       endDate: DateTime.parse(json['endDate'] as String),
       year: (json['year'] ?? 2024) as int,
       optedInMemberIds: List<String>.from(json['optedInMemberIds'] ?? []),
+      outsideMembers: (json['outsideMembers'] as List?)
+              ?.map((e) =>
+                  RamadanOutsideMember.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
       isActive: json['isActive'] ?? true,
       isSettled: json['isSettled'] ?? false,
       createdAt: json['createdAt'] != null
@@ -73,6 +111,7 @@ class RamadanSeason {
       'endDate': endDate.toIso8601String(),
       'year': year,
       'optedInMemberIds': optedInMemberIds,
+      'outsideMembers': outsideMembers.map((m) => m.toJson()).toList(),
       'isActive': isActive,
       'isSettled': isSettled,
       'createdAt': createdAt?.toIso8601String(),

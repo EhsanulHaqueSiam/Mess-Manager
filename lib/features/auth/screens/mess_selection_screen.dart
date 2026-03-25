@@ -136,6 +136,10 @@ class _MessSelectionScreenState extends ConsumerState<MessSelectionScreen> {
                           (entry) => _buildMessCard(entry.value, entry.key),
                         ),
                     const Gap(20),
+                  ] else ...[
+                    // Empty state — no messes yet
+                    _buildEmptyMessPlaceholder(),
+                    const Gap(20),
                   ],
 
                   // Join with Code
@@ -147,11 +151,7 @@ class _MessSelectionScreenState extends ConsumerState<MessSelectionScreen> {
                       filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                       child: Container(
                         padding: const EdgeInsets.all(AppSpacing.lg),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.04),
-                          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-                        ),
+                        decoration: AppSpacing.accentCard(accent: AppColors.primary, radius: AppSpacing.radiusLg),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -245,11 +245,7 @@ class _MessSelectionScreenState extends ConsumerState<MessSelectionScreen> {
                         child: Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.04),
-                            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                            border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
-                          ),
+                          decoration: AppSpacing.accentCard(accent: AppColors.primary, radius: AppSpacing.radiusMd),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -282,6 +278,64 @@ class _MessSelectionScreenState extends ConsumerState<MessSelectionScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildEmptyMessPlaceholder() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.primary.withValues(alpha: 0.06),
+                AppColors.accentAlt.withValues(alpha: 0.03),
+              ],
+            ),
+            border: Border.all(
+              color: AppColors.primary.withValues(alpha: 0.1),
+            ),
+          ),
+          child: Column(
+            children: [
+              Container(
+                width: 56, height: 56,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(colors: [
+                    AppColors.primary.withValues(alpha: 0.2),
+                    AppColors.primary.withValues(alpha: 0.04),
+                  ]),
+                ),
+                child: const Icon(LucideIcons.home, color: AppColors.primary, size: 26),
+              ),
+              const Gap(14),
+              Text(
+                'No mess yet',
+                style: AppTypography.titleMedium.copyWith(
+                  color: Colors.white.withValues(alpha: 0.8),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const Gap(6),
+              Text(
+                'Create a new mess to manage shared meals and expenses, or join an existing one with an invite code.',
+                textAlign: TextAlign.center,
+                style: AppTypography.bodySmall.copyWith(
+                  color: Colors.white.withValues(alpha: 0.35),
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).animate().fadeIn(duration: 500.ms).slideY(begin: 0.05);
   }
 
   Widget _buildSectionLabel(String text) {
